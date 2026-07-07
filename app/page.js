@@ -1,8 +1,20 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+
 export default function Home() {
+  const router = useRouter()
+
+  useEffect(() => {
+    router.push('/panel')
+  }, [router])
+
   return (
-    <div style={{ textAlign: 'center', padding: '50px' }}>
-      <h1>TermoEnerji</h1>
-      <p>Fiyat Yönetim Sistemi</p>
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-white text-lg">Yönlendiriliyor...</p>
+      </div>
     </div>
   )
 }
