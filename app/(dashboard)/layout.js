@@ -1,24 +1,24 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import {
-  LayoutDashboard,
-  Plus,
-  List,
-  Search,
-  Layers,
-  Building2,
-  BarChart3,
-  Settings,
+import { usePathname } from 'next/navigation'
+import { 
+  LayoutDashboard, 
+  Plus, 
+  List, 
+  Search, 
+  Layers, 
+  Building2, 
+  BarChart3, 
+  Settings, 
   Users,
-  LogOut
+  LogOut 
 } from 'lucide-react'
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname()
 
-  const menuItems = [
+  const menu = [
     { href: '/panel', label: 'Ana Panel', icon: LayoutDashboard },
     { href: '/panel/fiyat-ekle', label: 'Fiyat Ekle', icon: Plus },
     { href: '/panel/fiyat-listesi', label: 'Fiyat Listesi', icon: List },
@@ -32,7 +32,6 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-slate-950 flex">
-      {/* Sidebar */}
       <aside className="w-64 bg-slate-900/50 border-r border-slate-800 p-4 hidden md:block">
         <div className="flex items-center gap-2 mb-8">
           <div className="p-2 bg-emerald-500/20 rounded-lg">
@@ -42,14 +41,14 @@ export default function DashboardLayout({ children }) {
         </div>
 
         <nav className="space-y-1">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.href
+          {menu.map((item) => {
+            const active = pathname === item.href
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${
-                  isActive
+                  active
                     ? 'bg-emerald-500/20 text-emerald-400'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                 }`}
@@ -72,7 +71,6 @@ export default function DashboardLayout({ children }) {
         </nav>
       </aside>
 
-      {/* Ana İçerik */}
       <main className="flex-1 p-6 overflow-y-auto">
         {children}
       </main>
