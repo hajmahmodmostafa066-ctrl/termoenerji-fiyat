@@ -8,8 +8,9 @@ export default function YonetimPage() {
   const [telefon, setTelefon] = useState('')
   const [adres, setAdres] = useState('')
   const [loading, setLoading] = useState(false)
+  const [logoFile, setLogoFile] = useState(null)
+  const [logoUrl, setLogoUrl] = useState('')
 
-  // Kayıtlı firma bilgilerini yükle
   useEffect(() => {
     const fetchFirma = async () => {
       try {
@@ -24,6 +25,7 @@ export default function YonetimPage() {
           setFirmaAdi(data.ad || 'TermoEnerji')
           setTelefon(data.telefon || '')
           setAdres(data.adres || '')
+          setLogoUrl(data.logo_url || '')
         }
       } catch (error) {
         console.error('Firma bilgisi yükleme hatası:', error)
@@ -35,14 +37,34 @@ export default function YonetimPage() {
   const handleKaydet = async () => {
     setLoading(true)
     try {
+      let finalLogoUrl = logoUrl
+
+      // Logo varsa yükle
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop()
+        const fileName = `logo_${Date.now()}.${fileExt}`
+        const { error: uploadError } = await supabase.storage
+          .from('firma')
+          .upload(fileName, logoFile)
+
+        if (uploadError) throw uploadError
+
+        const { data: urlData } = supabase.storage
+          .from('firma')
+          .getPublicUrl(fileName)
+
+        finalLogoUrl = urlData.publicUrl
+      }
+
       const { error } = await supabase
         .from('firma_bilgileri')
         .upsert({
           ad: firmaAdi,
           telefon: telefon,
           adres: adres,
+          logo_url: finalLogoUrl,
           updated_at: new Date().toISOString()
-        }, { onConflict: 'id' })
+        })
 
       if (error) throw error
 
@@ -62,6 +84,37 @@ export default function YonetimPage() {
 
       <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700 max-w-xl">
         <div className="space-y-4">
+          {/* Logo Yükleme */}
+          <div>
+            <label className="block text-sm text-slate-300 mb-1">Logo</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setLogoFile(e.target.files[0])
+                  const reader = new FileReader()
+                  reader.onload = (event) => {
+                    document.getElementById('logoPreview').src = event.target.result
+                  }
+                  reader.readAsDataURL(e.target.files[0])
+                }
+              }}
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            />
+            {logoUrl && (
+              <div className="mt-2">
+                <img
+                  id="logoPreview"
+                  src={logoUrl}
+                  alt="Logo"
+                  className="h-16 w-auto object-contain"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Firma Adı */}
           <div>
             <label className="block text-sm text-slate-300 mb-1">Firma Adı</label>
             <input
@@ -72,6 +125,7 @@ export default function YonetimPage() {
             />
           </div>
 
+          {/* Telefon */}
           <div>
             <label className="block text-sm text-slate-300 mb-1">Telefon</label>
             <input
@@ -83,6 +137,7 @@ export default function YonetimPage() {
             />
           </div>
 
+          {/* Adres */}
           <div>
             <label className="block text-sm text-slate-300 mb-1">Adres</label>
             <textarea
