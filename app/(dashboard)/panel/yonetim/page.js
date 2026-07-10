@@ -93,23 +93,44 @@ export default function YonetimPage() {
     }
   }
 
+  // ✅ TCMB'den Canlı Kur Çek
   const fetchCanliKur = async () => {
     setKurLoading(true)
     try {
-      const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
-      const data = await response.json()
+      const response = await fetch('https://www.tcmb.gov.tr/kurlar/today.xml')
+      const xmlText = await response.text()
       
-      if (data && data.rates) {
-        const usdTry = data.rates.TRY || 34.50
-        const eurTry = data.rates.EUR ? data.rates.EUR * usdTry : 37.20
+      const parser = new DOMParser()
+      const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
+      
+      const currencies = xmlDoc.getElementsByTagName('Currency')
+      let usdTry = 34.50
+      let eurTry = 37.20
+      
+      for (let i = 0; i < currencies.length; i++) {
+        const currency = currencies[i]
+        const code = currency.getAttribute('Kod')
         
-        setUsdTry(parseFloat(usdTry.toFixed(4)))
-        setEurTry(parseFloat(eurTry.toFixed(4)))
-        alert('✅ Canlı kur güncellendi!')
+        if (code === 'USD') {
+          const forexSelling = currency.getElementsByTagName('ForexSelling')[0]
+          if (forexSelling) {
+            usdTry = parseFloat(forexSelling.textContent.replace(',', '.'))
+          }
+        } else if (code === 'EUR') {
+          const forexSelling = currency.getElementsByTagName('ForexSelling')[0]
+          if (forexSelling) {
+            eurTry = parseFloat(forexSelling.textContent.replace(',', '.'))
+          }
+        }
       }
+      
+      setUsdTry(parseFloat(usdTry.toFixed(4)))
+      setEurTry(parseFloat(eurTry.toFixed(4)))
+      alert(`✅ TCMB kurları güncellendi!\n💵 USD/TRY: ${usdTry.toFixed(4)}\n💶 EUR/TRY: ${eurTry.toFixed(4)}`)
+      
     } catch (error) {
-      console.error('Canlı kur hatası:', error)
-      alert('❌ Canlı kur alınamadı')
+      console.error('TCMB kur hatası:', error)
+      alert('❌ TCMB\'den kur alınamadı. Manuel giriş yapın.')
     } finally {
       setKurLoading(false)
     }
@@ -188,18 +209,26 @@ export default function YonetimPage() {
           <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-white">💱 Döviz Kuru Ayarları</h2>
-              <button
-                onClick={fetchCanliKur}
-                disabled={kurLoading}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition disabled:opacity-50 text-sm"
-              >
-                {kurLoading ? 'Güncelleniyor...' : '🔄 Canlı Kur Çek'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={fetchCanliKur}
+                  disabled={kurLoading}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition disabled:opacity-50 text-sm flex items-center gap-2"
+                >
+                  {kurLoading ? (
+                    <>
+                      <span className="animate-spin">⏳</span> Güncelleniyor...
+                    </>
+                  ) : (
+                    '🔄 TCMB Kurlarını Çek'
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-slate-300 mb-1">USD → TRY</label>
+                <label className="block text-sm text-slate-300 mb-1">💵 USD → TRY</label>
                 <input
                   type="number"
                   step="0.01"
@@ -209,7 +238,7 @@ export default function YonetimPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-300 mb-1">EUR → TRY</label>
+                <label className="block text-sm text-slate-300 mb-1">💶 EUR → TRY</label>
                 <input
                   type="number"
                   step="0.01"
