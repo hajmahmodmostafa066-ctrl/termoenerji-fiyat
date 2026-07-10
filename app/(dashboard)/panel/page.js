@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { 
-  Plus, List, Search, Layers, Building2, BarChart3, 
-  Settings, Users, FileText, Calendar, Clock, 
-  ChevronRight, Bell, Zap, Sparkles, Crown,
-  TrendingUp, TrendingDown, CheckCircle, Package,
-  Menu
+  LayoutDashboard, Plus, List, Search, Layers, Building2, 
+  BarChart3, Settings, Users, TrendingUp, TrendingDown, 
+  DollarSign, FileText, Calendar, Clock, Menu, ChevronRight,
+  Bell, Zap, Sparkles, Crown, CheckCircle, Package
 } from 'lucide-react'
 
 export default function PanelPage() {
