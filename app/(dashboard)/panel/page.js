@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { 
-  LayoutDashboard, 
+LayoutDashboard, 
   Plus, 
   List, 
   Search, 
@@ -19,11 +19,9 @@ import {
   ArrowRight,
   Sparkles,
   Zap,
-  Crown,
-  Calendar,
-  Clock,
-  Menu,
-  ChevronRight
+  Flame,
+  Snowflake,
+  FileText
 } from 'lucide-react'
 
 export default function PanelPage() {
