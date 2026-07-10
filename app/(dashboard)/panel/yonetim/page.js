@@ -13,7 +13,6 @@ export default function YonetimPage() {
   const [eurTry, setEurTry] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Verileri yükle
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -30,11 +29,11 @@ export default function YonetimPage() {
           setLogoUrl(firmaData.logo_url || '')
         }
 
-        // Kur bilgileri - SON KAYDI AL
+        // En son kur bilgilerini çek
         const { data: kurData, error } = await supabase
           .from('kur_ayarlari')
           .select('usd_try, eur_try')
-          .order('updated_at', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
 
@@ -81,14 +80,14 @@ export default function YonetimPage() {
         })
       if (firmaError) throw firmaError
 
-      // 3. KUR BİLGİLERİ - YENİ KAYIT EKLE (upsert değil, insert)
+      // 3. Kur bilgileri
       if (usdTry && eurTry) {
         const { error: kurError } = await supabase
           .from('kur_ayarlari')
           .insert({
             usd_try: parseFloat(usdTry),
             eur_try: parseFloat(eurTry),
-            updated_at: new Date().toISOString()
+            created_at: new Date().toISOString()
           })
         if (kurError) {
           console.error('Kur insert hatası:', kurError)
