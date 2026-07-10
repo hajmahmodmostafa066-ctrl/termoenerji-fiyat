@@ -7,7 +7,8 @@ import {
   Plus, List, Search, Layers, Building2, BarChart3, 
   Settings, Users, FileText, Calendar, Clock, 
   ChevronRight, Bell, Zap, Sparkles, Crown,
-  TrendingUp, TrendingDown, CheckCircle, Package
+  TrendingUp, TrendingDown, CheckCircle, Package,
+  Menu
 } from 'lucide-react'
 
 export default function PanelPage() {
