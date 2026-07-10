@@ -10,6 +10,7 @@ export default function KurSecici({ onKurDegisti }) {
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
+    // ✅ DOĞRU - useEffect içinde async fonksiyon tanımla ve çağır
     const loadKurlar = async () => {
       const kurlar = await getKurlar()
       setUsdTry(kurlar.usdTry)
@@ -26,6 +27,7 @@ export default function KurSecici({ onKurDegisti }) {
     return () => unsubscribe()
   }, [onKurDegisti])
 
+  // ✅ DOĞRU - event handler'lar async olabilir (çalışır)
   const handleKaydet = async () => {
     setLoading(true)
     try {
