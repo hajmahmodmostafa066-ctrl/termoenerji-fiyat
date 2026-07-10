@@ -37,8 +37,8 @@ export default function FiyatListesiPage() {
   const [loading, setLoading] = useState(true)
   const [secilenFiyat, setSecilenFiyat] = useState(null)
   const [modalAcik, setModalAcik] = useState(false)
-  const [auditLogs, setAuditLogs] = useState([])
-  const [isAdmin, setIsAdmin] = useState(false)
+  //const [auditLogs, setAuditLogs] = useState([])
+  //const [isAdmin, setIsAdmin] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredFiyatlar, setFilteredFiyatlar] = useState([])
 
