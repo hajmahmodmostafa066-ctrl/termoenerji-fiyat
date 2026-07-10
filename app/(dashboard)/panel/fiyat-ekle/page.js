@@ -81,15 +81,15 @@ export default function FiyatEklePage() {
       if (error) throw error
 
       // 📝 Log Ekle - Yeni kayıt oluşturuldu
-      if (data && data[0]) {
-        await addAuditLog(
-          'fiyat_teklifleri',
-          data[0].id,
-          'INSERT',
-          null,
-          data[0]
-        )
-      }
+     // if (data && data[0]) {
+      //  await addAuditLog(
+        //  'fiyat_teklifleri',
+         // data[0].id,
+         // 'INSERT',
+         // null,
+        //  data[0]
+       // )
+     // }
 
       alert('✅ Fiyat başarıyla eklendi!')
       
