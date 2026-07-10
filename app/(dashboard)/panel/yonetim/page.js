@@ -93,44 +93,25 @@ export default function YonetimPage() {
     }
   }
 
-  // ✅ TCMB'den Canlı Kur Çek
+  // ✅ API ile Kur Çek
   const fetchCanliKur = async () => {
     setKurLoading(true)
     try {
-      const response = await fetch('https://www.tcmb.gov.tr/kurlar/today.xml')
-      const xmlText = await response.text()
-      
-      const parser = new DOMParser()
-      const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
-      
-      const currencies = xmlDoc.getElementsByTagName('Currency')
-      let usdTry = 34.50
-      let eurTry = 37.20
-      
-      for (let i = 0; i < currencies.length; i++) {
-        const currency = currencies[i]
-        const code = currency.getAttribute('Kod')
-        
-        if (code === 'USD') {
-          const forexSelling = currency.getElementsByTagName('ForexSelling')[0]
-          if (forexSelling) {
-            usdTry = parseFloat(forexSelling.textContent.replace(',', '.'))
-          }
-        } else if (code === 'EUR') {
-          const forexSelling = currency.getElementsByTagName('ForexSelling')[0]
-          if (forexSelling) {
-            eurTry = parseFloat(forexSelling.textContent.replace(',', '.'))
-          }
-        }
-      }
-      
+      const usdResponse = await fetch('https://api.exchangerate.host/latest?base=USD&symbols=TRY')
+      const usdData = await usdResponse.json()
+      const usdTry = usdData.rates?.TRY || 34.50
+
+      const eurResponse = await fetch('https://api.exchangerate.host/latest?base=EUR&symbols=TRY')
+      const eurData = await eurResponse.json()
+      const eurTry = eurData.rates?.TRY || 37.20
+
       setUsdTry(parseFloat(usdTry.toFixed(4)))
       setEurTry(parseFloat(eurTry.toFixed(4)))
-      alert(`✅ TCMB kurları güncellendi!\n💵 USD/TRY: ${usdTry.toFixed(4)}\n💶 EUR/TRY: ${eurTry.toFixed(4)}`)
+      alert(`✅ Kurlar güncellendi!\n💵 USD/TRY: ${usdTry.toFixed(4)}\n💶 EUR/TRY: ${eurTry.toFixed(4)}`)
       
     } catch (error) {
-      console.error('TCMB kur hatası:', error)
-      alert('❌ TCMB\'den kur alınamadı. Manuel giriş yapın.')
+      console.error('Kur çekme hatası:', error)
+      alert('❌ Kur alınamadı. Manuel giriş yapın.')
     } finally {
       setKurLoading(false)
     }
@@ -209,21 +190,19 @@ export default function YonetimPage() {
           <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-white">💱 Döviz Kuru Ayarları</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={fetchCanliKur}
-                  disabled={kurLoading}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition disabled:opacity-50 text-sm flex items-center gap-2"
-                >
-                  {kurLoading ? (
-                    <>
-                      <span className="animate-spin">⏳</span> Güncelleniyor...
-                    </>
-                  ) : (
-                    '🔄 TCMB Kurlarını Çek'
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={fetchCanliKur}
+                disabled={kurLoading}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition disabled:opacity-50 text-sm flex items-center gap-2"
+              >
+                {kurLoading ? (
+                  <>
+                    <span className="animate-spin">⏳</span> Güncelleniyor...
+                  </>
+                ) : (
+                  '🔄 Kurları Çek'
+                )}
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
