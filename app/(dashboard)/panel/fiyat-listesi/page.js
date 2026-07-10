@@ -4,8 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
 import { addAuditLog, getAuditLogs, isUserAdmin } from '../../../../lib/audit'
-import { convertPrice, formatPrice, getKurlar } from '../../../../lib/currency'
-import { Eye, Plus, Search, Edit, Trash2, Save, X, Calendar, User, Clock, Shield } from 'lucide-react'
+import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../../lib/currency'
+import KurSecici from '../../../../components/KurSecici'
+import { 
+  Eye, Plus, Search, Edit, Trash2, Save, X, 
+  Calendar, User, Clock, Shield 
+} from 'lucide-react'
 
 export default function FiyatListesiPage() {
   const router = useRouter()
@@ -28,22 +32,30 @@ export default function FiyatListesiPage() {
     durum: 'pending'
   })
 
+  // Admin kontrolü
   useEffect(() => {
-    const fetchData = async () => {
-      const kurlarData = await getKurlar()
-      await checkAdminAndFetch()
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const admin = await isUserAdmin(user.email)
+        setIsAdmin(admin)
+      }
     }
-    fetchData()
+    checkAdmin()
   }, [])
 
-  const checkAdminAndFetch = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const admin = await isUserAdmin(user.email)
-      setIsAdmin(admin)
-    }
-    await fetchFiyatlar()
-  }
+  // Kur değişimini dinle
+  useEffect(() => {
+    const unsubscribe = kurDegistiginde(() => {
+      // Kur değişince sayfayı yenile
+      fetchFiyatlar()
+    })
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    fetchFiyatlar()
+  }, [])
 
   useEffect(() => {
     if (searchTerm) {
@@ -305,7 +317,7 @@ export default function FiyatListesiPage() {
               <div className="flex gap-2">
                 <button
                   onClick={handleDuzenleKaydet}
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 rounded-lg transition flex items-center gap-2"
                 >
                   <Save className="h-4 w-4" /> Kaydet
                 </button>
@@ -439,7 +451,6 @@ export default function FiyatListesiPage() {
   return (
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white">📋 Fiyat Listesi</h1>
@@ -483,6 +494,9 @@ export default function FiyatListesiPage() {
               </button>
             </div>
 
+            {/* Kur Seçici */}
+            <KurSecici />
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
@@ -504,7 +518,6 @@ export default function FiyatListesiPage() {
           </div>
         </div>
 
-        {/* Tablo */}
         {loading ? (
           <div className="text-center py-12">
             <p className="text-slate-400">Yükleniyor...</p>
