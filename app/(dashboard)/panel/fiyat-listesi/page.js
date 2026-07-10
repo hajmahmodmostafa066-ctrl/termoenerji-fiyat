@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
 import { addAuditLog, getAuditLogs, isUserAdmin } from '../../../../lib/audit'
-import { convertPrice, formatPrice, getKurlar } from '../../../../lib/currency'
+import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../../lib/currency'
 import { 
   Eye, Plus, Search, Edit, Trash2, Save, X, 
   Calendar, User, Clock, Shield, TrendingUp, TrendingDown 
@@ -51,6 +51,14 @@ export default function FiyatListesiPage() {
       setKurlar(k)
     }
     loadKurlar()
+
+    // Kur değişimini dinle
+    const unsubscribe = kurDegistiginde((yeniKurlar) => {
+      setKurlar(yeniKurlar)
+      // Fiyatları yeniden hesapla
+      fetchFiyatlar()
+    })
+    return () => unsubscribe()
   }, [])
 
   useEffect(() => {
@@ -90,14 +98,13 @@ export default function FiyatListesiPage() {
     }
   }
 
-const getConvertedPrice = (fiyat, paraBirimi) => {
-  // ✅ price değerini güvenli şekilde parse et
-  const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
-  if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
-  
-  const converted = convertPrice(parsedFiyat, paraBirimi, gorunenParaBirimi)
-  return formatPrice(converted, gorunenParaBirimi)
-}
+  const getConvertedPrice = (fiyat, paraBirimi) => {
+    const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
+    if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
+    
+    const converted = convertPrice(parsedFiyat, paraBirimi, gorunenParaBirimi, kurlar)
+    return formatPrice(converted, gorunenParaBirimi)
+  }
 
   const formatDate = (date) => {
     return new Date(date).toLocaleString('tr-TR', {
@@ -255,7 +262,6 @@ const getConvertedPrice = (fiyat, paraBirimi) => {
           </div>
 
           {duzenlemeModu ? (
-            // DÜZENLEME MODU
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-300 mb-1">Ürün Adı</label>
@@ -335,7 +341,6 @@ const getConvertedPrice = (fiyat, paraBirimi) => {
               </div>
             </div>
           ) : (
-            // GÖRÜNTÜLEME MODU
             <>
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
@@ -466,7 +471,6 @@ const getConvertedPrice = (fiyat, paraBirimi) => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {/* Para Birimi Seçici */}
             <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1 border border-slate-700">
               <button
                 onClick={() => setGorunenParaBirimi('TRY')}
