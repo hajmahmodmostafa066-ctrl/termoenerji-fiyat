@@ -9,13 +9,14 @@ export default function YonetimPage() {
   const [adres, setAdres] = useState('')
   const [logoFile, setLogoFile] = useState(null)
   const [logoUrl, setLogoUrl] = useState('')
-  const [usdTry, setUsdTry] = useState(34.50)
-  const [eurTry, setEurTry] = useState(37.20)
+  const [usdTry, setUsdTry] = useState('')
+  const [eurTry, setEurTry] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Firma bilgileri
         const { data: firmaData } = await supabase
           .from('firma_bilgileri')
           .select('*')
@@ -28,14 +29,15 @@ export default function YonetimPage() {
           setLogoUrl(firmaData.logo_url || '')
         }
 
+        // Kur bilgileri
         const { data: kurData } = await supabase
           .from('kur_ayarlari')
-          .select('*')
+          .select('usd_try, eur_try')
           .maybeSingle()
 
         if (kurData) {
-          setUsdTry(kurData.usd_try || 34.50)
-          setEurTry(kurData.eur_try || 37.20)
+          setUsdTry(kurData.usd_try?.toString() || '')
+          setEurTry(kurData.eur_try?.toString() || '')
         }
       } catch (error) {
         console.error('Veri yükleme hatası:', error)
@@ -49,6 +51,7 @@ export default function YonetimPage() {
     try {
       let finalLogoUrl = logoUrl
 
+      // Logo yükle
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop()
         const fileName = `logo_${Date.now()}.${fileExt}`
@@ -65,6 +68,7 @@ export default function YonetimPage() {
         finalLogoUrl = urlData.publicUrl
       }
 
+      // Firma bilgilerini kaydet
       await supabase
         .from('firma_bilgileri')
         .upsert({
@@ -75,13 +79,16 @@ export default function YonetimPage() {
           updated_at: new Date().toISOString()
         })
 
-      await supabase
-        .from('kur_ayarlari')
-        .upsert({
-          usd_try: parseFloat(usdTry),
-          eur_try: parseFloat(eurTry),
-          updated_at: new Date().toISOString()
-        })
+      // Kur bilgilerini kaydet (kullanıcı doldurduysa)
+      if (usdTry && eurTry) {
+        await supabase
+          .from('kur_ayarlari')
+          .upsert({
+            usd_try: parseFloat(usdTry),
+            eur_try: parseFloat(eurTry),
+            updated_at: new Date().toISOString()
+          })
+      }
 
       alert('✅ Bilgiler başarıyla kaydedildi!')
     } catch (error) {
@@ -97,110 +104,114 @@ export default function YonetimPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold text-white mb-6">⚙️ Yönetim</h1>
 
-        <div className="space-y-6">
-          {/* Firma Bilgileri */}
-          <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50">
-            <h2 className="text-lg font-semibold text-white mb-4">🏢 Firma Bilgileri</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">Logo</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setLogoFile(e.target.files[0])
-                      const reader = new FileReader()
-                      reader.onload = (event) => {
-                        document.getElementById('logoPreview').src = event.target.result
-                      }
-                      reader.readAsDataURL(e.target.files[0])
+        <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50">
+          <h2 className="text-lg font-semibold text-white mb-4">🏢 Firma Bilgileri</h2>
+          
+          <div className="space-y-4">
+            {/* Logo */}
+            <div>
+              <label className="block text-sm text-slate-300 mb-1">Logo</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setLogoFile(e.target.files[0])
+                    const reader = new FileReader()
+                    reader.onload = (event) => {
+                      document.getElementById('logoPreview').src = event.target.result
                     }
-                  }}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-                {logoUrl && (
-                  <div className="mt-2">
-                    <img id="logoPreview" src={logoUrl} alt="Logo" className="h-16 w-auto object-contain" />
-                  </div>
-                )}
-              </div>
+                    reader.readAsDataURL(e.target.files[0])
+                  }
+                }}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+              {logoUrl && (
+                <div className="mt-2">
+                  <img id="logoPreview" src={logoUrl} alt="Logo" className="h-16 w-auto object-contain" />
+                </div>
+              )}
+            </div>
 
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">Firma Adı</label>
-                <input
-                  type="text"
-                  value={firmaAdi}
-                  onChange={(e) => setFirmaAdi(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+            {/* Firma Adı */}
+            <div>
+              <label className="block text-sm text-slate-300 mb-1">Firma Adı</label>
+              <input
+                type="text"
+                value={firmaAdi}
+                onChange={(e) => setFirmaAdi(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">Telefon</label>
-                <input
-                  type="text"
-                  value={telefon}
-                  onChange={(e) => setTelefon(e.target.value)}
-                  placeholder="0 555 123 45 67"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+            {/* Telefon */}
+            <div>
+              <label className="block text-sm text-slate-300 mb-1">Telefon</label>
+              <input
+                type="text"
+                value={telefon}
+                onChange={(e) => setTelefon(e.target.value)}
+                placeholder="0 555 123 45 67"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">Adres</label>
-                <textarea
-                  value={adres}
-                  onChange={(e) => setAdres(e.target.value)}
-                  placeholder="Adres girin"
-                  rows={3}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+            {/* Adres */}
+            <div>
+              <label className="block text-sm text-slate-300 mb-1">Adres</label>
+              <textarea
+                value={adres}
+                onChange={(e) => setAdres(e.target.value)}
+                placeholder="Adres girin"
+                rows={3}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
             </div>
           </div>
-
-          {/* Kur Ayarları - Sadece Manuel Giriş */}
-          <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50">
-            <h2 className="text-lg font-semibold text-white mb-4">💱 Döviz Kuru Ayarları</h2>
-            
-            <p className="text-sm text-slate-400 mb-4">
-              Kurları manuel olarak girin. Bu kurlar fiyat listesinde ve raporlarda kullanılır.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">💵 USD → TRY</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={usdTry}
-                  onChange={(e) => setUsdTry(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-slate-300 mb-1">💶 EUR → TRY</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={eurTry}
-                  onChange={(e) => setEurTry(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={handleKaydet}
-            disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
-          >
-            {loading ? 'Kaydediliyor...' : '💾 Tüm Bilgileri Kaydet'}
-          </button>
         </div>
+
+        {/* Kur Ayarları - Kullanıcı Tarafından Doldurulacak */}
+        <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 mt-6">
+          <h2 className="text-lg font-semibold text-white mb-4">💱 Döviz Kuru Ayarları</h2>
+          
+          <p className="text-sm text-slate-400 mb-4">
+            Kurları manuel olarak girin. Bu kurlar fiyat listesinde ve raporlarda kullanılır.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-slate-300 mb-1">💵 USD → TRY</label>
+              <input
+                type="number"
+                step="0.01"
+                value={usdTry}
+                onChange={(e) => setUsdTry(e.target.value)}
+                placeholder="34.50"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-slate-300 mb-1">💶 EUR → TRY</label>
+              <input
+                type="number"
+                step="0.01"
+                value={eurTry}
+                onChange={(e) => setEurTry(e.target.value)}
+                placeholder="37.20"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Kaydet Butonu */}
+        <button
+          onClick={handleKaydet}
+          disabled={loading}
+          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 mt-6"
+        >
+          {loading ? 'Kaydediliyor...' : '💾 Tüm Bilgileri Kaydet'}
+        </button>
       </div>
     </div>
   )
