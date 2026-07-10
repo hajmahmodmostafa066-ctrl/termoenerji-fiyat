@@ -12,7 +12,6 @@ export default function YonetimPage() {
   const [usdTry, setUsdTry] = useState(34.50)
   const [eurTry, setEurTry] = useState(37.20)
   const [loading, setLoading] = useState(false)
-  const [kurLoading, setKurLoading] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,58 +92,6 @@ export default function YonetimPage() {
     }
   }
 
-  // ✅ KESİN ÇÖZÜM: TCMB XML'ini Parse Et
-  const fetchCanliKur = async () => {
-    setKurLoading(true)
-    try {
-      // 1. TCMB XML'ini çek
-      const response = await fetch('https://www.tcmb.gov.tr/kurlar/today.xml')
-      const xmlText = await response.text()
-      
-      // 2. XML'i string olarak parse et (DOMParser ile)
-      const parser = new DOMParser()
-      const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
-      
-      // 3. Tüm Currency (Döviz) etiketlerini bul
-      const currencies = xmlDoc.getElementsByTagName('Currency')
-      
-      let usdTry = 34.50
-      let eurTry = 37.20
-      
-      // 4. Her bir dövizi kontrol et
-      for (let i = 0; i < currencies.length; i++) {
-        const currency = currencies[i]
-        const kod = currency.getAttribute('Kod') // USD, EUR, GBP vb.
-        
-        // ForexSelling (Döviz Satış) etiketini bul
-        const forexSelling = currency.getElementsByTagName('ForexSelling')[0]
-        
-        if (forexSelling) {
-          const deger = forexSelling.textContent.trim()
-          const sayi = parseFloat(deger.replace(',', '.'))
-          
-          if (kod === 'USD') {
-            usdTry = sayi
-          } else if (kod === 'EUR') {
-            eurTry = sayi
-          }
-        }
-      }
-      
-      // 5. Kurları güncelle
-      setUsdTry(parseFloat(usdTry.toFixed(4)))
-      setEurTry(parseFloat(eurTry.toFixed(4)))
-      
-      alert(`✅ TCMB kurları güncellendi!\n💵 USD/TRY: ${usdTry.toFixed(4)}\n💶 EUR/TRY: ${eurTry.toFixed(4)}`)
-      
-    } catch (error) {
-      console.error('TCMB kur hatası:', error)
-      alert('❌ TCMB\'den kur alınamadı. Lütfen manuel girin.')
-    } finally {
-      setKurLoading(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-4xl mx-auto">
@@ -214,24 +161,13 @@ export default function YonetimPage() {
             </div>
           </div>
 
-          {/* Kur Ayarları */}
+          {/* Kur Ayarları - Sadece Manuel Giriş */}
           <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">💱 Döviz Kuru Ayarları</h2>
-              <button
-                onClick={fetchCanliKur}
-                disabled={kurLoading}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition disabled:opacity-50 text-sm flex items-center gap-2"
-              >
-                {kurLoading ? (
-                  <>
-                    <span className="animate-spin">⏳</span> Güncelleniyor...
-                  </>
-                ) : (
-                  '🔄 TCMB Kurlarını Çek'
-                )}
-              </button>
-            </div>
+            <h2 className="text-lg font-semibold text-white mb-4">💱 Döviz Kuru Ayarları</h2>
+            
+            <p className="text-sm text-slate-400 mb-4">
+              Kurları manuel olarak girin. Bu kurlar fiyat listesinde ve raporlarda kullanılır.
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -255,9 +191,6 @@ export default function YonetimPage() {
                 />
               </div>
             </div>
-            <p className="text-xs text-slate-500 mt-2">
-              💡 Bu kurlar, fiyat listesinde ve raporlarda para birimi çevrimi için kullanılır.
-            </p>
           </div>
 
           <button
