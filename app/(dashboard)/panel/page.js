@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { 
-LayoutDashboard, 
+  LayoutDashboard, 
   Plus, 
   List, 
   Search, 
@@ -15,14 +15,11 @@ LayoutDashboard,
   Users,
   TrendingUp,
   DollarSign,
-  Package,
-  ArrowRight,
-  Sparkles,
-  Zap,
-  Flame,
-  Snowflake,
   FileText,
-  Calendar
+  Calendar,
+  Clock,
+  Menu,
+  ChevronRight
 } from 'lucide-react'
 
 export default function PanelPage() {
@@ -78,7 +75,6 @@ export default function PanelPage() {
       }
     }
 
-    // Tarih ve saat
     const updateDateTime = () => {
       const now = new Date()
       const gunler = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
@@ -96,19 +92,26 @@ export default function PanelPage() {
   }, [])
 
   const menuItems = [
-    { title: 'Fiyat Sonuçları', icon: BarChart3, href: '/panel/fiyat-sorgula', count: stats.toplamFiyat, color: 'emerald' },
-    { title: 'Fiyat Ekle', icon: Plus, href: '/panel/fiyat-ekle', count: '+', color: 'blue' },
-    { title: 'Fiyat Listesi', icon: List, href: '/panel/fiyat-listesi', count: stats.toplamFiyat, color: 'purple' },
-    { title: 'Kategoriler', icon: Layers, href: '/panel/kategoriler', count: stats.toplamKategori, color: 'rose' },
+    { title: 'Fiyat Listesi', icon: List, href: '/panel/fiyat-listesi', count: stats.toplamFiyat, color: 'blue' },
+    { title: 'Fiyat Ekle', icon: Plus, href: '/panel/fiyat-ekle', count: '+', color: 'emerald' },
+    { title: 'Fiyat Sorgula', icon: Search, href: '/panel/fiyat-sorgula', count: stats.toplamFiyat, color: 'cyan' },
+    { title: 'Kategoriler', icon: Layers, href: '/panel/kategoriler', count: stats.toplamKategori, color: 'purple' },
     { title: 'Firmalar', icon: Building2, href: '/panel/firmalar', count: stats.toplamFirma, color: 'amber' },
-    { title: 'Raporlar', icon: FileText, href: '/panel/raporlar', count: '0', color: 'indigo' },
+    { title: 'Raporlar', icon: BarChart3, href: '/panel/raporlar', count: '0', color: 'rose' },
     { title: 'Yönetim', icon: Settings, href: '/panel/yonetim', count: '0', color: 'slate' },
-    { title: 'Kullanıcılar', icon: Users, href: '/panel/kullanıcılar', count: '0', color: 'cyan' },
+    { title: 'Kullanıcılar', icon: Users, href: '/panel/kullanıcılar', count: '0', color: 'indigo' },
   ]
+
+  const formatPrice = (price, currency = 'TRY') => {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: currency
+    }).format(price)
+  }
 
   return (
     <div className="space-y-6">
-      {/* KARŞILAMA BÖLÜMÜ */}
+      {/* KARŞILAMA */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
@@ -129,22 +132,15 @@ export default function PanelPage() {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-800/30 px-4 py-2 rounded-full border border-slate-700/50">
-          <Zap className="h-4 w-4 text-emerald-400" />
-          <span>Sistem Aktif</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        </div>
       </div>
 
-      {/* İSTATİSTİK KARTLARI - 3 ADET */}
+      {/* İSTATİSTİK KARTLARI */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 rounded-2xl p-6 border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-300 group">
+        <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 hover:border-emerald-500/50 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-400">Fiyat Teklifleri</p>
-              <p className="text-3xl font-bold text-white group-hover:text-emerald-400 transition-colors">
-                {stats.toplamFiyat}
-              </p>
+              <p className="text-3xl font-bold text-white">{stats.toplamFiyat}</p>
               <div className="flex items-center gap-1 mt-1">
                 <span className="text-xs text-emerald-400 flex items-center gap-0.5">
                   <TrendingUp className="h-3 w-3" />
@@ -153,19 +149,17 @@ export default function PanelPage() {
                 <span className="text-xs text-slate-500">geçen hafta</span>
               </div>
             </div>
-            <div className="p-3 bg-emerald-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+            <div className="p-3 bg-emerald-500/20 rounded-xl">
               <FileText className="h-6 w-6 text-emerald-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 rounded-2xl p-6 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-300 group">
+        <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 hover:border-amber-500/50 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-400">Kayıtlı Firmalar</p>
-              <p className="text-3xl font-bold text-white group-hover:text-amber-400 transition-colors">
-                {stats.toplamFirma}
-              </p>
+              <p className="text-3xl font-bold text-white">{stats.toplamFirma}</p>
               <div className="flex items-center gap-1 mt-1">
                 <span className="text-xs text-emerald-400 flex items-center gap-0.5">
                   <TrendingUp className="h-3 w-3" />
@@ -174,33 +168,31 @@ export default function PanelPage() {
                 <span className="text-xs text-slate-500">yeni firma</span>
               </div>
             </div>
-            <div className="p-3 bg-amber-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+            <div className="p-3 bg-amber-500/20 rounded-xl">
               <Building2 className="h-6 w-6 text-amber-400" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-slate-800/50 to-slate-700/50 rounded-2xl p-6 border border-slate-700/50 hover:border-purple-500/50 transition-all duration-300 group">
+        <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50 hover:border-purple-500/50 transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-400">Ürün Kategorileri</p>
-              <p className="text-3xl font-bold text-white group-hover:text-purple-400 transition-colors">
-                {stats.toplamKategori}
-              </p>
+              <p className="text-3xl font-bold text-white">{stats.toplamKategori}</p>
               <div className="flex items-center gap-1 mt-1">
                 <span className="text-xs text-slate-500">Toplam {stats.toplamKategori} kategori</span>
               </div>
             </div>
-            <div className="p-3 bg-purple-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+            <div className="p-3 bg-purple-500/20 rounded-xl">
               <Layers className="h-6 w-6 text-purple-400" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* FİRMALAR VE KATEGORİLER */}
+      {/* FIRMALAR VE KATEGORİLER */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-slate-800/30 to-slate-700/30 rounded-2xl p-6 border border-slate-700/50">
+        <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white font-semibold flex items-center gap-2">
               <Building2 className="h-5 w-5 text-emerald-400" />
@@ -224,7 +216,7 @@ export default function PanelPage() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-slate-800/30 to-slate-700/30 rounded-2xl p-6 border border-slate-700/50">
+        <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/50">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white font-semibold flex items-center gap-2">
               <Layers className="h-5 w-5 text-purple-400" />
@@ -233,7 +225,7 @@ export default function PanelPage() {
             <span className="text-xs text-slate-400">{stats.toplamKategori} kayıt</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {['SCH40 BORU', 'KELEBEK VANA', 'TERMOSTAT', 'POMPA', 'KOMPRESÖR', 'FAN'].map((kat, i) => (
+            {['SCH40 BORU', 'KELEBEK VANA', 'TERMOSTAT', 'POMPA', 'KOMPRESÖR'].map((kat, i) => (
               <span key={i} className="px-3 py-1.5 bg-slate-700/50 text-slate-300 rounded-lg text-sm border border-slate-600/30">
                 {kat}
               </span>
@@ -244,8 +236,7 @@ export default function PanelPage() {
 
       {/* MENÜ VE SON FİYATLAR */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Menü */}
-        <div className="bg-gradient-to-br from-slate-800/30 to-slate-700/30 rounded-2xl p-6 border border-slate-700/50">
+        <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/50">
           <h3 className="text-white font-semibold flex items-center gap-2 mb-4">
             <Menu className="h-5 w-5 text-blue-400" />
             Menü
@@ -255,27 +246,24 @@ export default function PanelPage() {
               <button
                 key={index}
                 onClick={() => router.push(item.href)}
-                className="flex items-center justify-between w-full p-3 bg-slate-800/30 rounded-xl hover:bg-slate-700/30 transition-all duration-200 border border-slate-700/30 hover:border-slate-600/50 group"
+                className="flex items-center justify-between w-full p-3 bg-slate-800/30 rounded-xl hover:bg-slate-700/30 transition-all duration-200 border border-slate-700/30 hover:border-slate-600/50"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 bg-${item.color}-500/20 rounded-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <item.icon className={`h-4 w-4 text-${item.color}-400`} />
+                  <div className="p-2 bg-slate-700/50 rounded-lg">
+                    <item.icon className="h-4 w-4 text-slate-400" />
                   </div>
-                  <span className="text-white text-sm font-medium group-hover:text-emerald-400 transition-colors">
-                    {item.title}
-                  </span>
+                  <span className="text-white text-sm font-medium">{item.title}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 text-sm">{item.count}</span>
-                  <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-slate-500" />
                 </div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Son Fiyatlar */}
-        <div className="bg-gradient-to-br from-slate-800/30 to-slate-700/30 rounded-2xl p-6 border border-slate-700/50 lg:col-span-2">
+        <div className="bg-slate-800/30 rounded-2xl p-6 border border-slate-700/50 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white font-semibold flex items-center gap-2">
               <FileText className="h-5 w-5 text-blue-400" />
@@ -297,17 +285,15 @@ export default function PanelPage() {
               {sonFiyatlar.map((teklif) => (
                 <div 
                   key={teklif.id}
-                  className="flex items-center justify-between p-3 bg-slate-800/30 rounded-xl border border-slate-700/30 hover:border-slate-600/50 transition-all cursor-pointer group"
+                  className="flex items-center justify-between p-3 bg-slate-800/30 rounded-xl border border-slate-700/30 hover:border-slate-600/50 transition-all cursor-pointer"
                   onClick={() => router.push('/panel/fiyat-listesi')}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-slate-700/50 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500/20 transition-colors">
-                      <FileText className="h-5 w-5 text-slate-400 group-hover:text-emerald-400 transition-colors" />
+                    <div className="w-10 h-10 rounded-xl bg-slate-700/50 flex items-center justify-center flex-shrink-0">
+                      <FileText className="h-5 w-5 text-slate-400" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-white text-sm font-medium truncate group-hover:text-emerald-400 transition-colors">
-                        {teklif.urun_adi}
-                      </p>
+                      <p className="text-white text-sm font-medium truncate">{teklif.urun_adi}</p>
                       <div className="flex items-center gap-2 text-xs text-slate-400">
                         <span>{teklif.firma_adi}</span>
                         <span>•</span>
@@ -317,15 +303,12 @@ export default function PanelPage() {
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <span className="text-emerald-400 font-bold text-sm">
-                      {new Intl.NumberFormat('tr-TR', {
-                        style: 'currency',
-                        currency: teklif.para_birimi || 'TRY',
-                      }).format(teklif.fiyat)}
+                      {formatPrice(teklif.fiyat, teklif.para_birimi)}
                     </span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      teklif.durum === 'approved' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                      teklif.durum === 'pending' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                      'bg-red-500/20 text-red-400 border border-red-500/30'
+                      teklif.durum === 'approved' ? 'bg-emerald-500/20 text-emerald-400' :
+                      teklif.durum === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                      'bg-red-500/20 text-red-400'
                     }`}>
                       {teklif.durum === 'approved' ? '✅ Aktif' :
                        teklif.durum === 'pending' ? '⏳ Beklemede' : '❌ Pasif'}
