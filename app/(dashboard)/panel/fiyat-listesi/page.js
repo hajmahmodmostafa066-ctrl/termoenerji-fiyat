@@ -3,33 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
-//import { getAuditLogs, isUserAdmin } from '../../../lib/audit'
-import { 
-  FileText, 
-  Building2, 
-  Layers, 
-  Calendar, 
-  User,
-  Clock,
-  Eye,
-  X,
-  Plus,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  CheckCircle,
-  AlertCircle,
-  Info,
-  Shield,
-  Edit,
-  Trash2,
-  MoreVertical,
-  ArrowUpRight,
-  ArrowDownRight,
-  Download,
-  Search,
-  Filter
-} from 'lucide-react'
+import { addAuditLog } from '../../../lib/audit'  // ← YENİDEN AKTİF ET
+import { Eye, Plus, Search, Edit, Trash2, Save, X } from 'lucide-react'
 
 export default function FiyatListesiPage() {
   const router = useRouter()
@@ -37,17 +12,30 @@ export default function FiyatListesiPage() {
   const [loading, setLoading] = useState(true)
   const [secilenFiyat, setSecilenFiyat] = useState(null)
   const [modalAcik, setModalAcik] = useState(false)
-  //const [auditLogs, setAuditLogs] = useState([])
-  //const [isAdmin, setIsAdmin] = useState(false)
+  const [auditLogs, setAuditLogs] = useState([])
+  const [isAdmin, setIsAdmin] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredFiyatlar, setFilteredFiyatlar] = useState([])
+  const [duzenlemeModu, setDuzenlemeModu] = useState(false)
+  const [duzenlenenVeri, setDuzenlenenVeri] = useState({
+    urun_adi: '',
+    firma_adi: '',
+    kategori: '',
+    fiyat: '',
+    para_birimi: 'TRY',
+    durum: 'pending'
+  })
 
   useEffect(() => {
     const checkAdminAndFetch = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const adminStatus = await isUserAdmin(user.email)
-        setIsAdmin(adminStatus)
+        const { data } = await supabase
+          .from('kullanici_rolleri')
+          .select('rol')
+          .eq('email', user.email)
+          .single()
+        setIsAdmin(data?.rol === 'admin')
       }
       await fetchFiyatlar()
     }
@@ -124,11 +112,120 @@ export default function FiyatListesiPage() {
 
   const handleDetayGoster = async (fiyat) => {
     setSecilenFiyat(fiyat)
+    setDuzenlenenVeri({
+      urun_adi: fiyat.urun_adi,
+      firma_adi: fiyat.firma_adi,
+      kategori: fiyat.kategori || '',
+      fiyat: fiyat.fiyat,
+      para_birimi: fiyat.para_birimi || 'TRY',
+      durum: fiyat.durum || 'pending'
+    })
+    setDuzenlemeModu(false)
     setModalAcik(true)
 
+    // Logları getir (admin ise)
     if (isAdmin) {
-      const logs = await getAuditLogs(fiyat.id, 'fiyat_teklifleri')
-      setAuditLogs(logs)
+      const { data } = await supabase
+        .from('audit_log')
+        .select('*')
+        .eq('kayit_id', fiyat.id)
+        .eq('tablo_adi', 'fiyat_teklifleri')
+        .order('created_at', { ascending: false })
+      setAuditLogs(data || [])
+    }
+  }
+
+  const handleDuzenle = () => {
+    setDuzenlemeModu(true)
+  }
+
+  const handleDuzenleIptal = () => {
+    setDuzenlemeModu(false)
+    setDuzenlenenVeri({
+      urun_adi: secilenFiyat.urun_adi,
+      firma_adi: secilenFiyat.firma_adi,
+      kategori: secilenFiyat.kategori || '',
+      fiyat: secilenFiyat.fiyat,
+      para_birimi: secilenFiyat.para_birimi || 'TRY',
+      durum: secilenFiyat.durum || 'pending'
+    })
+  }
+
+  const handleDuzenleKaydet = async () => {
+    if (!secilenFiyat) return
+
+    const eskiVeri = { ...secilenFiyat }
+    const yeniVeri = {
+      ...secilenFiyat,
+      urun_adi: duzenlenenVeri.urun_adi,
+      firma_adi: duzenlenenVeri.firma_adi,
+      kategori: duzenlenenVeri.kategori,
+      fiyat: parseFloat(duzenlenenVeri.fiyat),
+      para_birimi: duzenlenenVeri.para_birimi,
+      durum: duzenlenenVeri.durum
+    }
+
+    try {
+      const { error } = await supabase
+        .from('fiyat_teklifleri')
+        .update({
+          urun_adi: yeniVeri.urun_adi,
+          firma_adi: yeniVeri.firma_adi,
+          kategori: yeniVeri.kategori,
+          fiyat: yeniVeri.fiyat,
+          para_birimi: yeniVeri.para_birimi,
+          durum: yeniVeri.durum
+        })
+        .eq('id', secilenFiyat.id)
+
+      if (error) throw error
+
+      // 📝 Log Ekle - Güncelleme
+      await addAuditLog(
+        'fiyat_teklifleri',
+        secilenFiyat.id,
+        'UPDATE',
+        eskiVeri,
+        yeniVeri
+      )
+
+      alert('✅ Fiyat başarıyla güncellendi!')
+      setDuzenlemeModu(false)
+      setModalAcik(false)
+      fetchFiyatlar()
+    } catch (error) {
+      console.error('Güncelleme hatası:', error)
+      alert('❌ Hata: ' + error.message)
+    }
+  }
+
+  const handleSil = async () => {
+    if (!secilenFiyat) return
+    if (!confirm(`"${secilenFiyat.urun_adi}" fiyatını silmek istediğinize emin misiniz?`)) return
+
+    try {
+      // 📝 Log Ekle - Silme (önce log'u ekle)
+      await addAuditLog(
+        'fiyat_teklifleri',
+        secilenFiyat.id,
+        'DELETE',
+        secilenFiyat,
+        null
+      )
+
+      const { error } = await supabase
+        .from('fiyat_teklifleri')
+        .delete()
+        .eq('id', secilenFiyat.id)
+
+      if (error) throw error
+
+      alert('✅ Fiyat başarıyla silindi!')
+      setModalAcik(false)
+      fetchFiyatlar()
+    } catch (error) {
+      console.error('Silme hatası:', error)
+      alert('❌ Hata: ' + error.message)
     }
   }
 
@@ -141,13 +238,18 @@ export default function FiyatListesiPage() {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <FileText className="h-5 w-5 text-emerald-400" />
-              Fiyat Detayı
+              📄 Fiyat Detayı
+              {isAdmin && (
+                <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">
+                  Admin
+                </span>
+              )}
             </h2>
             <button
               onClick={() => {
                 setModalAcik(false)
                 setSecilenFiyat(null)
+                setDuzenlemeModu(false)
                 setAuditLogs([])
               }}
               className="text-slate-400 hover:text-white transition"
@@ -156,136 +258,190 @@ export default function FiyatListesiPage() {
             </button>
           </div>
 
-          {/* Ürün Bilgileri */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div>
-              <p className="text-xs text-slate-400">Ürün Adı</p>
-              <p className="text-white font-medium">{secilenFiyat.urun_adi}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Firma</p>
-              <p className="text-white font-medium">{secilenFiyat.firma_adi}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Kategori</p>
-              <p className="text-white font-medium">{secilenFiyat.kategori || '-'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Fiyat</p>
-              <p className="text-emerald-400 font-bold text-lg">
-                {formatPrice(secilenFiyat.fiyat, secilenFiyat.para_birimi)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Durum</p>
-              <span className={`text-xs px-2 py-1 rounded-full border ${getDurumRenk(secilenFiyat.durum)}`}>
-                {getDurumEtiket(secilenFiyat.durum)}
-              </span>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400">Oluşturulma</p>
-              <p className="text-white font-medium flex items-center gap-1">
-                <Calendar className="h-3 w-3 text-slate-400" />
-                {formatDate(secilenFiyat.created_at)}
-              </p>
-            </div>
-          </div>
-
-          {/* Audit Log - Sadece Admin Görebilir */}
-          {isAdmin && (
-            <div className="border-t border-slate-700 pt-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-amber-400" />
-                  Aktivite Geçmişi
-                  <span className="text-xs text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full">
-                    Sadece Admin
-                  </span>
-                </h3>
-                <span className="text-xs text-slate-500">{auditLogs.length} kayıt</span>
+          {/* Düzenleme Formu veya Bilgi Görünümü */}
+          {duzenlemeModu ? (
+            // DÜZENLEME MODU
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Ürün Adı</label>
+                <input
+                  type="text"
+                  value={duzenlenenVeri.urun_adi}
+                  onChange={(e) => setDuzenlenenVeri({...duzenlenenVeri, urun_adi: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Firma</label>
+                <input
+                  type="text"
+                  value={duzenlenenVeri.firma_adi}
+                  onChange={(e) => setDuzenlenenVeri({...duzenlenenVeri, firma_adi: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Kategori</label>
+                <input
+                  type="text"
+                  value={duzenlenenVeri.kategori}
+                  onChange={(e) => setDuzenlenenVeri({...duzenlenenVeri, kategori: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Fiyat</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={duzenlenenVeri.fiyat}
+                  onChange={(e) => setDuzenlenenVeri({...duzenlenenVeri, fiyat: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Para Birimi</label>
+                <select
+                  value={duzenlenenVeri.para_birimi}
+                  onChange={(e) => setDuzenlenenVeri({...duzenlenenVeri, para_birimi: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                >
+                  <option value="TRY">🇹🇷 TL</option>
+                  <option value="USD">🇺🇸 USD</option>
+                  <option value="EUR">🇪🇺 EUR</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Durum</label>
+                <select
+                  value={duzenlenenVeri.durum}
+                  onChange={(e) => setDuzenlenenVeri({...duzenlenenVeri, durum: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                >
+                  <option value="pending">⏳ Beklemede</option>
+                  <option value="approved">✅ Onaylandı</option>
+                  <option value="rejected">❌ Reddedildi</option>
+                </select>
               </div>
 
-              {auditLogs.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-4">
-                  Bu ürün için henüz aktivite kaydı yok
-                </p>
-              ) : (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {auditLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="bg-slate-700/30 rounded-lg p-3 border border-slate-600/30 hover:border-slate-500/50 transition"
-                    >
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            log.islem_turu === 'INSERT' ? 'bg-emerald-500/20 text-emerald-400' :
-                            log.islem_turu === 'UPDATE' ? 'bg-blue-500/20 text-blue-400' :
-                            'bg-red-500/20 text-red-400'
-                          }`}>
-                            {log.islem_turu === 'INSERT' ? '➕ Ekleme' :
-                             log.islem_turu === 'UPDATE' ? '✏️ Güncelleme' : '🗑️ Silme'}
-                          </span>
-                          <span className="text-sm text-white font-medium flex items-center gap-1">
-                            <User className="h-3 w-3 text-slate-400" />
-                            {log.kullanici_email}
-                          </span>
-                        </div>
-                        <span className="text-xs text-slate-500 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {formatDate(log.created_at)}
-                        </span>
-                      </div>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={handleDuzenleKaydet}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                >
+                  <Save className="h-4 w-4" /> Kaydet
+                </button>
+                <button
+                  onClick={handleDuzenleIptal}
+                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition"
+                >
+                  İptal
+                </button>
+              </div>
+            </div>
+          ) : (
+            // GÖRÜNTÜLEME MODU
+            <>
+              {/* Fiyat Bilgileri */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <p className="text-xs text-slate-400">Ürün Adı</p>
+                  <p className="text-white font-medium">{secilenFiyat.urun_adi}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Firma</p>
+                  <p className="text-white font-medium">{secilenFiyat.firma_adi}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Kategori</p>
+                  <p className="text-white font-medium">{secilenFiyat.kategori || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Fiyat</p>
+                  <p className="text-emerald-400 font-bold text-lg">
+                    {formatPrice(secilenFiyat.fiyat, secilenFiyat.para_birimi)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Durum</p>
+                  <span className={`text-xs px-2 py-1 rounded-full border ${getDurumRenk(secilenFiyat.durum)}`}>
+                    {getDurumEtiket(secilenFiyat.durum)}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Oluşturulma</p>
+                  <p className="text-white font-medium">{formatDate(secilenFiyat.created_at)}</p>
+                </div>
+              </div>
 
-                      {/* Değişiklik detayı */}
-                      {log.islem_turu === 'UPDATE' && log.eski_veri && log.yeni_veri && (
-                        <div className="mt-2 text-xs flex flex-wrap gap-3">
-                          <span className="text-red-400">
-                            Eski: {log.eski_veri.fiyat} ₺
-                          </span>
-                          <span className="text-slate-500">→</span>
-                          <span className="text-emerald-400">
-                            Yeni: {log.yeni_veri.fiyat} ₺
-                          </span>
-                          {log.eski_veri.durum !== log.yeni_veri.durum && (
-                            <span className="text-amber-400">
-                              Durum: {log.eski_veri.durum} → {log.yeni_veri.durum}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {log.islem_turu === 'INSERT' && log.yeni_veri && (
-                        <div className="mt-1 text-xs text-emerald-400">
-                          Yeni kayıt oluşturuldu: {log.yeni_veri.urun_adi}
-                        </div>
-                      )}
-
-                      {log.islem_turu === 'DELETE' && log.eski_veri && (
-                        <div className="mt-1 text-xs text-red-400">
-                          Kayıt silindi: {log.eski_veri.urun_adi}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              {/* Admin Butonları */}
+              {isAdmin && (
+                <div className="flex gap-2 mb-6">
+                  <button
+                    onClick={handleDuzenle}
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" /> Düzenle
+                  </button>
+                  <button
+                    onClick={handleSil}
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" /> Sil
+                  </button>
                 </div>
               )}
-            </div>
-          )}
 
-          {/* Kapat Butonu */}
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={() => {
-                setModalAcik(false)
-                setSecilenFiyat(null)
-                setAuditLogs([])
-              }}
-              className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition"
-            >
-              Kapat
-            </button>
-          </div>
+              {/* Audit Log - Sadece Admin */}
+              {isAdmin && (
+                <div className="border-t border-slate-700 pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                      🔒 Aktivite Geçmişi
+                      <span className="text-xs text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full">
+                        Sadece Admin
+                      </span>
+                    </h3>
+                    <span className="text-xs text-slate-500">{auditLogs.length} kayıt</span>
+                  </div>
+
+                  {auditLogs.length === 0 ? (
+                    <p className="text-sm text-slate-400 text-center py-4">
+                      Bu ürün için henüz aktivite kaydı yok
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {auditLogs.map((log) => (
+                        <div key={log.id} className="bg-slate-700/30 rounded-lg p-3 border border-slate-600/30">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                log.islem_turu === 'INSERT' ? 'bg-emerald-500/20 text-emerald-400' :
+                                log.islem_turu === 'UPDATE' ? 'bg-blue-500/20 text-blue-400' :
+                                'bg-red-500/20 text-red-400'
+                              }`}>
+                                {log.islem_turu === 'INSERT' ? '➕ Ekleme' :
+                                 log.islem_turu === 'UPDATE' ? '✏️ Güncelleme' : '🗑️ Silme'}
+                              </span>
+                              <span className="text-sm text-white">{log.kullanici_email}</span>
+                            </div>
+                            <span className="text-xs text-slate-500">{formatDate(log.created_at)}</span>
+                          </div>
+                          {log.eski_veri && log.yeni_veri && log.islem_turu === 'UPDATE' && (
+                            <div className="mt-1 text-xs text-slate-400">
+                              <span className="text-red-400">Eski: {log.eski_veri.fiyat} ₺</span>
+                              {' → '}
+                              <span className="text-emerald-400">Yeni: {log.yeni_veri.fiyat} ₺</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     )
@@ -294,7 +450,7 @@ export default function FiyatListesiPage() {
   return (
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header - AYNI */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white">📋 Fiyat Listesi</h1>
@@ -323,7 +479,7 @@ export default function FiyatListesiPage() {
           </div>
         </div>
 
-        {/* Liste */}
+        {/* Tablo - AYNI */}
         {loading ? (
           <div className="text-center py-12">
             <p className="text-slate-400">Yükleniyor...</p>
@@ -353,10 +509,7 @@ export default function FiyatListesiPage() {
               </thead>
               <tbody>
                 {filteredFiyatlar.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="border-b border-slate-700/50 hover:bg-slate-800/30 transition cursor-pointer group"
-                  >
+                  <tr key={item.id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition cursor-pointer group">
                     <td className="py-3 px-4 text-white font-medium group-hover:text-emerald-400 transition-colors">
                       {item.urun_adi}
                     </td>
