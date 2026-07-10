@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
-//import { addAuditLog } from '../../../lib/audit'
+import { addAuditLog } from '../../../lib/audit'
 
 export default function FiyatEklePage() {
   const router = useRouter()
