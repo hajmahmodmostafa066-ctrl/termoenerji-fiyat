@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
 import { addAuditLog, getAuditLogs, isUserAdmin } from '../../../../lib/audit'
-import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../../lib/currency'
-//import KurSecici from '../../../../components/KurSecici'
+import { convertPrice, formatPrice, getKurlar } from '../../../../lib/currency'
 import { 
   Eye, Plus, Search, Edit, Trash2, Save, X, 
-  Calendar, User, Clock, Shield 
+  Calendar, User, Clock, Shield, TrendingUp, TrendingDown 
 } from 'lucide-react'
 
 export default function FiyatListesiPage() {
@@ -31,6 +30,7 @@ export default function FiyatListesiPage() {
     para_birimi: 'TRY',
     durum: 'pending'
   })
+  const [kurlar, setKurlar] = useState({ usdTry: 34.50, eurTry: 37.20 })
 
   // Admin kontrolü
   useEffect(() => {
@@ -44,13 +44,13 @@ export default function FiyatListesiPage() {
     checkAdmin()
   }, [])
 
-  // Kur değişimini dinle
+  // Kurları yükle
   useEffect(() => {
-    const unsubscribe = kurDegistiginde(() => {
-      // Kur değişince sayfayı yenile
-      fetchFiyatlar()
-    })
-    return () => unsubscribe()
+    const loadKurlar = async () => {
+      const k = await getKurlar()
+      setKurlar(k)
+    }
+    loadKurlar()
   }, [])
 
   useEffect(() => {
@@ -90,8 +90,8 @@ export default function FiyatListesiPage() {
     }
   }
 
-  const getConvertedPrice = async (fiyat, paraBirimi) => {
-    const converted = await convertPrice(fiyat, paraBirimi, gorunenParaBirimi)
+  const getConvertedPrice = (fiyat, paraBirimi) => {
+    const converted = convertPrice(fiyat, paraBirimi, gorunenParaBirimi)
     return formatPrice(converted, gorunenParaBirimi)
   }
 
@@ -251,6 +251,7 @@ export default function FiyatListesiPage() {
           </div>
 
           {duzenlemeModu ? (
+            // DÜZENLEME MODU
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-300 mb-1">Ürün Adı</label>
@@ -330,6 +331,7 @@ export default function FiyatListesiPage() {
               </div>
             </div>
           ) : (
+            // GÖRÜNTÜLEME MODU
             <>
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
@@ -494,9 +496,6 @@ export default function FiyatListesiPage() {
               </button>
             </div>
 
-            {/* Kur Seçici */}
-          //  <KurSecici />
-
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
@@ -506,7 +505,7 @@ export default function FiyatListesiPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-slate-800/50 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-64"
               />
-            </div> 
+            </div>
 
             <button
               onClick={() => router.push('/panel/fiyat-ekle')}
@@ -546,32 +545,40 @@ export default function FiyatListesiPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredFiyatlar.map((item) => (
-                  <tr key={item.id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition group">
-                    <td className="py-3 px-4 text-white font-medium group-hover:text-emerald-400 transition-colors">
-                      {item.urun_adi}
-                    </td>
-                    <td className="py-3 px-4 text-slate-300">{item.firma_adi}</td>
-                    <td className="py-3 px-4 text-slate-400 hidden md:table-cell">
-                      {item.kategori || '-'}
-                    </td>
-                    <td className="py-3 px-4 text-emerald-400 font-bold text-right">
-                      {getConvertedPrice(item.fiyat, item.para_birimi)}
-                    </td>
-                    <td className="py-3 px-4 text-center text-slate-400 text-xs">
-                      {formatPrice(item.fiyat, item.para_birimi)}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <button
-                        onClick={() => handleDetayGoster(item)}
-                        className="text-blue-400 hover:text-blue-300 transition p-1 rounded-lg hover:bg-blue-500/20"
-                        title="Detayları gör"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredFiyatlar.map((item) => {
+                  const convertedPrice = getConvertedPrice(item.fiyat, item.para_birimi)
+                  const isEnUcuz = item.fiyat === Math.min(...filteredFiyatlar.map(i => i.fiyat))
+                  const isEnPahali = item.fiyat === Math.max(...filteredFiyatlar.map(i => i.fiyat))
+
+                  return (
+                    <tr key={item.id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition group">
+                      <td className="py-3 px-4 text-white font-medium group-hover:text-emerald-400 transition-colors">
+                        {item.urun_adi}
+                        {isEnUcuz && <span className="ml-2 text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">💚 En Ucuz</span>}
+                        {isEnPahali && <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">❤️ En Pahalı</span>}
+                      </td>
+                      <td className="py-3 px-4 text-slate-300">{item.firma_adi}</td>
+                      <td className="py-3 px-4 text-slate-400 hidden md:table-cell">
+                        {item.kategori || '-'}
+                      </td>
+                      <td className="py-3 px-4 text-emerald-400 font-bold text-right">
+                        {convertedPrice}
+                      </td>
+                      <td className="py-3 px-4 text-center text-slate-400 text-xs">
+                        {formatPrice(item.fiyat, item.para_birimi)}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          onClick={() => handleDetayGoster(item)}
+                          className="text-blue-400 hover:text-blue-300 transition p-1 rounded-lg hover:bg-blue-500/20"
+                          title="Detayları gör"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
