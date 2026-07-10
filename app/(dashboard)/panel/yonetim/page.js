@@ -30,10 +30,14 @@ export default function YonetimPage() {
         }
 
         // Kur bilgileri
-        const { data: kurData } = await supabase
+        const { data: kurData, error } = await supabase
           .from('kur_ayarlari')
           .select('usd_try, eur_try')
           .maybeSingle()
+
+        if (error) {
+          console.error('Kur verisi çekme hatası:', error)
+        }
 
         if (kurData) {
           setUsdTry(kurData.usd_try?.toString() || '')
@@ -79,15 +83,21 @@ export default function YonetimPage() {
           updated_at: new Date().toISOString()
         })
 
-      // Kur bilgilerini kaydet (kullanıcı doldurduysa)
+      // ✅ KUR BİLGİLERİNİ KAYDET (Kullanıcı doldurduysa)
       if (usdTry && eurTry) {
-        await supabase
+        const { error: kurError } = await supabase
           .from('kur_ayarlari')
           .upsert({
             usd_try: parseFloat(usdTry),
             eur_try: parseFloat(eurTry),
             updated_at: new Date().toISOString()
           })
+
+        if (kurError) {
+          console.error('Kur kaydetme hatası:', kurError)
+          alert('❌ Kur kaydedilirken hata: ' + kurError.message)
+          return
+        }
       }
 
       alert('✅ Bilgiler başarıyla kaydedildi!')
@@ -108,7 +118,6 @@ export default function YonetimPage() {
           <h2 className="text-lg font-semibold text-white mb-4">🏢 Firma Bilgileri</h2>
           
           <div className="space-y-4">
-            {/* Logo */}
             <div>
               <label className="block text-sm text-slate-300 mb-1">Logo</label>
               <input
@@ -133,7 +142,6 @@ export default function YonetimPage() {
               )}
             </div>
 
-            {/* Firma Adı */}
             <div>
               <label className="block text-sm text-slate-300 mb-1">Firma Adı</label>
               <input
@@ -144,7 +152,6 @@ export default function YonetimPage() {
               />
             </div>
 
-            {/* Telefon */}
             <div>
               <label className="block text-sm text-slate-300 mb-1">Telefon</label>
               <input
@@ -156,7 +163,6 @@ export default function YonetimPage() {
               />
             </div>
 
-            {/* Adres */}
             <div>
               <label className="block text-sm text-slate-300 mb-1">Adres</label>
               <textarea
@@ -170,7 +176,7 @@ export default function YonetimPage() {
           </div>
         </div>
 
-        {/* Kur Ayarları - Kullanıcı Tarafından Doldurulacak */}
+        {/* Kur Ayarları */}
         <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 mt-6">
           <h2 className="text-lg font-semibold text-white mb-4">💱 Döviz Kuru Ayarları</h2>
           
@@ -204,7 +210,6 @@ export default function YonetimPage() {
           </div>
         </div>
 
-        {/* Kaydet Butonu */}
         <button
           onClick={handleKaydet}
           disabled={loading}
