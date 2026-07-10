@@ -17,7 +17,6 @@ export default function YonetimPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Firma bilgileri
         const { data: firmaData } = await supabase
           .from('firma_bilgileri')
           .select('*')
@@ -30,7 +29,6 @@ export default function YonetimPage() {
           setLogoUrl(firmaData.logo_url || '')
         }
 
-        // Kur bilgileri
         const { data: kurData } = await supabase
           .from('kur_ayarlari')
           .select('*')
@@ -68,7 +66,6 @@ export default function YonetimPage() {
         finalLogoUrl = urlData.publicUrl
       }
 
-      // Firma bilgilerini güncelle
       await supabase
         .from('firma_bilgileri')
         .upsert({
@@ -79,7 +76,6 @@ export default function YonetimPage() {
           updated_at: new Date().toISOString()
         })
 
-      // Kur bilgilerini güncelle
       await supabase
         .from('kur_ayarlari')
         .upsert({
@@ -228,7 +224,6 @@ export default function YonetimPage() {
             </p>
           </div>
 
-          {/* Kaydet Butonu */}
           <button
             onClick={handleKaydet}
             disabled={loading}
