@@ -21,7 +21,8 @@ LayoutDashboard,
   Zap,
   Flame,
   Snowflake,
-  FileText
+  FileText,
+  Calendar
 } from 'lucide-react'
 
 export default function PanelPage() {
