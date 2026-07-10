@@ -2,20 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../../../lib/supabase'
-import { addAuditLog } from '../../../../lib/audit'  // ← YENİDEN AKTİF ET
-import { Eye, Plus, Search, Edit, Trash2, Save, X } from 'lucide-react'
+import { supabase } from '../../../../lib/supabase'
+import { addAuditLog, getAuditLogs, isUserAdmin } from '../../../../lib/audit'
+import { convertPrice, formatPrice, getKurlar } from '../../../../lib/currency'
+import { Eye, Plus, Search, Edit, Trash2, Save, X, Calendar, User, Clock, Shield } from 'lucide-react'
 
 export default function FiyatListesiPage() {
   const router = useRouter()
   const [fiyatlar, setFiyatlar] = useState([])
+  const [filteredFiyatlar, setFilteredFiyatlar] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [gorunenParaBirimi, setGorunenParaBirimi] = useState('TRY')
   const [secilenFiyat, setSecilenFiyat] = useState(null)
   const [modalAcik, setModalAcik] = useState(false)
   const [auditLogs, setAuditLogs] = useState([])
   const [isAdmin, setIsAdmin] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filteredFiyatlar, setFilteredFiyatlar] = useState([])
   const [duzenlemeModu, setDuzenlemeModu] = useState(false)
   const [duzenlenenVeri, setDuzenlenenVeri] = useState({
     urun_adi: '',
@@ -27,20 +29,21 @@ export default function FiyatListesiPage() {
   })
 
   useEffect(() => {
-    const checkAdminAndFetch = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase
-          .from('kullanici_rolleri')
-          .select('rol')
-          .eq('email', user.email)
-          .single()
-        setIsAdmin(data?.rol === 'admin')
-      }
-      await fetchFiyatlar()
+    const fetchData = async () => {
+      const kurlarData = await getKurlar()
+      await checkAdminAndFetch()
     }
-    checkAdminAndFetch()
+    fetchData()
   }, [])
+
+  const checkAdminAndFetch = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const admin = await isUserAdmin(user.email)
+      setIsAdmin(admin)
+    }
+    await fetchFiyatlar()
+  }
 
   useEffect(() => {
     if (searchTerm) {
@@ -75,11 +78,9 @@ export default function FiyatListesiPage() {
     }
   }
 
-  const formatPrice = (price, currency = 'TRY') => {
-    return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: currency
-    }).format(price)
+  const getConvertedPrice = async (fiyat, paraBirimi) => {
+    const converted = await convertPrice(fiyat, paraBirimi, gorunenParaBirimi)
+    return formatPrice(converted, gorunenParaBirimi)
   }
 
   const formatDate = (date) => {
@@ -123,15 +124,9 @@ export default function FiyatListesiPage() {
     setDuzenlemeModu(false)
     setModalAcik(true)
 
-    // Logları getir (admin ise)
     if (isAdmin) {
-      const { data } = await supabase
-        .from('audit_log')
-        .select('*')
-        .eq('kayit_id', fiyat.id)
-        .eq('tablo_adi', 'fiyat_teklifleri')
-        .order('created_at', { ascending: false })
-      setAuditLogs(data || [])
+      const logs = await getAuditLogs(fiyat.id, 'fiyat_teklifleri')
+      setAuditLogs(logs)
     }
   }
 
@@ -180,14 +175,7 @@ export default function FiyatListesiPage() {
 
       if (error) throw error
 
-      // 📝 Log Ekle - Güncelleme
-      await addAuditLog(
-        'fiyat_teklifleri',
-        secilenFiyat.id,
-        'UPDATE',
-        eskiVeri,
-        yeniVeri
-      )
+      await addAuditLog('fiyat_teklifleri', secilenFiyat.id, 'UPDATE', eskiVeri, yeniVeri)
 
       alert('✅ Fiyat başarıyla güncellendi!')
       setDuzenlemeModu(false)
@@ -204,14 +192,7 @@ export default function FiyatListesiPage() {
     if (!confirm(`"${secilenFiyat.urun_adi}" fiyatını silmek istediğinize emin misiniz?`)) return
 
     try {
-      // 📝 Log Ekle - Silme (önce log'u ekle)
-      await addAuditLog(
-        'fiyat_teklifleri',
-        secilenFiyat.id,
-        'DELETE',
-        secilenFiyat,
-        null
-      )
+      await addAuditLog('fiyat_teklifleri', secilenFiyat.id, 'DELETE', secilenFiyat, null)
 
       const { error } = await supabase
         .from('fiyat_teklifleri')
@@ -235,7 +216,6 @@ export default function FiyatListesiPage() {
     return (
       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div className="bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 border border-slate-700/50 shadow-2xl">
-          {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               📄 Fiyat Detayı
@@ -258,9 +238,7 @@ export default function FiyatListesiPage() {
             </button>
           </div>
 
-          {/* Düzenleme Formu veya Bilgi Görünümü */}
           {duzenlemeModu ? (
-            // DÜZENLEME MODU
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-300 mb-1">Ürün Adı</label>
@@ -324,7 +302,7 @@ export default function FiyatListesiPage() {
                 </select>
               </div>
 
-              <div className="flex gap-2 mt-4">
+              <div className="flex gap-2">
                 <button
                   onClick={handleDuzenleKaydet}
                   className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
@@ -340,9 +318,7 @@ export default function FiyatListesiPage() {
               </div>
             </div>
           ) : (
-            // GÖRÜNTÜLEME MODU
             <>
-              {/* Fiyat Bilgileri */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
                   <p className="text-xs text-slate-400">Ürün Adı</p>
@@ -358,8 +334,11 @@ export default function FiyatListesiPage() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">Fiyat</p>
-                  <p className="text-emerald-400 font-bold text-lg">
+                  <p className="text-emerald-400 font-bold">
                     {formatPrice(secilenFiyat.fiyat, secilenFiyat.para_birimi)}
+                    <span className="text-xs text-slate-400 ml-2">
+                      ({gorunenParaBirimi}: {getConvertedPrice(secilenFiyat.fiyat, secilenFiyat.para_birimi)})
+                    </span>
                   </p>
                 </div>
                 <div>
@@ -374,30 +353,29 @@ export default function FiyatListesiPage() {
                 </div>
               </div>
 
-              {/* Admin Butonları */}
               {isAdmin && (
                 <div className="flex gap-2 mb-6">
                   <button
                     onClick={handleDuzenle}
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition flex items-center gap-2"
                   >
                     <Edit className="h-4 w-4" /> Düzenle
                   </button>
                   <button
                     onClick={handleSil}
-                    className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-2"
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition flex items-center gap-2"
                   >
                     <Trash2 className="h-4 w-4" /> Sil
                   </button>
                 </div>
               )}
 
-              {/* Audit Log - Sadece Admin */}
               {isAdmin && (
                 <div className="border-t border-slate-700 pt-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                      🔒 Aktivite Geçmişi
+                      <Shield className="h-4 w-4 text-amber-400" />
+                      Aktivite Geçmişi
                       <span className="text-xs text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full">
                         Sadece Admin
                       </span>
@@ -423,15 +401,26 @@ export default function FiyatListesiPage() {
                                 {log.islem_turu === 'INSERT' ? '➕ Ekleme' :
                                  log.islem_turu === 'UPDATE' ? '✏️ Güncelleme' : '🗑️ Silme'}
                               </span>
-                              <span className="text-sm text-white">{log.kullanici_email}</span>
+                              <span className="text-sm text-white flex items-center gap-1">
+                                <User className="h-3 w-3 text-slate-400" />
+                                {log.kullanici_email}
+                              </span>
                             </div>
-                            <span className="text-xs text-slate-500">{formatDate(log.created_at)}</span>
+                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatDate(log.created_at)}
+                            </span>
                           </div>
                           {log.eski_veri && log.yeni_veri && log.islem_turu === 'UPDATE' && (
                             <div className="mt-1 text-xs text-slate-400">
                               <span className="text-red-400">Eski: {log.eski_veri.fiyat} ₺</span>
                               {' → '}
                               <span className="text-emerald-400">Yeni: {log.yeni_veri.fiyat} ₺</span>
+                            </div>
+                          )}
+                          {log.eski_veri && log.islem_turu === 'DELETE' && (
+                            <div className="mt-1 text-xs text-red-400">
+                              Kayıt silindi: {log.eski_veri.urun_adi}
                             </div>
                           )}
                         </div>
@@ -450,7 +439,7 @@ export default function FiyatListesiPage() {
   return (
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header - AYNI */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white">📋 Fiyat Listesi</h1>
@@ -458,7 +447,42 @@ export default function FiyatListesiPage() {
               {filteredFiyatlar.length} kayıt gösteriliyor
             </p>
           </div>
+
           <div className="flex flex-wrap gap-2">
+            {/* Para Birimi Seçici */}
+            <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1 border border-slate-700">
+              <button
+                onClick={() => setGorunenParaBirimi('TRY')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                  gorunenParaBirimi === 'TRY' 
+                    ? 'bg-emerald-500/20 text-emerald-400' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🇹🇷 TL
+              </button>
+              <button
+                onClick={() => setGorunenParaBirimi('USD')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                  gorunenParaBirimi === 'USD' 
+                    ? 'bg-blue-500/20 text-blue-400' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🇺🇸 USD
+              </button>
+              <button
+                onClick={() => setGorunenParaBirimi('EUR')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                  gorunenParaBirimi === 'EUR' 
+                    ? 'bg-purple-500/20 text-purple-400' 
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🇪🇺 EUR
+              </button>
+            </div>
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
@@ -469,6 +493,7 @@ export default function FiyatListesiPage() {
                 className="bg-slate-800/50 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-64"
               />
             </div>
+
             <button
               onClick={() => router.push('/panel/fiyat-ekle')}
               className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition flex items-center gap-2"
@@ -479,7 +504,7 @@ export default function FiyatListesiPage() {
           </div>
         </div>
 
-        {/* Tablo - AYNI */}
+        {/* Tablo */}
         {loading ? (
           <div className="text-center py-12">
             <p className="text-slate-400">Yükleniyor...</p>
@@ -503,13 +528,13 @@ export default function FiyatListesiPage() {
                   <th className="text-left py-3 px-4 text-slate-400 font-medium">Firma</th>
                   <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">Kategori</th>
                   <th className="text-right py-3 px-4 text-slate-400 font-medium">Fiyat</th>
-                  <th className="text-center py-3 px-4 text-slate-400 font-medium">Durum</th>
+                  <th className="text-center py-3 px-4 text-slate-400 font-medium">Orijinal</th>
                   <th className="text-center py-3 px-4 text-slate-400 font-medium">Detay</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredFiyatlar.map((item) => (
-                  <tr key={item.id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition cursor-pointer group">
+                  <tr key={item.id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition group">
                     <td className="py-3 px-4 text-white font-medium group-hover:text-emerald-400 transition-colors">
                       {item.urun_adi}
                     </td>
@@ -518,12 +543,10 @@ export default function FiyatListesiPage() {
                       {item.kategori || '-'}
                     </td>
                     <td className="py-3 px-4 text-emerald-400 font-bold text-right">
-                      {formatPrice(item.fiyat, item.para_birimi)}
+                      {getConvertedPrice(item.fiyat, item.para_birimi)}
                     </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className={`text-xs px-2 py-1 rounded-full border ${getDurumRenk(item.durum)}`}>
-                        {getDurumEtiket(item.durum)}
-                      </span>
+                    <td className="py-3 px-4 text-center text-slate-400 text-xs">
+                      {formatPrice(item.fiyat, item.para_birimi)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button
@@ -542,7 +565,6 @@ export default function FiyatListesiPage() {
         )}
       </div>
 
-      {/* Modal */}
       {modalAcik && <DetayModal />}
     </div>
   )
