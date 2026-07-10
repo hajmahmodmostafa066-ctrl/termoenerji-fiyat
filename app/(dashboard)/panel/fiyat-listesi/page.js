@@ -90,10 +90,14 @@ export default function FiyatListesiPage() {
     }
   }
 
-  const getConvertedPrice = (fiyat, paraBirimi) => {
-    const converted = convertPrice(fiyat, paraBirimi, gorunenParaBirimi)
-    return formatPrice(converted, gorunenParaBirimi)
-  }
+const getConvertedPrice = (fiyat, paraBirimi) => {
+  // ✅ price değerini güvenli şekilde parse et
+  const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
+  if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
+  
+  const converted = convertPrice(parsedFiyat, paraBirimi, gorunenParaBirimi)
+  return formatPrice(converted, gorunenParaBirimi)
+}
 
   const formatDate = (date) => {
     return new Date(date).toLocaleString('tr-TR', {
