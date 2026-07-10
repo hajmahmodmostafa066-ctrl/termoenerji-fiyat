@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
+import { addAuditLog } from '../../../lib/audit'
 
 export default function FiyatEklePage() {
   const router = useRouter()
@@ -72,11 +73,23 @@ export default function FiyatEklePage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('fiyat_teklifleri')
         .insert([veri])
+        .select()
 
       if (error) throw error
+
+      // 📝 Log Ekle - Yeni kayıt oluşturuldu
+      if (data && data[0]) {
+        await addAuditLog(
+          'fiyat_teklifleri',
+          data[0].id,
+          'INSERT',
+          null,
+          data[0]
+        )
+      }
 
       alert('✅ Fiyat başarıyla eklendi!')
       
