@@ -16,36 +16,20 @@
     min-height: 100vh;
   }
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #1e293b; }
-  ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 9999px; }
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #10b981;
+    border-radius: 9999px;
+  }
 }
 
 @layer components {
   .card {
     @apply bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 backdrop-blur-sm;
   }
-  
-  .btn-primary {
-    @apply bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg transition-all;
-  }
-  
-  .stat-value {
-    @apply text-3xl font-bold;
-  }
-  
-  .stat-label {
-    @apply text-sm text-slate-400 font-medium;
-  }
-}
-
-/* Geçiş Animasyonları */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
 }
