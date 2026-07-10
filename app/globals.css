@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0f172a;
+    color: #f1f5f9;
+    min-height: 100vh;
+  }
+
+  /* Scrollbar Özelleştirme */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #10b981;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #059669;
+  }
+}
+
+@layer components {
+  /* Kartlar */
+  .card {
+    @apply bg-slate-800/30 border border-slate-700/50 rounded-2xl p-6 backdrop-blur-sm;
+  }
+  
+  /* Butonlar */
+  .btn-primary {
+    @apply bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200;
+  }
+  .btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* Inputlar */
+  .input-field {
+    @apply w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50;
+  }
+
+  /* Tablolar */
+  .table-container {
+    @apply overflow-x-auto bg-slate-800/30 rounded-xl border border-slate-700/50;
+  }
+  .table-container table {
+    @apply w-full text-sm;
+  }
+  .table-container th {
+    @apply text-left py-3 px-4 text-slate-400 font-medium border-b border-slate-700 bg-slate-800/50;
+  }
+  .table-container td {
+    @apply py-3 px-4 border-b border-slate-700/50;
+  }
+  .table-container tr:hover {
+    @apply bg-slate-700/20 transition-colors;
+  }
+}
