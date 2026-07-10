@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
-import { addAuditLog } from '../../../lib/audit'  // ← YENİDEN AKTİF ET
+import { addAuditLog } from './../../lib/audit'  // ← YENİDEN AKTİF ET
 import { Eye, Plus, Search, Edit, Trash2, Save, X } from 'lucide-react'
 
 export default function FiyatListesiPage() {
