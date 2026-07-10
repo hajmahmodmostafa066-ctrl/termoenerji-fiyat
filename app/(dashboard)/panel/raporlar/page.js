@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
+import { getKurlar, kurDegistiginde } from '../../../../lib/currency'
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 
 // ============================================================
-// PDF STİLLERİ - ULTRA PROFESYONEL
+// PDF STİLLERİ
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
@@ -29,11 +30,6 @@ const pdfStyles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#0f172a',
   },
-  companySub: {
-    fontSize: 10,
-    color: '#64748b',
-    marginTop: 2,
-  },
   reportTitle: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -50,11 +46,6 @@ const pdfStyles = StyleSheet.create({
     padding: 12,
     borderRadius: 6,
     marginVertical: 12,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 20,
-    flexWrap: 'wrap',
   },
   filterText: {
     fontSize: 9,
@@ -136,16 +127,7 @@ const pdfStyles = StyleSheet.create({
 // ============================================================
 // PDF BİLEŞENİ
 // ============================================================
-const RaporPDF = ({ 
-  data, 
-  firmaBilgileri, 
-  baslik, 
-  filtre, 
-  enUcuz, 
-  enPahali, 
-  fark,
-  logoUrl 
-}) => {
+const RaporPDF = ({ data, firmaBilgileri, logoUrl, baslik, enUcuz, enPahali, fark }) => {
   const formatPrice = (price, currency = 'TRY') => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -166,45 +148,29 @@ const RaporPDF = ({
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
-        {/* HEADER */}
         <View style={pdfStyles.header}>
           <View style={pdfStyles.headerLeft}>
-            {logoUrl && (
-              <Image src={logoUrl} style={{ width: 120, height: 40, marginBottom: 5 }} />
-            )}
+            {logoUrl && <Image src={logoUrl} style={{ width: 120, height: 40, marginBottom: 5 }} />}
             <Text style={pdfStyles.companyName}>{firmaBilgileri?.ad || 'TermoEnerji'}</Text>
-            <Text style={pdfStyles.companySub}>
-              {firmaBilgileri?.adres || ''} {firmaBilgileri?.telefon ? `• ${firmaBilgileri.telefon}` : ''}
-            </Text>
             <Text style={pdfStyles.reportTitle}>📊 Fiyat Karşılaştırma Raporu</Text>
           </View>
-          <View>
-            <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
-          </View>
+          <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
         </View>
 
-        {/* FİLTRE BİLGİSİ */}
         <View style={pdfStyles.filterBox}>
-          <View style={pdfStyles.filterRow}>
-            <Text style={pdfStyles.filterText}>🔍 Arama: {baslik || 'Tümü'}</Text>
-            <Text style={pdfStyles.filterText}>📂 Kategori: {filtre?.kategori || 'Tüm Kategoriler'}</Text>
-            <Text style={pdfStyles.filterText}>🏢 Firma: {filtre?.firma || 'Tüm Firmalar'}</Text>
-            <Text style={pdfStyles.filterText}>📦 Toplam: {data.length} kayıt</Text>
-          </View>
+          <Text style={pdfStyles.filterText}>🔍 Arama: {baslik || 'Tümü'}</Text>
+          <Text style={pdfStyles.filterText}>📦 Toplam: {data.length} kayıt</Text>
         </View>
 
-        {/* ÖZET */}
         {data.length > 0 && (
           <View style={pdfStyles.summaryBox}>
             <Text style={pdfStyles.summaryText}>
-              📌 Özet: {data.length} firmadan alınan verilere göre, en uygun fiyat <Text style={{ fontWeight: 'bold', color: '#10b981' }}>{formatPrice(enUcuz)}</Text>, 
-              en pahalı fiyat ise <Text style={{ fontWeight: 'bold', color: '#ef4444' }}>{formatPrice(enPahali)}</Text>. 
-              Fiyat farkı: <Text style={{ fontWeight: 'bold', color: '#f59e0b' }}>{formatPrice(fark)}</Text>
+              📌 Özet: {data.length} firmadan alınan verilere göre, en uygun fiyat {formatPrice(enUcuz)}, 
+              en pahalı fiyat ise {formatPrice(enPahali)}. Fiyat farkı: {formatPrice(fark)}
             </Text>
           </View>
         )}
 
-        {/* TABLO */}
         <View style={pdfStyles.table}>
           <View style={pdfStyles.tableHeader}>
             <Text style={pdfStyles.tableHeaderCell}>#</Text>
@@ -224,14 +190,12 @@ const RaporPDF = ({
                 {formatPrice(item.fiyat, item.para_birimi)}
               </Text>
               <Text style={[pdfStyles.statusCell, { flex: 0.7 }]}>
-                {item.durum === 'approved' ? '✅ Aktif' :
-                 item.durum === 'pending' ? '⏳ Beklemede' : '❌ Pasif'}
+                {item.durum === 'approved' ? '✅ Aktif' : item.durum === 'pending' ? '⏳ Beklemede' : '❌ Pasif'}
               </Text>
             </View>
           ))}
         </View>
 
-        {/* FOOTER */}
         <View style={pdfStyles.footer} fixed>
           <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'} - Tüm hakları saklıdır.</Text>
           <Text style={pdfStyles.footerText}>Bu rapor otomatik olarak oluşturulmuştur.</Text>
@@ -256,7 +220,23 @@ export default function RaporlarPage() {
   const [firmaBilgileri, setFirmaBilgileri] = useState({})
   const [logoUrl, setLogoUrl] = useState('')
   const [seciliIds, setSeciliIds] = useState([])
+  const [kurlar, setKurlar] = useState({ usdTry: 34.50, eurTry: 37.20 })
 
+  // Kur değişimini dinle
+  useEffect(() => {
+    const loadKurlar = async () => {
+      const k = await getKurlar()
+      setKurlar(k)
+    }
+    loadKurlar()
+
+    const unsubscribe = kurDegistiginde((yeniKurlar) => {
+      setKurlar(yeniKurlar)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  // Verileri yükle
   useEffect(() => {
     const fetchData = async () => {
       const { data: firmalarData } = await supabase.from('firmalar').select('ad')
@@ -324,9 +304,10 @@ export default function RaporlarPage() {
   return (
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-white mb-6">📊 Raporlar</h1>
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <h1 className="text-2xl font-bold text-white">📊 Raporlar</h1>
+        </div>
 
-        {/* Filtreler */}
         <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input
@@ -366,7 +347,6 @@ export default function RaporlarPage() {
           </button>
         </div>
 
-        {/* Sonuçlar */}
         {fiyatlar.length > 0 && (
           <>
             <div className="flex justify-between items-center mb-4">
@@ -379,7 +359,6 @@ export default function RaporlarPage() {
                       firmaBilgileri={firmaBilgileri}
                       logoUrl={logoUrl}
                       baslik={arama || 'Tümü'}
-                      filtre={{ kategori: filtreKategori || 'Tümü', firma: filtreFirma || 'Tümü' }}
                       enUcuz={enUcuz}
                       enPahali={enPahali}
                       fark={fark}
