@@ -3,26 +3,28 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
   }
 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
   body {
-    font-family: system-ui, -apple-system, sans-serif;
-    background: #0f172a;
-    color: #f1f5f9;
-    min-height: 100vh;
+    @apply bg-background text-foreground;
   }
 }
 
 @layer components {
   .card {
-    background: rgba(30, 41, 59, 0.5);
-    border: 1px solid rgba(71, 85, 105, 0.5);
-    border-radius: 16px;
-    padding: 24px;
-    backdrop-filter: blur(8px);
+    @apply bg-slate-800/30 border border-slate-700/50 rounded-2xl p-6 backdrop-blur-sm;
   }
 }
