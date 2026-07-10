@@ -13,6 +13,7 @@ export default function YonetimPage() {
   const [eurTry, setEurTry] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Verileri yükle
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -29,14 +30,16 @@ export default function YonetimPage() {
           setLogoUrl(firmaData.logo_url || '')
         }
 
-        // Kur bilgileri
+        // Kur bilgileri - SON KAYDI AL
         const { data: kurData, error } = await supabase
           .from('kur_ayarlari')
           .select('usd_try, eur_try')
+          .order('updated_at', { ascending: false })
+          .limit(1)
           .maybeSingle()
 
         if (error) {
-          console.error('Kur verisi çekme hatası:', error)
+          console.error('Kur çekme hatası:', error)
         }
 
         if (kurData) {
@@ -53,27 +56,21 @@ export default function YonetimPage() {
   const handleKaydet = async () => {
     setLoading(true)
     try {
+      // 1. Logo
       let finalLogoUrl = logoUrl
-
-      // Logo yükle
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop()
         const fileName = `logo_${Date.now()}.${fileExt}`
         const { error: uploadError } = await supabase.storage
           .from('firma')
           .upload(fileName, logoFile)
-
         if (uploadError) throw uploadError
-
-        const { data: urlData } = supabase.storage
-          .from('firma')
-          .getPublicUrl(fileName)
-
+        const { data: urlData } = supabase.storage.from('firma').getPublicUrl(fileName)
         finalLogoUrl = urlData.publicUrl
       }
 
-      // Firma bilgilerini kaydet
-      await supabase
+      // 2. Firma bilgileri
+      const { error: firmaError } = await supabase
         .from('firma_bilgileri')
         .upsert({
           ad: firmaAdi,
@@ -82,27 +79,29 @@ export default function YonetimPage() {
           logo_url: finalLogoUrl,
           updated_at: new Date().toISOString()
         })
+      if (firmaError) throw firmaError
 
-      // ✅ KUR BİLGİLERİNİ KAYDET (Kullanıcı doldurduysa)
+      // 3. KUR BİLGİLERİ - YENİ KAYIT EKLE (upsert değil, insert)
       if (usdTry && eurTry) {
         const { error: kurError } = await supabase
           .from('kur_ayarlari')
-          .upsert({
+          .insert({
             usd_try: parseFloat(usdTry),
             eur_try: parseFloat(eurTry),
             updated_at: new Date().toISOString()
           })
-
         if (kurError) {
-          console.error('Kur kaydetme hatası:', kurError)
-          alert('❌ Kur kaydedilirken hata: ' + kurError.message)
-          return
+          console.error('Kur insert hatası:', kurError)
+          throw kurError
         }
       }
 
       alert('✅ Bilgiler başarıyla kaydedildi!')
+      
+      // Sayfayı yenile
+      window.location.reload()
     } catch (error) {
-      console.error('Kaydetme hatası:', error)
+      console.error('❌ Kaydetme hatası:', error)
       alert('❌ Hata: ' + error.message)
     } finally {
       setLoading(false)
@@ -181,7 +180,7 @@ export default function YonetimPage() {
           <h2 className="text-lg font-semibold text-white mb-4">💱 Döviz Kuru Ayarları</h2>
           
           <p className="text-sm text-slate-400 mb-4">
-            Kurları manuel olarak girin. Bu kurlar fiyat listesinde ve raporlarda kullanılır.
+            Kurları manuel olarak girin. Her kayıt yeni bir kur kaydı oluşturur ve en son kayıt kullanılır.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
