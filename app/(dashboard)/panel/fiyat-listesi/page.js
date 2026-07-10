@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
 import { addAuditLog, getAuditLogs, isUserAdmin } from '../../../../lib/audit'
 import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../../lib/currency'
-import KurSecici from '../../../../components/KurSecici'
+//import KurSecici from '../../../../components/KurSecici'
 import { 
   Eye, Plus, Search, Edit, Trash2, Save, X, 
   Calendar, User, Clock, Shield 
