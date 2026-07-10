@@ -495,7 +495,7 @@ export default function FiyatListesiPage() {
             </div>
 
             {/* Kur Seçici */}
-            <KurSecici />
+          //  <KurSecici />
 
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -506,7 +506,7 @@ export default function FiyatListesiPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-slate-800/50 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-64"
               />
-            </div>
+            </div> 
 
             <button
               onClick={() => router.push('/panel/fiyat-ekle')}
