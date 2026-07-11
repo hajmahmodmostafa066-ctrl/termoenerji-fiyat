@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
-import { getKurlar, kurDegistiginde } from '../../../../lib/currency'
+import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../../lib/currency'
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 
 // ============================================================
-// PDF STİLLERİ
+// PDF STILLERI - ULTRA PROFESYONEL
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 50,
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
   },
@@ -19,33 +19,44 @@ const pdfStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottom: '3px solid #10b981',
-    paddingBottom: 15,
-    marginBottom: 20,
+    paddingBottom: 20,
+    marginBottom: 25,
   },
   headerLeft: {
     flexDirection: 'column',
   },
   companyName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#0f172a',
+    letterSpacing: 1,
+  },
+  companySub: {
+    fontSize: 10,
+    color: '#64748b',
+    marginTop: 2,
   },
   reportTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#0f172a',
-    marginTop: 4,
+    marginTop: 6,
   },
   dateText: {
-    fontSize: 9,
+    fontSize: 10,
     color: '#64748b',
     textAlign: 'right',
   },
   filterBox: {
     backgroundColor: '#f1f5f9',
-    padding: 12,
-    borderRadius: 6,
-    marginVertical: 12,
+    padding: 14,
+    borderRadius: 8,
+    marginVertical: 15,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 20,
   },
   filterText: {
     fontSize: 9,
@@ -53,7 +64,7 @@ const pdfStyles = StyleSheet.create({
   },
   summaryBox: {
     backgroundColor: '#f0fdf4',
-    padding: 14,
+    padding: 16,
     borderRadius: 8,
     border: '1px solid #bbf7d0',
     marginVertical: 12,
@@ -61,7 +72,22 @@ const pdfStyles = StyleSheet.create({
   summaryText: {
     fontSize: 10,
     color: '#0f172a',
-    lineHeight: 1.6,
+    lineHeight: 1.8,
+  },
+  summaryBold: {
+    fontWeight: 'bold',
+  },
+  summaryGreen: {
+    color: '#10b981',
+    fontWeight: 'bold',
+  },
+  summaryRed: {
+    color: '#ef4444',
+    fontWeight: 'bold',
+  },
+  summaryAmber: {
+    color: '#f59e0b',
+    fontWeight: 'bold',
   },
   table: {
     marginTop: 10,
@@ -69,8 +95,8 @@ const pdfStyles = StyleSheet.create({
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#0f172a',
-    padding: 8,
-    borderRadius: 4,
+    padding: 10,
+    borderRadius: 6,
   },
   tableHeaderCell: {
     fontSize: 8,
@@ -78,20 +104,29 @@ const pdfStyles = StyleSheet.create({
     color: '#ffffff',
     flex: 1,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   tableRow: {
     flexDirection: 'row',
-    padding: 6,
+    padding: 8,
     borderBottom: '1px solid #e2e8f0',
+    alignItems: 'center',
   },
   tableRowAlternate: {
     flexDirection: 'row',
-    padding: 6,
+    padding: 8,
     borderBottom: '1px solid #e2e8f0',
     backgroundColor: '#fafafa',
+    alignItems: 'center',
   },
   tableCell: {
     fontSize: 8,
+    color: '#0f172a',
+    flex: 1,
+  },
+  tableCellBold: {
+    fontSize: 8,
+    fontWeight: 'bold',
     color: '#0f172a',
     flex: 1,
   },
@@ -102,19 +137,45 @@ const pdfStyles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
   },
+  priceCellHigh: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#ef4444',
+    flex: 1,
+    textAlign: 'right',
+  },
+  priceCellAmber: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#f59e0b',
+    flex: 1,
+    textAlign: 'right',
+  },
   statusCell: {
     fontSize: 8,
     color: '#10b981',
     flex: 1,
     textAlign: 'center',
   },
+  statusCellPending: {
+    fontSize: 8,
+    color: '#eab308',
+    flex: 1,
+    textAlign: 'center',
+  },
+  statusCellRejected: {
+    fontSize: 8,
+    color: '#ef4444',
+    flex: 1,
+    textAlign: 'center',
+  },
   footer: {
     position: 'absolute',
     bottom: 30,
-    left: 40,
-    right: 40,
+    left: 50,
+    right: 50,
     borderTop: '1px solid #e2e8f0',
-    paddingTop: 10,
+    paddingTop: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -122,13 +183,72 @@ const pdfStyles = StyleSheet.create({
     fontSize: 8,
     color: '#94a3b8',
   },
+  divider: {
+    borderBottom: '1px solid #e2e8f0',
+    marginVertical: 8,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginVertical: 10,
+  },
+  statCard: {
+    backgroundColor: '#f8fafc',
+    padding: 12,
+    borderRadius: 6,
+    width: '23%',
+    border: '1px solid #e2e8f0',
+  },
+  statLabel: {
+    fontSize: 7,
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    marginTop: 2,
+  },
+  statValueGreen: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#10b981',
+    marginTop: 2,
+  },
+  statValueRed: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#ef4444',
+    marginTop: 2,
+  },
+  statValueAmber: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#f59e0b',
+    marginTop: 2,
+  },
 })
 
 // ============================================================
-// PDF BİLEŞENİ
+// PDF BİLEŞENİ - ULTRA PROFESYONEL
 // ============================================================
-const RaporPDF = ({ data, firmaBilgileri, logoUrl, baslik, enUcuz, enPahali, fark }) => {
+const RaporPDF = ({ 
+  data, 
+  firmaBilgileri, 
+  logoUrl, 
+  baslik, 
+  filtre, 
+  enUcuz, 
+  enPahali, 
+  fark,
+  paraBirimi,
+  ortalama
+}) => {
   const formatPrice = (price, currency = 'TRY') => {
+    if (price === null || price === undefined) return '-'
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: currency || 'TRY',
@@ -136,6 +256,7 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, baslik, enUcuz, enPahali, far
   }
 
   const formatDate = (date) => {
+    if (!date) return '-'
     return new Date(date).toLocaleString('tr-TR', {
       day: '2-digit',
       month: 'long',
@@ -148,57 +269,117 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, baslik, enUcuz, enPahali, far
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
+        {/* HEADER */}
         <View style={pdfStyles.header}>
           <View style={pdfStyles.headerLeft}>
-            {logoUrl && <Image src={logoUrl} style={{ width: 120, height: 40, marginBottom: 5 }} />}
+            {logoUrl && (
+              <Image src={logoUrl} style={{ width: 130, height: 45, marginBottom: 5 }} />
+            )}
             <Text style={pdfStyles.companyName}>{firmaBilgileri?.ad || 'TermoEnerji'}</Text>
+            {firmaBilgileri?.adres && (
+              <Text style={pdfStyles.companySub}>{firmaBilgileri.adres}</Text>
+            )}
+            {firmaBilgileri?.telefon && (
+              <Text style={pdfStyles.companySub}>📞 {firmaBilgileri.telefon}</Text>
+            )}
             <Text style={pdfStyles.reportTitle}>📊 Fiyat Karşılaştırma Raporu</Text>
           </View>
-          <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
+          <View>
+            <Text style={pdfStyles.dateText}>📅 {formatDate(new Date())}</Text>
+            <Text style={[pdfStyles.dateText, { marginTop: 4 }]}>💱 Para Birimi: {paraBirimi}</Text>
+          </View>
         </View>
 
+        {/* FİLTRE BİLGİSİ */}
         <View style={pdfStyles.filterBox}>
-          <Text style={pdfStyles.filterText}>🔍 Arama: {baslik || 'Tümü'}</Text>
-          <Text style={pdfStyles.filterText}>📦 Toplam: {data.length} kayıt</Text>
+          <View style={pdfStyles.filterRow}>
+            <Text style={pdfStyles.filterText}>🔍 Arama: {baslik || 'Tümü'}</Text>
+            <Text style={pdfStyles.filterText}>📂 Kategori: {filtre?.kategori || 'Tüm Kategoriler'}</Text>
+            <Text style={pdfStyles.filterText}>🏢 Firma: {filtre?.firma || 'Tüm Firmalar'}</Text>
+            <Text style={pdfStyles.filterText}>📦 Toplam: {data.length} kayıt</Text>
+          </View>
         </View>
 
+        {/* ÖZET İSTATİSTİKLER */}
         {data.length > 0 && (
-          <View style={pdfStyles.summaryBox}>
-            <Text style={pdfStyles.summaryText}>
-              📌 Özet: {data.length} firmadan alınan verilere göre, en uygun fiyat {formatPrice(enUcuz)}, 
-              en pahalı fiyat ise {formatPrice(enPahali)}. Fiyat farkı: {formatPrice(fark)}
-            </Text>
-          </View>
-        )}
-
-        <View style={pdfStyles.table}>
-          <View style={pdfStyles.tableHeader}>
-            <Text style={pdfStyles.tableHeaderCell}>#</Text>
-            <Text style={pdfStyles.tableHeaderCell}>Ürün Adı</Text>
-            <Text style={pdfStyles.tableHeaderCell}>Firma</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Kategori</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { textAlign: 'right', flex: 0.8 }]}>Fiyat</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { textAlign: 'center', flex: 0.7 }]}>Durum</Text>
-          </View>
-          {data.map((item, index) => (
-            <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowAlternate}>
-              <Text style={pdfStyles.tableCell}>{index + 1}</Text>
-              <Text style={pdfStyles.tableCell}>{item.urun_adi}</Text>
-              <Text style={pdfStyles.tableCell}>{item.firma_adi}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.kategori || 'Genel'}</Text>
-              <Text style={[pdfStyles.priceCell, { flex: 0.8 }]}>
-                {formatPrice(item.fiyat, item.para_birimi)}
-              </Text>
-              <Text style={[pdfStyles.statusCell, { flex: 0.7 }]}>
-                {item.durum === 'approved' ? '✅ Aktif' : item.durum === 'pending' ? '⏳ Beklemede' : '❌ Pasif'}
+          <>
+            <View style={pdfStyles.summaryBox}>
+              <Text style={pdfStyles.summaryText}>
+                📌 <Text style={pdfStyles.summaryBold}>Özet:</Text> Toplam <Text style={pdfStyles.summaryBold}>{data.length}</Text> fiyat teklifi analiz edildi.
+                {'\n'}
+                💚 En düşük fiyat: <Text style={pdfStyles.summaryGreen}>{formatPrice(enUcuz, paraBirimi)}</Text>
+                {'  '}❤️ En yüksek fiyat: <Text style={pdfStyles.summaryRed}>{formatPrice(enPahali, paraBirimi)}</Text>
+                {'  '}💰 Fiyat farkı: <Text style={pdfStyles.summaryAmber}>{formatPrice(fark, paraBirimi)}</Text>
+                {'\n'}
+                📊 Ortalama fiyat: <Text style={pdfStyles.summaryBold}>{formatPrice(ortalama, paraBirimi)}</Text>
               </Text>
             </View>
-          ))}
+
+            {/* İSTATİSTİK KARTLARI */}
+            <View style={pdfStyles.statsGrid}>
+              <View style={pdfStyles.statCard}>
+                <Text style={pdfStyles.statLabel}>Toplam Teklif</Text>
+                <Text style={pdfStyles.statValue}>{data.length}</Text>
+              </View>
+              <View style={pdfStyles.statCard}>
+                <Text style={pdfStyles.statLabel}>💚 En Düşük</Text>
+                <Text style={pdfStyles.statValueGreen}>{formatPrice(enUcuz, paraBirimi)}</Text>
+              </View>
+              <View style={pdfStyles.statCard}>
+                <Text style={pdfStyles.statLabel}>❤️ En Yüksek</Text>
+                <Text style={pdfStyles.statValueRed}>{formatPrice(enPahali, paraBirimi)}</Text>
+              </View>
+              <View style={pdfStyles.statCard}>
+                <Text style={pdfStyles.statLabel}>💰 Fiyat Farkı</Text>
+                <Text style={pdfStyles.statValueAmber}>{formatPrice(fark, paraBirimi)}</Text>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* TABLO */}
+        <View style={pdfStyles.table}>
+          <View style={pdfStyles.tableHeader}>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.5 }]}>#</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.5 }]}>Ürün Adı</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>Firma</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Kategori</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1, textAlign: 'right' }]}>Fiyat</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8, textAlign: 'center' }]}>Durum</Text>
+          </View>
+          {data.map((item, index) => {
+            const isEnUcuz = item.fiyat === enUcuz && enUcuz > 0
+            const isEnPahali = item.fiyat === enPahali && enPahali > 0
+            
+            return (
+              <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowAlternate}>
+                <Text style={[pdfStyles.tableCell, { flex: 0.5 }]}>{index + 1}</Text>
+                <Text style={[pdfStyles.tableCell, { flex: 1.5 }]}>{item.urun_adi}</Text>
+                <Text style={[pdfStyles.tableCell, { flex: 1.2 }]}>{item.firma_adi}</Text>
+                <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.kategori || 'Genel'}</Text>
+                <Text style={[
+                  isEnUcuz ? pdfStyles.priceCell : isEnPahali ? pdfStyles.priceCellHigh : pdfStyles.priceCell,
+                  { flex: 1 }
+                ]}>
+                  {formatPrice(item.fiyat, paraBirimi)}
+                </Text>
+                <Text style={[
+                  item.durum === 'approved' ? pdfStyles.statusCell : 
+                  item.durum === 'pending' ? pdfStyles.statusCellPending : pdfStyles.statusCellRejected,
+                  { flex: 0.8 }
+                ]}>
+                  {item.durum === 'approved' ? '✅ Aktif' : 
+                   item.durum === 'pending' ? '⏳ Beklemede' : '❌ Pasif'}
+                </Text>
+              </View>
+            )
+          })}
         </View>
 
+        {/* FOOTER */}
         <View style={pdfStyles.footer} fixed>
           <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'} - Tüm hakları saklıdır.</Text>
-          <Text style={pdfStyles.footerText}>Bu rapor otomatik olarak oluşturulmuştur.</Text>
+          <Text style={pdfStyles.footerText}>Bu rapor {formatDate(new Date())} tarihinde oluşturulmuştur.</Text>
         </View>
       </Page>
     </Document>
@@ -210,8 +391,8 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, baslik, enUcuz, enPahali, far
 // ============================================================
 export default function RaporlarPage() {
   const [fiyatlar, setFiyatlar] = useState([])
-  const [selectedFiyatlar, setSelectedFiyatlar] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [filteredFiyatlar, setFilteredFiyatlar] = useState([])
+  const [loading, setLoading] = useState(true)
   const [arama, setArama] = useState('')
   const [filtreKategori, setFiltreKategori] = useState('')
   const [filtreFirma, setFiltreFirma] = useState('')
@@ -220,7 +401,36 @@ export default function RaporlarPage() {
   const [firmaBilgileri, setFirmaBilgileri] = useState({})
   const [logoUrl, setLogoUrl] = useState('')
   const [seciliIds, setSeciliIds] = useState([])
+  const [gorunenParaBirimi, setGorunenParaBirimi] = useState('TRY')
   const [kurlar, setKurlar] = useState({ usdTry: 34.50, eurTry: 37.20 })
+
+  // Tüm fiyatları yükle
+  useEffect(() => {
+    const loadData = async () => {
+      // Fiyatları çek
+      const { data: fiyatData } = await supabase
+        .from('fiyat_teklifleri')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      setFiyatlar(fiyatData || [])
+      setFilteredFiyatlar(fiyatData || [])
+      setLoading(false)
+
+      // Firmaları ve kategorileri çek
+      const { data: firmalarData } = await supabase.from('firmalar').select('ad')
+      const { data: kategoriData } = await supabase.from('kategoriler').select('ad')
+      const { data: firmaData } = await supabase.from('firma_bilgileri').select('*').maybeSingle()
+      
+      setFirmalar(firmalarData || [])
+      setKategoriler(kategoriData || [])
+      if (firmaData) {
+        setFirmaBilgileri(firmaData)
+        setLogoUrl(firmaData.logo_url || '')
+      }
+    }
+    loadData()
+  }, [])
 
   // Kur değişimini dinle
   useEffect(() => {
@@ -236,52 +446,24 @@ export default function RaporlarPage() {
     return () => unsubscribe()
   }, [])
 
-  // Verileri yükle
+  // Filtreleme
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: firmalarData } = await supabase.from('firmalar').select('ad')
-      const { data: kategoriData } = await supabase.from('kategoriler').select('ad')
-      const { data: firmaData } = await supabase.from('firma_bilgileri').select('*').maybeSingle()
-      setFirmalar(firmalarData || [])
-      setKategoriler(kategoriData || [])
-      if (firmaData) {
-        setFirmaBilgileri(firmaData)
-        setLogoUrl(firmaData.logo_url || '')
-      }
-    }
-    fetchData()
-  }, [])
+    let filtered = [...fiyatlar]
 
-  const handleAra = async () => {
-    if (!arama.trim() && !filtreKategori && !filtreFirma) {
-      alert('🔍 Lütfen en az bir filtre seçin!')
-      return
+    if (arama.trim()) {
+      filtered = filtered.filter(item =>
+        item.urun_adi?.toLowerCase().includes(arama.toLowerCase())
+      )
+    }
+    if (filtreKategori) {
+      filtered = filtered.filter(item => item.kategori === filtreKategori)
+    }
+    if (filtreFirma) {
+      filtered = filtered.filter(item => item.firma_adi === filtreFirma)
     }
 
-    setLoading(true)
-    try {
-      let query = supabase.from('fiyat_teklifleri').select('*')
-
-      if (arama.trim()) {
-        query = query.ilike('urun_adi', `%${arama}%`)
-      }
-      if (filtreKategori) {
-        query = query.eq('kategori', filtreKategori)
-      }
-      if (filtreFirma) {
-        query = query.eq('firma_adi', filtreFirma)
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false })
-      if (error) throw error
-      setFiyatlar(data || [])
-    } catch (error) {
-      console.error('Arama hatası:', error)
-      alert('❌ Hata: ' + error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+    setFilteredFiyatlar(filtered)
+  }, [arama, filtreKategori, filtreFirma, fiyatlar])
 
   const toggleSecim = (id) => {
     setSeciliIds(prev =>
@@ -289,25 +471,71 @@ export default function RaporlarPage() {
     )
   }
 
-  useEffect(() => {
-    setSelectedFiyatlar(fiyatlar.filter(item => seciliIds.includes(item.id)))
-  }, [seciliIds, fiyatlar])
+  const selectedFiyatlar = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
 
-  const enUcuz = selectedFiyatlar.length > 0 
-    ? Math.min(...selectedFiyatlar.map(i => i.fiyat)) 
-    : 0
-  const enPahali = selectedFiyatlar.length > 0 
-    ? Math.max(...selectedFiyatlar.map(i => i.fiyat)) 
-    : 0
+  // İstatistikler
+  const enUcuz = filteredFiyatlar.length > 0 ? Math.min(...filteredFiyatlar.map(i => i.fiyat)) : 0
+  const enPahali = filteredFiyatlar.length > 0 ? Math.max(...filteredFiyatlar.map(i => i.fiyat)) : 0
   const fark = enPahali - enUcuz
+  const ortalama = filteredFiyatlar.length > 0 
+    ? filteredFiyatlar.reduce((sum, i) => sum + i.fiyat, 0) / filteredFiyatlar.length 
+    : 0
+
+  const getConvertedPrice = (fiyat, paraBirimi) => {
+    const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
+    if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
+    const converted = convertPrice(parsedFiyat, paraBirimi, gorunenParaBirimi, kurlar)
+    return formatPrice(converted, gorunenParaBirimi)
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto">
+        {/* HEADER */}
         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-          <h1 className="text-2xl font-bold text-white">📊 Raporlar</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-white">📊 Raporlar</h1>
+            <p className="text-slate-400 text-sm">
+              {filteredFiyatlar.length} kayıt gösteriliyor
+            </p>
+          </div>
+
+          {/* Para Birimi Seçici */}
+          <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1 border border-slate-700">
+            <button
+              onClick={() => setGorunenParaBirimi('TRY')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                gorunenParaBirimi === 'TRY' 
+                  ? 'bg-emerald-500/20 text-emerald-400' 
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🇹🇷 TL
+            </button>
+            <button
+              onClick={() => setGorunenParaBirimi('USD')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                gorunenParaBirimi === 'USD' 
+                  ? 'bg-blue-500/20 text-blue-400' 
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🇺🇸 USD
+            </button>
+            <button
+              onClick={() => setGorunenParaBirimi('EUR')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                gorunenParaBirimi === 'EUR' 
+                  ? 'bg-purple-500/20 text-purple-400' 
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🇪🇺 EUR
+            </button>
+          </div>
         </div>
 
+        {/* FİLTRELER */}
         <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input
@@ -338,90 +566,150 @@ export default function RaporlarPage() {
               ))}
             </select>
           </div>
-          <button
-            onClick={handleAra}
-            disabled={loading}
-            className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
-          >
-            {loading ? 'Aranıyor...' : '🔎 Ara'}
-          </button>
         </div>
 
-        {fiyatlar.length > 0 && (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-slate-400">{fiyatlar.length} kayıt bulundu</p>
-              {selectedFiyatlar.length > 0 && (
-                <PDFDownloadLink
-                  document={
-                    <RaporPDF 
-                      data={selectedFiyatlar}
-                      firmaBilgileri={firmaBilgileri}
-                      logoUrl={logoUrl}
-                      baslik={arama || 'Tümü'}
-                      enUcuz={enUcuz}
-                      enPahali={enPahali}
-                      fark={fark}
-                    />
-                  }
-                  fileName={`rapor_${new Date().toISOString().split('T')[0]}.pdf`}
-                >
-                  {({ loading }) => (
-                    <button
-                      disabled={loading}
-                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2"
-                    >
-                      📄 PDF Rapor ({selectedFiyatlar.length})
-                    </button>
-                  )}
-                </PDFDownloadLink>
-              )}
+        {/* İSTATİSTİK KARTLARI */}
+        {filteredFiyatlar.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+              <p className="text-xs text-slate-400">Toplam Teklif</p>
+              <p className="text-2xl font-bold text-white">{filteredFiyatlar.length}</p>
             </div>
+            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+              <p className="text-xs text-slate-400">💚 En Düşük</p>
+              <p className="text-2xl font-bold text-emerald-400">
+                {getConvertedPrice(enUcuz, 'TRY')}
+              </p>
+            </div>
+            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+              <p className="text-xs text-slate-400">❤️ En Yüksek</p>
+              <p className="text-2xl font-bold text-red-400">
+                {getConvertedPrice(enPahali, 'TRY')}
+              </p>
+            </div>
+            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+              <p className="text-xs text-slate-400">💰 Fiyat Farkı</p>
+              <p className="text-2xl font-bold text-amber-400">
+                {getConvertedPrice(fark, 'TRY')}
+              </p>
+            </div>
+          </div>
+        )}
 
-            <div className="overflow-x-auto bg-slate-800/50 rounded-xl border border-slate-700">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-700 bg-slate-800">
-                    <th className="py-3 px-4 text-slate-400 font-medium w-10">
-                      <input
-                        type="checkbox"
-                        onChange={() => {
-                          if (seciliIds.length === fiyatlar.length) {
-                            setSeciliIds([])
-                          } else {
-                            setSeciliIds(fiyatlar.map(item => item.id))
-                          }
-                        }}
-                        checked={seciliIds.length === fiyatlar.length && fiyatlar.length > 0}
-                        className="w-4 h-4 accent-emerald-500"
-                      />
-                    </th>
-                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Ürün</th>
-                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Firma</th>
-                    <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">Kategori</th>
-                    <th className="text-right py-3 px-4 text-slate-400 font-medium">Fiyat</th>
-                    <th className="text-center py-3 px-4 text-slate-400 font-medium">Durum</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fiyatlar.map((item) => (
-                    <tr key={item.id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition">
+        {/* PDF RAPOR BUTONU */}
+        {selectedFiyatlar.length > 0 && (
+          <div className="flex justify-end mb-4">
+            <PDFDownloadLink
+              document={
+                <RaporPDF 
+                  data={selectedFiyatlar}
+                  firmaBilgileri={firmaBilgileri}
+                  logoUrl={logoUrl}
+                  baslik={arama || 'Tümü'}
+                  filtre={{ kategori: filtreKategori || 'Tümü', firma: filtreFirma || 'Tümü' }}
+                  enUcuz={enUcuz}
+                  enPahali={enPahali}
+                  fark={fark}
+                  paraBirimi={gorunenParaBirimi}
+                  ortalama={ortalama}
+                />
+              }
+              fileName={`rapor_${new Date().toISOString().split('T')[0]}.pdf`}
+            >
+              {({ loading }) => (
+                <button
+                  disabled={loading}
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2"
+                >
+                  📄 PDF Rapor ({selectedFiyatlar.length})
+                </button>
+              )}
+            </PDFDownloadLink>
+          </div>
+        )}
+
+        {/* FİYAT LİSTESİ */}
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-slate-400">Yükleniyor...</p>
+          </div>
+        ) : filteredFiyatlar.length === 0 ? (
+          <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
+            <p className="text-slate-400">Henüz fiyat bulunmuyor</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto bg-slate-800/50 rounded-xl border border-slate-700">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-700 bg-slate-800">
+                  <th className="py-3 px-4 text-slate-400 font-medium w-10">
+                    <input
+                      type="checkbox"
+                      onChange={() => {
+                        if (seciliIds.length === filteredFiyatlar.length) {
+                          setSeciliIds([])
+                        } else {
+                          setSeciliIds(filteredFiyatlar.map(item => item.id))
+                        }
+                      }}
+                      checked={seciliIds.length === filteredFiyatlar.length && filteredFiyatlar.length > 0}
+                      className="w-4 h-4 accent-emerald-500"
+                    />
+                  </th>
+                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Ürün</th>
+                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Firma</th>
+                  <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">Kategori</th>
+                  <th className="text-right py-3 px-4 text-slate-400 font-medium">Fiyat</th>
+                  <th className="text-center py-3 px-4 text-slate-400 font-medium">Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredFiyatlar.map((item) => {
+                  const isSelected = seciliIds.includes(item.id)
+                  const isEnUcuz = item.fiyat === enUcuz && enUcuz > 0
+                  const isEnPahali = item.fiyat === enPahali && enPahali > 0
+
+                  return (
+                    <tr 
+                      key={item.id} 
+                      className={`border-b border-slate-700/50 hover:bg-slate-800/30 transition ${
+                        isSelected ? 'bg-emerald-500/5' : ''
+                      }`}
+                    >
                       <td className="py-3 px-4">
                         <input
                           type="checkbox"
-                          checked={seciliIds.includes(item.id)}
+                          checked={isSelected}
                           onChange={() => toggleSecim(item.id)}
                           className="w-4 h-4 accent-emerald-500"
                         />
                       </td>
-                      <td className="py-3 px-4 text-white font-medium">{item.urun_adi}</td>
+                      <td className="py-3 px-4 text-white font-medium">
+                        {item.urun_adi}
+                        {isEnUcuz && (
+                          <span className="ml-2 text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
+                            💚 En Ucuz
+                          </span>
+                        )}
+                        {isEnPahali && (
+                          <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">
+                            ❤️ En Pahalı
+                          </span>
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-slate-300">{item.firma_adi}</td>
-                      <td className="py-3 px-4 text-slate-400 hidden md:table-cell">{item.kategori || '-'}</td>
-                      <td className="py-3 px-4 text-emerald-400 font-bold text-right">
-                        {new Intl.NumberFormat('tr-TR', {
-                          style: 'currency',
-                          currency: item.para_birimi || 'TRY',
-                        }).format(item.fiyat)}
+                      <td className="py-3 px-4 text-slate-400 hidden md:table-cell">
+                        {item.kategori || '-'}
+                      </td>
+                      <td className={`py-3 px-4 font-bold text-right ${
+                        isEnUcuz ? 'text-emerald-400' : 
+                        isEnPahali ? 'text-red-400' : 
+                        'text-white'
+                      }`}>
+                        {getConvertedPrice(item.fiyat, item.para_birimi)}
+                        <span className="text-xs text-slate-500 ml-1">
+                          ({item.para_birimi})
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-center">
                         <span className={`text-xs px-2 py-1 rounded-full ${
@@ -434,16 +722,10 @@ export default function RaporlarPage() {
                         </span>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-
-        {fiyatlar.length === 0 && !loading && (
-          <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
-            <p className="text-slate-400">Filtreleri kullanarak arama yapın.</p>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
