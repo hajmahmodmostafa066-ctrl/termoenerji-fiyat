@@ -18,7 +18,7 @@ Font.register({
 })
 
 // ============================================================
-// PDF STILLERI (TAMAMEN YENİLENDİ VE GÜZELLEŞTİRİLDİ)
+// PDF STILLERI (HATALAR GİDERİLDİ - REACT-PDF UYUMLU)
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
@@ -34,13 +34,15 @@ const pdfStyles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 8,
-    backgroundColor: '#10b981', // Kurumsal yeşil vurgu
+    backgroundColor: '#10b981',
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    borderBottom: '1.5px solid #e2e8f0',
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#e2e8f0',
+    borderBottomStyle: 'solid',
     paddingBottom: 20,
     marginBottom: 20,
   },
@@ -68,25 +70,35 @@ const pdfStyles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
-    border: '1px solid #e2e8f0',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderStyle: 'solid',
     alignItems: 'flex-end',
   },
   reportDateLabel: { fontSize: 7, color: '#64748b', marginBottom: 3, textTransform: 'uppercase', fontWeight: 'bold' },
   reportDate: { fontSize: 10, fontWeight: 'bold', color: '#0f172a' },
   summaryBox: {
     flexDirection: 'row',
-    gap: 12,
     marginBottom: 25,
   },
   summaryItem: {
     flex: 1,
     backgroundColor: '#f8fafc',
-    borderLeft: '4px solid #10b981',
+    borderLeftWidth: 4,
+    borderLeftColor: '#10b981',
+    borderLeftStyle: 'solid',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    borderRightWidth: 1,
+    borderRightColor: '#f1f5f9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
     borderRadius: 4,
     padding: 12,
-    borderTop: '1px solid #f1f5f9',
-    borderRight: '1px solid #f1f5f9',
-    borderBottom: '1px solid #f1f5f9',
+    marginRight: 12, // flex gap yerine marginRight kullanıyoruz
+  },
+  summaryItemLast: {
+    marginRight: 0,
   },
   summaryLabel: {
     fontSize: 8,
@@ -105,19 +117,22 @@ const pdfStyles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 4,
     marginBottom: 15,
-    borderLeft: '3px solid #0f172a',
+    borderLeftWidth: 3,
+    borderLeftColor: '#0f172a',
+    borderLeftStyle: 'solid',
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 25,
+    marginBottom: 15,
   },
   statCard: {
-    width: '48%', // Daha ferah görünüm için 3 yerine 2 kolon
+    width: '48%',
     backgroundColor: '#ffffff',
-    border: '1px solid #e2e8f0',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderStyle: 'solid',
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
@@ -128,7 +143,9 @@ const pdfStyles = StyleSheet.create({
     color: '#0f172a',
     marginBottom: 10,
     paddingBottom: 8,
-    borderBottom: '1px solid #e2e8f0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    borderBottomStyle: 'solid',
   },
   statRow: {
     flexDirection: 'row',
@@ -137,8 +154,14 @@ const pdfStyles = StyleSheet.create({
     marginBottom: 6,
   },
   statLabel: { fontSize: 9, color: '#475569' },
-  statValueMin: { fontSize: 9, fontWeight: 'bold', color: '#059669', backgroundColor: '#d1fae5', padding: '3 6', borderRadius: 4 },
-  statValueMax: { fontSize: 9, fontWeight: 'bold', color: '#dc2626', backgroundColor: '#fee2e2', padding: '3 6', borderRadius: 4 },
+  statValueMin: { 
+    fontSize: 9, fontWeight: 'bold', color: '#059669', backgroundColor: '#d1fae5', 
+    paddingVertical: 3, paddingHorizontal: 6, borderRadius: 4, overflow: 'hidden'
+  },
+  statValueMax: { 
+    fontSize: 9, fontWeight: 'bold', color: '#dc2626', backgroundColor: '#fee2e2', 
+    paddingVertical: 3, paddingHorizontal: 6, borderRadius: 4, overflow: 'hidden'
+  },
   statValueDiff: { fontSize: 9, fontWeight: 'bold', color: '#d97706' },
   statCount: { fontSize: 8, color: '#64748b', marginTop: 8, textAlign: 'right', fontStyle: 'italic' },
   table: { width: '100%', marginBottom: 30 },
@@ -161,7 +184,9 @@ const pdfStyles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderBottom: '1px solid #e2e8f0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    borderBottomStyle: 'solid',
     alignItems: 'center',
   },
   tableRowStriped: {
@@ -169,30 +194,25 @@ const pdfStyles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: '#f8fafc',
-    borderBottom: '1px solid #e2e8f0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    borderBottomStyle: 'solid',
     alignItems: 'center',
   },
   tableCell: { fontSize: 9, color: '#334155' },
   tableCellBold: { fontSize: 9, fontWeight: 'bold', color: '#0f172a' },
   priceTagMin: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#059669',
-    backgroundColor: '#d1fae5',
-    padding: '4 8',
-    borderRadius: 4,
-    textAlign: 'right',
+    fontSize: 9, fontWeight: 'bold', color: '#059669', backgroundColor: '#d1fae5',
+    paddingVertical: 4, paddingHorizontal: 8, borderRadius: 4, textAlign: 'right', overflow: 'hidden'
   },
   priceTagMax: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#dc2626',
-    backgroundColor: '#fee2e2',
-    padding: '4 8',
-    borderRadius: 4,
-    textAlign: 'right',
+    fontSize: 9, fontWeight: 'bold', color: '#dc2626', backgroundColor: '#fee2e2',
+    paddingVertical: 4, paddingHorizontal: 8, borderRadius: 4, textAlign: 'right', overflow: 'hidden'
   },
-  priceNormal: { fontSize: 9, fontWeight: 'bold', color: '#0f172a', textAlign: 'right', padding: '4 8' },
+  priceNormal: { 
+    fontSize: 9, fontWeight: 'bold', color: '#0f172a', textAlign: 'right', 
+    paddingVertical: 4, paddingHorizontal: 8 
+  },
   footer: {
     position: 'absolute',
     bottom: 30,
@@ -201,7 +221,9 @@ const pdfStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTop: '1px solid #e2e8f0',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    borderTopStyle: 'solid',
     paddingTop: 12,
   },
   footerText: { fontSize: 8, color: '#94a3b8' },
@@ -209,7 +231,7 @@ const pdfStyles = StyleSheet.create({
 })
 
 // ============================================================
-// PDF BİLEŞENİ (DÜZENLENDİ)
+// PDF BİLEŞENİ
 // ============================================================
 const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikler }) => {
   const formatPriceForPDF = (price, currency = 'TRY') => {
@@ -238,7 +260,7 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
       <Page size="A4" style={pdfStyles.page}>
         <View style={pdfStyles.topAccent} fixed />
         
-        <View style={pdfStyles.headerContainer}>
+        <View style={pdfStyles.headerContainer} fixed>
           <View style={pdfStyles.headerLeft}>
             {logoUrl && <Image src={logoUrl} style={pdfStyles.logo} />}
             <Text style={pdfStyles.companyTitle}>{firmaBilgileri?.ad || 'TermoEnerji Sistemleri'}</Text>
@@ -263,7 +285,7 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
             <Text style={pdfStyles.summaryLabel}>Listelenen Teklif</Text>
             <Text style={pdfStyles.summaryValue}>{data.length} Adet</Text>
           </View>
-          <View style={pdfStyles.summaryItem}>
+          <View style={[pdfStyles.summaryItem, pdfStyles.summaryItemLast]}>
             <Text style={pdfStyles.summaryLabel}>Analiz Edilen Ürün</Text>
             <Text style={pdfStyles.summaryValue}>{seciliIstatistikler.length} Çeşit</Text>
           </View>
@@ -284,7 +306,7 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
                     <Text style={pdfStyles.statLabel}>En Yüksek Fiyat:</Text>
                     <Text style={pdfStyles.statValueMax}>{formatPriceForPDF(urun.enPahali, paraBirimi)}</Text>
                   </View>
-                  <View style={[pdfStyles.statRow, { marginTop: 6, paddingTop: 6, borderTop: '1px dashed #e2e8f0' }]}>
+                  <View style={[pdfStyles.statRow, { marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#e2e8f0', borderTopStyle: 'dashed' }]}>
                     <Text style={pdfStyles.statLabel}>Maksimum Fark:</Text>
                     <Text style={pdfStyles.statValueDiff}>{formatPriceForPDF(urun.fark, paraBirimi)}</Text>
                   </View>
@@ -336,19 +358,16 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
 }
 
 // ============================================================
-// DETAY MODALI BİLEŞENİ - DÜZELTİLDİ (Dokunulmadı)
+// DETAY MODALI BİLEŞENİ
 // ============================================================
 const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }) => {
   if (!urun) return null
 
-  // ✅ DOĞRU FİYAT ÇEVİRİSİ
   const getConvertedPrice = (fiyat, paraBirimi) => {
     const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
     if (isNaN(parsedFiyat) || !parsedFiyat) return { original: '-', converted: '-', convertedValue: 0 }
     
-    // Önce TL'ye çevir
     const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
-    // TL'den hedef para birimine çevir
     const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
     
     return {
@@ -358,7 +377,6 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
     }
   }
 
-  // Fiyatları sırala (en ucuzdan en pahalıya - ÇEVRİLMİŞ FİYATA GÖRE)
   const sortedFiyatlar = [...firmaDetaylari].map(item => ({
     ...item,
     _converted: getConvertedPrice(item.fiyat, item.para_birimi || 'TRY')
@@ -379,7 +397,6 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-slate-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-700/50 shadow-2xl">
-        {/* Modal Header */}
         <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4 flex items-center justify-between z-10">
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -388,17 +405,12 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
             </h2>
             <p className="text-sm text-slate-400">{firmaDetaylari.length} firma tarafından teklif verilmiş</p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-lg transition text-slate-400 hover:text-white"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition text-slate-400 hover:text-white">
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        {/* İçerik */}
         <div className="p-6 space-y-6">
-          {/* Özet Kartları */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
               <p className="text-xs text-slate-400">Toplam Teklif</p>
@@ -429,7 +441,6 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
             </div>
           </div>
 
-          {/* Firma Bazında Fiyat Listesi */}
           <div>
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
               <Building2 className="h-4 w-4 text-emerald-400" />
@@ -493,7 +504,6 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
             </div>
           </div>
 
-          {/* Grafik Benzeri Görsel */}
           <div>
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-400" />
@@ -538,7 +548,7 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
 }
 
 // ============================================================
-// ANA SAYFA (Dokunulmadı)
+// ANA SAYFA
 // ============================================================
 export default function RaporlarPage() {
   const [fiyatlar, setFiyatlar] = useState([])
@@ -556,14 +566,10 @@ export default function RaporlarPage() {
   const [kurlar, setKurlar] = useState({ usdTry: 34.50, eurTry: 37.20 })
   const [urunIstatistikleri, setUrunIstatistikleri] = useState([])
 
-  // ===== DETAY MODALI STATE'LERİ =====
   const [detayModalAcik, setDetayModalAcik] = useState(false)
   const [detayUrun, setDetayUrun] = useState(null)
   const [detayFirmaDetaylari, setDetayFirmaDetaylari] = useState([])
 
-  // ============================================================
-  // VERİLERİ ÇEK
-  // ============================================================
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
@@ -610,9 +616,6 @@ export default function RaporlarPage() {
     return () => unsubscribe()
   }, [])
 
-  // ============================================================
-  // FİLTRELEME VE İSTATİSTİKLER
-  // ============================================================
   useEffect(() => {
     let filtered = [...fiyatlar]
     
@@ -660,9 +663,6 @@ export default function RaporlarPage() {
     setUrunIstatistikleri(istatistikler)
   }, [arama, filtreKategori, filtreFirma, fiyatlar, gorunenParaBirimi, kurlar])
 
-  // ============================================================
-  // DETAY MODALI AÇ
-  // ============================================================
   const handleDetayAc = (urun) => {
     const firmaDetaylari = filteredFiyatlar.filter(item => item.urun_adi === urun.urunAdi)
     setDetayUrun(urun)
@@ -670,9 +670,6 @@ export default function RaporlarPage() {
     setDetayModalAcik(true)
   }
 
-  // ============================================================
-  // YARDIMCI FONKSİYONLAR
-  // ============================================================
   const toggleSecim = (id) => {
     setSeciliIds(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -761,7 +758,6 @@ export default function RaporlarPage() {
     <div className="min-h-screen bg-slate-950 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <div className="flex items-center gap-3">
@@ -792,7 +788,6 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* FİLTRELER */}
         <div className="bg-slate-900/40 rounded-2xl p-5 border border-slate-700/50 backdrop-blur-sm shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
@@ -859,7 +854,6 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* GENEL ÜRÜN İSTATİSTİKLERİ - TIKLANABİLİR KARTLAR */}
         {urunIstatistikleri.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
@@ -902,7 +896,6 @@ export default function RaporlarPage() {
           </div>
         )}
 
-        {/* PDF BUTONU VE TABLO */}
         <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
           <div className="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/80">
             <h3 className="text-sm font-medium text-slate-300">Fiyat Teklifleri Tablosu</h3>
@@ -919,29 +912,32 @@ export default function RaporlarPage() {
                 } 
                 fileName={`Analiz_Raporu_${new Date().toISOString().split('T')[0]}.pdf`}
               >
-                {({ loading: pdfLoading }) => (
-                  <button 
-                    disabled={pdfLoading} 
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium shadow-lg shadow-emerald-500/20"
-                  >
-                    {pdfLoading ? (
-                      <>
-                        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Oluşturuluyor...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Seçili Kayıtları İndir ({seciliIds.length})
-                      </>
-                    )}
-                  </button>
-                )}
+                {({ loading: pdfLoading, error }) => {
+                  if (error) console.error("PDF Hatası:", error);
+                  return (
+                    <button 
+                      disabled={pdfLoading} 
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium shadow-lg shadow-emerald-500/20"
+                    >
+                      {pdfLoading ? (
+                        <>
+                          <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Oluşturuluyor...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Seçili Kayıtları İndir ({seciliIds.length})
+                        </>
+                      )}
+                    </button>
+                  )
+                }}
               </PDFDownloadLink>
             )}
           </div>
@@ -1072,7 +1068,6 @@ export default function RaporlarPage() {
         </div>
       </div>
 
-      {/* DETAY MODALI */}
       {detayModalAcik && detayUrun && (
         <DetayModal 
           urun={detayUrun}
