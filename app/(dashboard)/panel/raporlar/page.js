@@ -25,7 +25,6 @@ const pdfStyles = StyleSheet.create({
     backgroundColor: '#ffffff',
     fontFamily: 'Roboto',
   },
-  // Üst Bilgi (Header)
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -35,34 +34,22 @@ const pdfStyles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
   },
-  headerLeft: {
-    flex: 1,
-  },
+  headerLeft: { flex: 1 },
   companyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
     marginBottom: 4,
   },
-  companyAddress: {
-    fontSize: 9,
-    color: '#94a3b8',
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-  },
+  companyAddress: { fontSize: 9, color: '#94a3b8' },
+  headerRight: { alignItems: 'flex-end' },
   reportMainTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#10b981', // Zümrüt yeşili vurgu
+    color: '#10b981',
     marginBottom: 4,
   },
-  reportDate: {
-    fontSize: 9,
-    color: '#cbd5e1',
-  },
-  
-  // Özet Bilgi Kutusu
+  reportDate: { fontSize: 9, color: '#cbd5e1' },
   summaryBox: {
     flexDirection: 'row',
     backgroundColor: '#f8fafc',
@@ -71,22 +58,14 @@ const pdfStyles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
   },
-  summaryItem: {
-    flex: 1,
-  },
+  summaryItem: { flex: 1 },
   summaryLabel: {
     fontSize: 7,
     color: '#64748b',
     textTransform: 'uppercase',
     marginBottom: 2,
   },
-  summaryValue: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: '#0f172a',
-  },
-
-  // Ürün İstatistikleri Bölümü
+  summaryValue: { fontSize: 9, fontWeight: 'bold', color: '#0f172a' },
   sectionTitle: {
     fontSize: 11,
     fontWeight: 'bold',
@@ -102,7 +81,7 @@ const pdfStyles = StyleSheet.create({
     marginBottom: 15,
   },
   statCard: {
-    width: '31%', // Yan yana 3 adet
+    width: '31%',
     backgroundColor: '#ffffff',
     border: '1px solid #cbd5e1',
     borderRadius: 6,
@@ -121,36 +100,12 @@ const pdfStyles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 3,
   },
-  statLabel: {
-    fontSize: 8,
-    color: '#64748b',
-  },
-  statValueMin: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#10b981',
-  },
-  statValueMax: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#ef4444',
-  },
-  statValueDiff: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#f59e0b',
-  },
-  statCount: {
-    fontSize: 7,
-    color: '#94a3b8',
-    marginTop: 4,
-    textAlign: 'right',
-  },
-
-  // Tablo Tasarımı
-  table: {
-    width: '100%',
-  },
+  statLabel: { fontSize: 8, color: '#64748b' },
+  statValueMin: { fontSize: 8, fontWeight: 'bold', color: '#10b981' },
+  statValueMax: { fontSize: 8, fontWeight: 'bold', color: '#ef4444' },
+  statValueDiff: { fontSize: 8, fontWeight: 'bold', color: '#f59e0b' },
+  statCount: { fontSize: 7, color: '#94a3b8', marginTop: 4, textAlign: 'right' },
+  table: { width: '100%' },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#f1f5f9',
@@ -178,33 +133,10 @@ const pdfStyles = StyleSheet.create({
     backgroundColor: '#fafafa',
     borderBottom: '1px solid #f1f5f9',
   },
-  tableCell: {
-    fontSize: 8,
-    color: '#334155',
-    flex: 1,
-  },
-  tableCellBold: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#0f172a',
-    flex: 1,
-  },
-  priceCell: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#10b981',
-    flex: 1,
-    textAlign: 'right',
-  },
-  priceCellHigh: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#ef4444',
-    flex: 1,
-    textAlign: 'right',
-  },
-  
-  // Alt Bilgi (Footer)
+  tableCell: { fontSize: 8, color: '#334155', flex: 1 },
+  tableCellBold: { fontSize: 8, fontWeight: 'bold', color: '#0f172a', flex: 1 },
+  priceCell: { fontSize: 8, fontWeight: 'bold', color: '#10b981', flex: 1, textAlign: 'right' },
+  priceCellHigh: { fontSize: 8, fontWeight: 'bold', color: '#ef4444', flex: 1, textAlign: 'right' },
   footer: {
     position: 'absolute',
     bottom: 20,
@@ -215,18 +147,13 @@ const pdfStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  footerText: {
-    fontSize: 7,
-    color: '#94a3b8',
-  },
+  footerText: { fontSize: 7, color: '#94a3b8' },
 })
 
 // ============================================================
 // PDF BİLEŞENİ
 // ============================================================
 const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikler }) => {
-  
-  // Para birimi ikonları yerine uluslararası kodları kullanıyoruz (Sorunsuz Render için)
   const formatPriceForPDF = (price, currency = 'TRY') => {
     if (price === null || price === undefined) return '-'
     const safeCurrencyCode = currency === 'TRY' ? 'TL' : currency
@@ -234,7 +161,6 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(price)
-    
     return `${formattedAmount} ${safeCurrencyCode}`
   }
 
@@ -252,8 +178,6 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
-        
-        {/* KURUMSAL ÜST BİLGİ (HEADER) */}
         <View style={pdfStyles.headerContainer}>
           <View style={pdfStyles.headerLeft}>
             {logoUrl && <Image src={logoUrl} style={{ width: 110, height: 40, marginBottom: 8 }} />}
@@ -267,7 +191,6 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
           </View>
         </View>
 
-        {/* RAPOR ÖZETİ (FİLTRELER) */}
         <View style={pdfStyles.summaryBox}>
           <View style={pdfStyles.summaryItem}>
             <Text style={pdfStyles.summaryLabel}>Rapor Para Birimi</Text>
@@ -283,7 +206,6 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
           </View>
         </View>
 
-        {/* SADECE SEÇİLİ ÜRÜNLERİN İSTATİSTİKLERİ */}
         {seciliIstatistikler && seciliIstatistikler.length > 0 && (
           <View>
             <Text style={pdfStyles.sectionTitle}>Seçili Ürünlerin Fiyat Analizi</Text>
@@ -291,22 +213,18 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
               {seciliIstatistikler.map((urun, index) => (
                 <View key={index} style={pdfStyles.statCard}>
                   <Text style={pdfStyles.statProductName}>{urun.urunAdi}</Text>
-                  
                   <View style={pdfStyles.statRow}>
                     <Text style={pdfStyles.statLabel}>En Uygun:</Text>
                     <Text style={pdfStyles.statValueMin}>{formatPriceForPDF(urun.enUcuz, paraBirimi)}</Text>
                   </View>
-                  
                   <View style={pdfStyles.statRow}>
                     <Text style={pdfStyles.statLabel}>En Yüksek:</Text>
                     <Text style={pdfStyles.statValueMax}>{formatPriceForPDF(urun.enPahali, paraBirimi)}</Text>
                   </View>
-                  
                   <View style={pdfStyles.statRow}>
                     <Text style={pdfStyles.statLabel}>Fiyat Farkı:</Text>
                     <Text style={pdfStyles.statValueDiff}>{formatPriceForPDF(urun.fark, paraBirimi)}</Text>
                   </View>
-                  
                   <Text style={pdfStyles.statCount}>{urun.adet} Teklif Arasında</Text>
                 </View>
               ))}
@@ -314,7 +232,6 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
           </View>
         )}
 
-        {/* DETAYLI TEKLİF TABLOSU */}
         <View>
           <Text style={pdfStyles.sectionTitle}>Detaylı Fiyat Teklifleri (Seçilenler)</Text>
           <View style={pdfStyles.table}>
@@ -325,15 +242,12 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
               <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>TEDARİKÇİ FİRMA</Text>
               <Text style={[pdfStyles.tableHeaderCell, { flex: 0.9, textAlign: 'right' }]}>BİRİM FİYAT</Text>
             </View>
-            
             {data.map((item, index) => (
               <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowStriped}>
                 <Text style={[pdfStyles.tableCell, { flex: 0.3 }]}>{index + 1}</Text>
                 <Text style={[pdfStyles.tableCellBold, { flex: 1.5 }]}>{item.urun_adi}</Text>
                 <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.marka || '-'}</Text>
                 <Text style={[pdfStyles.tableCell, { flex: 1.2 }]}>{item.firma_adi}</Text>
-                
-                {/* En ucuz ise yeşil, en pahalı ise kırmızı renkli font */}
                 <Text style={[
                   item._etiket === 'ucuz' ? pdfStyles.priceCell : 
                   item._etiket === 'pahali' ? pdfStyles.priceCellHigh : 
@@ -347,12 +261,9 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
           </View>
         </View>
 
-        {/* FOOTER */}
         <View style={pdfStyles.footer} fixed>
           <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'} - Gizli ve Şirket İçi Belgedir.</Text>
-          <Text style={pdfStyles.footerText} render={({ pageNumber, totalPages }) => (
-            `Sayfa ${pageNumber} / ${totalPages}`
-          )} />
+          <Text style={pdfStyles.footerText} render={({ pageNumber, totalPages }) => `Sayfa ${pageNumber} / ${totalPages}`} />
         </View>
       </Page>
     </Document>
@@ -427,6 +338,9 @@ export default function RaporlarPage() {
     return () => unsubscribe()
   }, [])
 
+  // ============================================================
+  // FİLTRELEME VE İSTATİSTİKLER
+  // ============================================================
   useEffect(() => {
     let filtered = [...fiyatlar]
     
@@ -516,7 +430,6 @@ export default function RaporlarPage() {
     }
   }
 
-  // Sadece ekranda işaretli olanların datasını çeker
   const getPreparedData = () => {
     return filteredFiyatlar.filter(item => seciliIds.includes(item.id)).map(item => {
       const etiket = getUrunEtiketi(item)
@@ -529,7 +442,6 @@ export default function RaporlarPage() {
     })
   }
 
-  // PDF içine gönderilmek üzere SADECE SEÇİLİ ürünlerin istatistiklerini hesaplar
   const getSelectedIstatistikler = () => {
     const selectedData = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
     const urunGruplari = {}
@@ -581,7 +493,6 @@ export default function RaporlarPage() {
             <p className="text-slate-400 text-sm mt-1 ml-11">{filteredFiyatlar.length} kayıt listeleniyor</p>
           </div>
           
-          {/* CURRENCY TOGGLE */}
           <div className="flex items-center bg-slate-900/80 p-1 rounded-xl border border-slate-700/50 backdrop-blur-sm">
             {['TRY', 'USD', 'EUR'].map((currency) => (
               <button 
@@ -666,7 +577,7 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* EKRAN İÇİN GENEL ÜRÜN İSTATİSTİKLERİ */}
+        {/* GENEL ÜRÜN İSTATİSTİKLERİ */}
         {urunIstatistikleri.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
@@ -701,7 +612,6 @@ export default function RaporlarPage() {
 
         {/* PDF BUTONU VE TABLO */}
         <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
-          {/* Tablo Üst Araç Çubuğu */}
           <div className="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/80">
             <h3 className="text-sm font-medium text-slate-300">Fiyat Teklifleri Tablosu</h3>
             {seciliIds.length > 0 && (
@@ -712,7 +622,7 @@ export default function RaporlarPage() {
                     firmaBilgileri={firmaBilgileri}
                     logoUrl={logoUrl}
                     paraBirimi={gorunenParaBirimi}
-                    seciliIstatistikler={getSelectedIstatistikler()} // Sadece seçilenlerin analizini PDF'e bas
+                    seciliIstatistikler={getSelectedIstatistikler()}
                   />
                 } 
                 fileName={`Analiz_Raporu_${new Date().toISOString().split('T')[0]}.pdf`}
