@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
-import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../../lib/currency'
+import { convertPrice, formatPrice, getKurlar, kurDegistiginde, getCurrencySymbol } from '../../../../lib/currency'
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 
 // ============================================================
-// PDF STILLERI - KÜÇÜK KARTLAR
+// PDF STILLERI
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
@@ -61,7 +61,6 @@ const pdfStyles = StyleSheet.create({
     fontSize: 7,
     color: '#475569',
   },
-  // ✅ KÜÇÜK KARTLAR
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -104,7 +103,6 @@ const pdfStyles = StyleSheet.create({
     color: '#f59e0b',
     marginTop: 1,
   },
-  // ✅ TABLO - KÜÇÜK
   table: {
     marginTop: 6,
   },
@@ -146,6 +144,13 @@ const pdfStyles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
   },
+  priceCellHigh: {
+    fontSize: 6,
+    fontWeight: 'bold',
+    color: '#ef4444',
+    flex: 1,
+    textAlign: 'right',
+  },
   statusCell: {
     fontSize: 6,
     color: '#10b981',
@@ -181,7 +186,7 @@ const pdfStyles = StyleSheet.create({
 })
 
 // ============================================================
-// PDF BİLEŞENİ - KÜÇÜK KARTLAR
+// PDF BİLEŞENİ
 // ============================================================
 const RaporPDF = ({ 
   data, 
@@ -212,7 +217,7 @@ const RaporPDF = ({
     })
   }
 
-  const getCurrencySymbol = (currency) => {
+  const getSymbol = (currency) => {
     switch(currency) {
       case 'TRY': return '₺'
       case 'USD': return '$'
@@ -232,7 +237,7 @@ const RaporPDF = ({
           </View>
           <View>
             <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
-            <Text style={[pdfStyles.dateText, { marginTop: 2 }]}>Para Birimi: {paraBirimi} ({getCurrencySymbol(paraBirimi)})</Text>
+            <Text style={[pdfStyles.dateText, { marginTop: 2 }]}>Para Birimi: {paraBirimi} ({getSymbol(paraBirimi)})</Text>
           </View>
         </View>
 
@@ -245,7 +250,6 @@ const RaporPDF = ({
           </View>
         </View>
 
-        {/* ✅ KÜÇÜK KARTLAR */}
         {urunIstatistikleri && urunIstatistikleri.length > 0 && (
           <View style={pdfStyles.statsGrid}>
             {urunIstatistikleri.map((urun, index) => (
@@ -259,7 +263,6 @@ const RaporPDF = ({
           </View>
         )}
 
-        {/* ✅ TABLO - MARKA SÜTUNU EKLENDİ */}
         <View style={pdfStyles.table}>
           <View style={pdfStyles.tableHeader}>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 0.4 }]}>#</Text>
@@ -440,12 +443,20 @@ export default function RaporlarPage() {
     return null
   }
 
+  // ✅ DOĞRU FİYAT ÇEVİRİSİ - ORİJİNAL VE ÇEVRİLMİŞ
   const getConvertedPrice = (fiyat, paraBirimi) => {
     const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
-    if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
+    if (isNaN(parsedFiyat) || !parsedFiyat) return { original: '-', converted: '-' }
+    
+    // Önce TL'ye çevir
     const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
+    // TL'den hedef para birimine çevir
     const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
-    return formatPrice(converted, gorunenParaBirimi)
+    
+    return {
+      original: formatPrice(parsedFiyat, paraBirimi),
+      converted: formatPrice(converted, gorunenParaBirimi)
+    }
   }
 
   return (
@@ -584,7 +595,7 @@ export default function RaporlarPage() {
           </div>
         )}
 
-        {/* FİYAT LİSTESİ - MARKA SÜTUNU EKLENDİ */}
+        {/* FİYAT LİSTESİ - ORİJİNAL VE ÇEVRİLMİŞ */}
         {loading ? (
           <div className="text-center py-8">
             <p className="text-slate-400">Yukleniyor...</p>
@@ -624,7 +635,7 @@ export default function RaporlarPage() {
                 {filteredFiyatlar.map((item) => {
                   const isSelected = seciliIds.includes(item.id)
                   const etiket = getUrunEtiketi(item)
-                  const convertedPrice = getConvertedPrice(item.fiyat, item.para_birimi)
+                  const fiyatlar = getConvertedPrice(item.fiyat, item.para_birimi)
 
                   return (
                     <tr 
@@ -661,15 +672,17 @@ export default function RaporlarPage() {
                       </td>
                       <td className="py-2 px-3 text-right">
                         <div className="flex flex-col items-end">
+                          {/* ✅ ÇEVRİLMİŞ FİYAT (BÜYÜK) */}
                           <span className={`text-xs font-bold ${
                             etiket === 'ucuz' ? 'text-emerald-400' : 
                             etiket === 'pahali' ? 'text-red-400' : 
                             'text-white'
                           }`}>
-                            {convertedPrice}
+                            {fiyatlar.converted}
                           </span>
-                          <span className="text-[10px] text-slate-500">
-                            {formatPrice(item.fiyat, item.para_birimi)}
+                          {/* ✅ ORİJİNAL FİYAT (KÜÇÜK) */}
+                          <span className="text-[9px] text-slate-500">
+                            {fiyatlar.original}
                           </span>
                         </div>
                       </td>
