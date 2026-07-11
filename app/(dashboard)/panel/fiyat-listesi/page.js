@@ -24,6 +24,7 @@ export default function FiyatListesiPage() {
   const [duzenlemeModu, setDuzenlemeModu] = useState(false)
   const [duzenlenenVeri, setDuzenlenenVeri] = useState({
     urun_adi: '',
+    marka: '',
     firma_adi: '',
     kategori: '',
     fiyat: '',
@@ -52,10 +53,8 @@ export default function FiyatListesiPage() {
     }
     loadKurlar()
 
-    // Kur değişimini dinle
     const unsubscribe = kurDegistiginde((yeniKurlar) => {
       setKurlar(yeniKurlar)
-      // Fiyatları yeniden hesapla
       fetchFiyatlar()
     })
     return () => unsubscribe()
@@ -70,6 +69,7 @@ export default function FiyatListesiPage() {
       setFilteredFiyatlar(
         fiyatlar.filter(item =>
           item.urun_adi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.marka?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.firma_adi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.kategori?.toLowerCase().includes(searchTerm.toLowerCase())
         )
@@ -101,7 +101,6 @@ export default function FiyatListesiPage() {
   const getConvertedPrice = (fiyat, paraBirimi) => {
     const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
     if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
-    
     const converted = convertPrice(parsedFiyat, paraBirimi, gorunenParaBirimi, kurlar)
     return formatPrice(converted, gorunenParaBirimi)
   }
@@ -138,6 +137,7 @@ export default function FiyatListesiPage() {
     setSecilenFiyat(fiyat)
     setDuzenlenenVeri({
       urun_adi: fiyat.urun_adi,
+      marka: fiyat.marka || '',
       firma_adi: fiyat.firma_adi,
       kategori: fiyat.kategori || '',
       fiyat: fiyat.fiyat,
@@ -161,6 +161,7 @@ export default function FiyatListesiPage() {
     setDuzenlemeModu(false)
     setDuzenlenenVeri({
       urun_adi: secilenFiyat.urun_adi,
+      marka: secilenFiyat.marka || '',
       firma_adi: secilenFiyat.firma_adi,
       kategori: secilenFiyat.kategori || '',
       fiyat: secilenFiyat.fiyat,
@@ -176,6 +177,7 @@ export default function FiyatListesiPage() {
     const yeniVeri = {
       ...secilenFiyat,
       urun_adi: duzenlenenVeri.urun_adi,
+      marka: duzenlenenVeri.marka,
       firma_adi: duzenlenenVeri.firma_adi,
       kategori: duzenlenenVeri.kategori,
       fiyat: parseFloat(duzenlenenVeri.fiyat),
@@ -188,6 +190,7 @@ export default function FiyatListesiPage() {
         .from('fiyat_teklifleri')
         .update({
           urun_adi: yeniVeri.urun_adi,
+          marka: yeniVeri.marka,
           firma_adi: yeniVeri.firma_adi,
           kategori: yeniVeri.kategori,
           fiyat: yeniVeri.fiyat,
@@ -272,6 +275,16 @@ export default function FiyatListesiPage() {
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 />
               </div>
+              {/* ✅ MARKA DÜZENLEME */}
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Marka</label>
+                <input
+                  type="text"
+                  value={duzenlenenVeri.marka}
+                  onChange={(e) => setDuzenlenenVeri({...duzenlenenVeri, marka: e.target.value})}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                />
+              </div>
               <div>
                 <label className="block text-sm text-slate-300 mb-1">Firma</label>
                 <input
@@ -346,6 +359,10 @@ export default function FiyatListesiPage() {
                 <div>
                   <p className="text-xs text-slate-400">Ürün Adı</p>
                   <p className="text-white font-medium">{secilenFiyat.urun_adi}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Marka</p>
+                  <p className="text-white font-medium">{secilenFiyat.marka || '-'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">Firma</p>
@@ -508,7 +525,7 @@ export default function FiyatListesiPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Ürün, firma veya kategori ara..."
+                placeholder="Ürün, marka, firma veya kategori ara..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="bg-slate-800/50 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-64"
@@ -545,6 +562,7 @@ export default function FiyatListesiPage() {
               <thead>
                 <tr className="border-b border-slate-700 bg-slate-800">
                   <th className="text-left py-3 px-4 text-slate-400 font-medium">Ürün</th>
+                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Marka</th>
                   <th className="text-left py-3 px-4 text-slate-400 font-medium">Firma</th>
                   <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">Kategori</th>
                   <th className="text-right py-3 px-4 text-slate-400 font-medium">Fiyat</th>
@@ -562,8 +580,9 @@ export default function FiyatListesiPage() {
                     <tr key={item.id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition group">
                       <td className="py-3 px-4 text-white font-medium group-hover:text-emerald-400 transition-colors">
                         {item.urun_adi}
-                        {isEnUcuz && <span className="ml-2 text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">💚 En Ucuz</span>}
-                        {isEnPahali && <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">❤️ En Pahalı</span>}
+                      </td>
+                      <td className="py-3 px-4 text-slate-300">
+                        {item.marka || '-'}
                       </td>
                       <td className="py-3 px-4 text-slate-300">{item.firma_adi}</td>
                       <td className="py-3 px-4 text-slate-400 hidden md:table-cell">
