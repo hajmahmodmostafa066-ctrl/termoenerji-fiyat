@@ -6,114 +6,153 @@ import { convertPrice, formatPrice, getKurlar, kurDegistiginde, getCurrencySymbo
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 
 // ============================================================
-// PDF STILLERI
+// PDF STILLERI (GÜVENLİ VE EKSTRA PROFESYONEL TASARIM)
+// Not: react-pdf çökmelerini önlemek için shorthand CSS (border: '1px...') 
+// yerine ayrıntılı (borderWidth, borderColor) kullanılmıştır.
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
     padding: 30,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f8fafc',
     fontFamily: 'Helvetica',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottom: '2px solid #10b981',
-    paddingBottom: 12,
-    marginBottom: 15,
+    alignItems: 'flex-start',
+    borderBottomWidth: 2,
+    borderBottomColor: '#1e293b',
+    paddingBottom: 15,
+    marginBottom: 20,
   },
   headerLeft: {
     flexDirection: 'column',
   },
+  logo: {
+    width: 100,
+    height: 35,
+    marginBottom: 6,
+  },
   companyName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#0f172a',
-  },
-  companySub: {
-    fontSize: 8,
-    color: '#64748b',
-    marginTop: 2,
   },
   reportTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#0f172a',
+    fontSize: 11,
+    color: '#3b82f6',
     marginTop: 4,
+    textTransform: 'uppercase',
+  },
+  headerRight: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
   },
   dateText: {
     fontSize: 8,
     color: '#64748b',
-    textAlign: 'right',
+    marginBottom: 4,
+  },
+  currencyBadge: {
+    backgroundColor: '#e2e8f0',
+    padding: 5,
+    borderRadius: 4,
+  },
+  currencyBadgeText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#0f172a',
   },
   filterBox: {
-    backgroundColor: '#f1f5f9',
-    padding: 8,
-    borderRadius: 4,
-    marginVertical: 8,
-  },
-  filterRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderLeftWidth: 4,
+    borderLeftColor: '#3b82f6',
+    borderRadius: 4,
+    padding: 10,
+    marginBottom: 15,
   },
-  filterText: {
+  filterColumn: {
+    flex: 1,
+  },
+  filterLabel: {
     fontSize: 7,
-    color: '#475569',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    marginBottom: 3,
+  },
+  filterValue: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#0f172a',
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 10,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
-    marginVertical: 6,
+    gap: 8,
+    marginBottom: 15,
   },
   statCard: {
-    backgroundColor: '#f8fafc',
-    padding: 4,
-    borderRadius: 3,
-    width: '23%',
-    border: '1px solid #e2e8f0',
+    backgroundColor: '#ffffff',
+    padding: 8,
+    borderRadius: 4,
+    width: '31%',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-  statLabel: {
-    fontSize: 5,
-    color: '#64748b',
-    textTransform: 'uppercase',
-  },
-  statValue: {
-    fontSize: 7,
+  statCardTitle: {
+    fontSize: 8,
     fontWeight: 'bold',
     color: '#0f172a',
-    marginTop: 1,
+    marginBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    paddingBottom: 4,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 3,
+  },
+  statLabel: {
+    fontSize: 7,
+    color: '#64748b',
   },
   statValueGreen: {
     fontSize: 7,
     fontWeight: 'bold',
     color: '#10b981',
-    marginTop: 1,
   },
   statValueRed: {
     fontSize: 7,
     fontWeight: 'bold',
     color: '#ef4444',
-    marginTop: 1,
   },
   statValueAmber: {
     fontSize: 7,
     fontWeight: 'bold',
     color: '#f59e0b',
-    marginTop: 1,
   },
   table: {
-    marginTop: 6,
+    marginTop: 5,
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#0f172a',
-    padding: 4,
-    borderRadius: 3,
+    backgroundColor: '#1e293b',
+    padding: 8,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
   },
   tableHeaderCell: {
-    fontSize: 6,
+    fontSize: 7,
     fontWeight: 'bold',
     color: '#ffffff',
     flex: 1,
@@ -121,68 +160,79 @@ const pdfStyles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
-    padding: 4,
-    borderBottom: '1px solid #e2e8f0',
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
   },
   tableRowAlternate: {
     flexDirection: 'row',
-    padding: 4,
-    borderBottom: '1px solid #e2e8f0',
-    backgroundColor: '#fafafa',
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    backgroundColor: '#f1f5f9',
     alignItems: 'center',
   },
   tableCell: {
-    fontSize: 6,
+    fontSize: 7,
+    color: '#334155',
+    flex: 1,
+  },
+  tableCellBold: {
+    fontSize: 7,
+    fontWeight: 'bold',
     color: '#0f172a',
     flex: 1,
   },
   priceCell: {
-    fontSize: 6,
+    fontSize: 7,
     fontWeight: 'bold',
-    color: '#10b981',
-    flex: 1,
-    textAlign: 'right',
-  },
-  priceCellHigh: {
-    fontSize: 6,
-    fontWeight: 'bold',
-    color: '#ef4444',
+    color: '#0f172a',
     flex: 1,
     textAlign: 'right',
   },
   statusCell: {
-    fontSize: 6,
+    fontSize: 7,
     color: '#10b981',
     flex: 1,
     textAlign: 'center',
+    fontWeight: 'bold',
   },
   statusCellPending: {
-    fontSize: 6,
+    fontSize: 7,
     color: '#eab308',
     flex: 1,
     textAlign: 'center',
+    fontWeight: 'bold',
   },
   statusCellRejected: {
-    fontSize: 6,
+    fontSize: 7,
     color: '#ef4444',
     flex: 1,
     textAlign: 'center',
+    fontWeight: 'bold',
   },
   footer: {
     position: 'absolute',
     bottom: 20,
     left: 30,
     right: 30,
-    borderTop: '1px solid #e2e8f0',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
     paddingTop: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   footerText: {
-    fontSize: 6,
+    fontSize: 7,
     color: '#94a3b8',
   },
+  pageNumber: {
+    fontSize: 7,
+    color: '#94a3b8',
+    fontWeight: 'bold',
+  }
 })
 
 // ============================================================
@@ -229,64 +279,92 @@ const RaporPDF = ({
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
+        
+        {/* KURUMSAL BAŞLIK */}
         <View style={pdfStyles.header}>
           <View style={pdfStyles.headerLeft}>
-            {logoUrl && <Image src={logoUrl} style={{ width: 80, height: 28, marginBottom: 3 }} />}
-            <Text style={pdfStyles.companyName}>{firmaBilgileri?.ad || 'TermoEnerji'}</Text>
-            <Text style={pdfStyles.reportTitle}>Fiyat Karsilastirma Raporu</Text>
+            {logoUrl && <Image src={logoUrl} style={pdfStyles.logo} />}
+            <Text style={pdfStyles.companyName}>{firmaBilgileri?.ad || 'TermoEnerji A.Ş.'}</Text>
+            <Text style={pdfStyles.reportTitle}>Fiyat Karşılaştırma Raporu</Text>
           </View>
-          <View>
+          <View style={pdfStyles.headerRight}>
             <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
-            <Text style={[pdfStyles.dateText, { marginTop: 2 }]}>Para Birimi: {paraBirimi} ({getSymbol(paraBirimi)})</Text>
+            <Text style={pdfStyles.dateText}>Kayıt Sayısı: {data.length}</Text>
+            <View style={pdfStyles.currencyBadge}>
+              <Text style={pdfStyles.currencyBadgeText}>Birim: {paraBirimi} ({getSymbol(paraBirimi)})</Text>
+            </View>
           </View>
         </View>
 
+        {/* FİLTRE BİLGİLERİ KUTUSU */}
         <View style={pdfStyles.filterBox}>
-          <View style={pdfStyles.filterRow}>
-            <Text style={pdfStyles.filterText}>Arama: {baslik || 'Tumu'}</Text>
-            <Text style={pdfStyles.filterText}>Kategori: {kategori || 'Tum Kategoriler'}</Text>
-            <Text style={pdfStyles.filterText}>Firma: {firma || 'Tum Firmalar'}</Text>
-            <Text style={pdfStyles.filterText}>Toplam: {data.length} kayit</Text>
+          <View style={pdfStyles.filterColumn}>
+            <Text style={pdfStyles.filterLabel}>Aranan Ürün</Text>
+            <Text style={pdfStyles.filterValue}>{baslik || 'Tümü'}</Text>
+          </View>
+          <View style={pdfStyles.filterColumn}>
+            <Text style={pdfStyles.filterLabel}>Kategori</Text>
+            <Text style={pdfStyles.filterValue}>{kategori || 'Tüm Kategoriler'}</Text>
+          </View>
+          <View style={pdfStyles.filterColumn}>
+            <Text style={pdfStyles.filterLabel}>Tedarikçi Firma</Text>
+            <Text style={pdfStyles.filterValue}>{firma || 'Tüm Firmalar'}</Text>
           </View>
         </View>
 
+        {/* ÜRÜN İSTATİSTİKLERİ KARTLARI */}
         {urunIstatistikleri && urunIstatistikleri.length > 0 && (
-          <View style={pdfStyles.statsGrid}>
-            {urunIstatistikleri.map((urun, index) => (
-              <View key={index} style={pdfStyles.statCard}>
-                <Text style={pdfStyles.statLabel}>{urun.urunAdi}</Text>
-                <Text style={pdfStyles.statValueGreen}>{formatPrice(urun.enUcuz, paraBirimi)}</Text>
-                <Text style={pdfStyles.statValueRed}>{formatPrice(urun.enPahali, paraBirimi)}</Text>
-                <Text style={pdfStyles.statValueAmber}>Fark: {formatPrice(urun.fark, paraBirimi)}</Text>
-              </View>
-            ))}
-          </View>
+          <>
+            <Text style={pdfStyles.sectionTitle}>Ürün Fiyat Analizi</Text>
+            <View style={pdfStyles.statsGrid}>
+              {urunIstatistikleri.map((urun, index) => (
+                <View key={index} style={pdfStyles.statCard}>
+                  <Text style={pdfStyles.statCardTitle}>{urun.urunAdi}</Text>
+                  <View style={pdfStyles.statRow}>
+                    <Text style={pdfStyles.statLabel}>En Ucuz:</Text>
+                    <Text style={pdfStyles.statValueGreen}>{formatPrice(urun.enUcuz, paraBirimi)}</Text>
+                  </View>
+                  <View style={pdfStyles.statRow}>
+                    <Text style={pdfStyles.statLabel}>En Pahalı:</Text>
+                    <Text style={pdfStyles.statValueRed}>{formatPrice(urun.enPahali, paraBirimi)}</Text>
+                  </View>
+                  <View style={[pdfStyles.statRow, { borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 3, marginTop: 2 }]}>
+                    <Text style={pdfStyles.statLabel}>Fark:</Text>
+                    <Text style={pdfStyles.statValueAmber}>{formatPrice(urun.fark, paraBirimi)}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </>
         )}
 
+        {/* DETAYLI VERİ TABLOSU */}
+        <Text style={pdfStyles.sectionTitle}>Fiyat Listesi Detayı</Text>
         <View style={pdfStyles.table}>
           <View style={pdfStyles.tableHeader}>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 0.4 }]}>#</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>Urun</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.5 }]}>Ürün</Text>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Marka</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Firma</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Kategori</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8, textAlign: 'right' }]}>Fiyat</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.6, textAlign: 'center' }]}>Durum</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>Firma</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Kategori</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1, textAlign: 'right' }]}>Fiyat</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8, textAlign: 'center' }]}>Durum</Text>
           </View>
+          
           {data.map((item, index) => (
             <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowAlternate}>
               <Text style={[pdfStyles.tableCell, { flex: 0.4 }]}>{index + 1}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 1.2 }]}>{item.urun_adi}</Text>
+              <Text style={[pdfStyles.tableCellBold, { flex: 1.5 }]}>{item.urun_adi}</Text>
               <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.marka || '-'}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.firma_adi}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.kategori || 'Genel'}</Text>
-              <Text style={[pdfStyles.priceCell, { flex: 0.8 }]}>
+              <Text style={[pdfStyles.tableCell, { flex: 1.2 }]}>{item.firma_adi}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.kategori || 'Genel'}</Text>
+              <Text style={[pdfStyles.priceCell, { flex: 1 }]}>
                 {formatPrice(item.fiyat, paraBirimi)}
               </Text>
               <Text style={[
                 item.durum === 'approved' ? pdfStyles.statusCell : 
                 item.durum === 'pending' ? pdfStyles.statusCellPending : pdfStyles.statusCellRejected,
-                { flex: 0.6 }
+                { flex: 0.8 }
               ]}>
                 {item.durum === 'approved' ? 'Aktif' : 
                  item.durum === 'pending' ? 'Beklemede' : 'Pasif'}
@@ -295,17 +373,21 @@ const RaporPDF = ({
           ))}
         </View>
 
+        {/* ALT BİLGİ VE SAYFA NUMARASI */}
         <View style={pdfStyles.footer} fixed>
-          <Text style={pdfStyles.footerText}>Telif {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'}</Text>
-          <Text style={pdfStyles.footerText}>Rapor {formatDate(new Date())}</Text>
+          <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'}. Sistem tarafından otomatik üretilmiştir.</Text>
+          <Text render={({ pageNumber, totalPages }) => (
+            `Sayfa ${pageNumber} / ${totalPages}`
+          )} style={pdfStyles.pageNumber} />
         </View>
+
       </Page>
     </Document>
   )
 }
 
 // ============================================================
-// ANA SAYFA
+// ANA SAYFA (HİÇBİR MANTIĞI DEĞİŞTİRİLMEDİ)
 // ============================================================
 export default function RaporlarPage() {
   const [fiyatlar, setFiyatlar] = useState([])
