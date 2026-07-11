@@ -206,7 +206,7 @@ const pdfStyles = StyleSheet.create({
 })
 
 // ============================================================
-// PDF BİLEŞENİ
+// PDF BİLEŞENİ - MARKA SÜTUNU EKLENDİ
 // ============================================================
 const RaporPDF = ({ 
   data, 
@@ -237,6 +237,16 @@ const RaporPDF = ({
     })
   }
 
+  // Para birimi sembolü
+  const getCurrencySymbol = (currency) => {
+    switch(currency) {
+      case 'TRY': return '₺'
+      case 'USD': return '$'
+      case 'EUR': return '€'
+      default: return '₺'
+    }
+  }
+
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
@@ -248,7 +258,7 @@ const RaporPDF = ({
           </View>
           <View>
             <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
-            <Text style={[pdfStyles.dateText, { marginTop: 3 }]}>Para Birimi: {paraBirimi}</Text>
+            <Text style={[pdfStyles.dateText, { marginTop: 3 }]}>Para Birimi: {paraBirimi} ({getCurrencySymbol(paraBirimi)})</Text>
           </View>
         </View>
 
@@ -274,10 +284,12 @@ const RaporPDF = ({
           </View>
         )}
 
+        {/* ✅ TABLO - MARKA SÜTUNU EKLENDİ */}
         <View style={pdfStyles.table}>
           <View style={pdfStyles.tableHeader}>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 0.5 }]}>#</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.5 }]}>Urun</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.3 }]}>Urun</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Marka</Text>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>Firma</Text>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Kategori</Text>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 1, textAlign: 'right' }]}>Fiyat</Text>
@@ -286,7 +298,8 @@ const RaporPDF = ({
           {data.map((item, index) => (
             <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowAlternate}>
               <Text style={[pdfStyles.tableCell, { flex: 0.5 }]}>{index + 1}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 1.5 }]}>{item.urun_adi}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 1.3 }]}>{item.urun_adi}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.marka || '-'}</Text>
               <Text style={[pdfStyles.tableCell, { flex: 1.2 }]}>{item.firma_adi}</Text>
               <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.kategori || 'Genel'}</Text>
               <Text style={[pdfStyles.priceCell, { flex: 1 }]}>
@@ -390,7 +403,6 @@ export default function RaporlarPage() {
 
     setFilteredFiyatlar(filtered)
 
-    // ✅ ÜRÜN BAZINDA İSTATİSTİKLER - DOĞRU PARA BİRİMİ İLE
     const urunGruplari = {}
     filtered.forEach(item => {
       const urunAdi = item.urun_adi || 'Bilinmiyor'
@@ -402,19 +414,15 @@ export default function RaporlarPage() {
 
     const istatistikler = Object.keys(urunGruplari).map(urunAdi => {
       const items = urunGruplari[urunAdi]
-      
-      // ✅ Her ürünün kendi para birimine göre TL'ye çevir
       const tlFiyatlar = items.map(item => {
         const fiyat = parseFloat(item.fiyat)
         const paraBirimi = item.para_birimi || 'TRY'
-        // Ürünün kendi para biriminden TL'ye çevir
         return convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
       })
       
       const enUcuzTL = Math.min(...tlFiyatlar)
       const enPahaliTL = Math.max(...tlFiyatlar)
       
-      // ✅ TL'den hedef para birimine çevir
       const enUcuzConverted = convertPrice(enUcuzTL, 'TRY', gorunenParaBirimi, kurlar)
       const enPahaliConverted = convertPrice(enPahaliTL, 'TRY', gorunenParaBirimi, kurlar)
       
@@ -438,12 +446,10 @@ export default function RaporlarPage() {
 
   const selectedFiyatlar = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
 
-  // ✅ ÜRÜN BAZINDA en ucuz/en pahalı işaretleme - DOĞRU
   const getUrunEtiketi = (item) => {
     const urunItems = filteredFiyatlar.filter(i => i.urun_adi === item.urun_adi)
     if (urunItems.length === 0) return null
     
-    // Her ürünün fiyatını TL'ye çevir
     const tlFiyatlar = urunItems.map(i => {
       const fiyat = parseFloat(i.fiyat)
       const paraBirimi = i.para_birimi || 'TRY'
@@ -459,11 +465,9 @@ export default function RaporlarPage() {
     return null
   }
 
-  // ✅ FİYAT ÇEVİRİSİ - DOĞRU
   const getConvertedPrice = (fiyat, paraBirimi) => {
     const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
     if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
-    // Önce TL'ye çevir, sonra hedef para birimine
     const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
     const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
     return formatPrice(converted, gorunenParaBirimi)
@@ -481,7 +485,6 @@ export default function RaporlarPage() {
             </p>
           </div>
 
-          {/* Para Birimi Seçici */}
           <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-700">
             <button
               onClick={() => setGorunenParaBirimi('TRY')}
@@ -516,7 +519,6 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* FİLTRELER */}
         <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <input
@@ -549,7 +551,6 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* ✅ KÜÇÜK KARTLAR - DOĞRU FİYATLAR */}
         {urunIstatistikleri.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
             {urunIstatistikleri.map((urun, index) => (
@@ -576,7 +577,6 @@ export default function RaporlarPage() {
           </div>
         )}
 
-        {/* PDF RAPOR BUTONU */}
         {selectedFiyatlar.length > 0 && (
           <div className="flex justify-end mb-4">
             <PDFDownloadLink
@@ -606,7 +606,6 @@ export default function RaporlarPage() {
           </div>
         )}
 
-        {/* FİYAT LİSTESİ */}
         {loading ? (
           <div className="text-center py-8">
             <p className="text-slate-400">Yukleniyor...</p>
@@ -635,6 +634,7 @@ export default function RaporlarPage() {
                     />
                   </th>
                   <th className="text-left py-2 px-3 text-slate-400 font-medium text-xs">Urun</th>
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium text-xs">Marka</th>
                   <th className="text-left py-2 px-3 text-slate-400 font-medium text-xs">Firma</th>
                   <th className="text-left py-2 px-3 text-slate-400 font-medium text-xs hidden md:table-cell">Kategori</th>
                   <th className="text-right py-2 px-3 text-slate-400 font-medium text-xs">Fiyat</th>
@@ -675,6 +675,7 @@ export default function RaporlarPage() {
                           </span>
                         )}
                       </td>
+                      <td className="py-2 px-3 text-slate-300 text-xs">{item.marka || '-'}</td>
                       <td className="py-2 px-3 text-slate-300 text-xs">{item.firma_adi}</td>
                       <td className="py-2 px-3 text-slate-400 text-xs hidden md:table-cell">
                         {item.kategori || '-'}
