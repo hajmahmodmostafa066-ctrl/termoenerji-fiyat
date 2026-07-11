@@ -6,11 +6,11 @@ import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 
 // ============================================================
-// PDF STILLERI
+// PDF STILLERI - KÜÇÜK KARTLAR
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 30,
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
   },
@@ -19,86 +19,103 @@ const pdfStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottom: '2px solid #10b981',
-    paddingBottom: 15,
-    marginBottom: 20,
+    paddingBottom: 12,
+    marginBottom: 15,
   },
   headerLeft: {
     flexDirection: 'column',
   },
   companyName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#0f172a',
   },
   companySub: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#64748b',
     marginTop: 2,
   },
   reportTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#0f172a',
     marginTop: 4,
   },
   dateText: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#64748b',
     textAlign: 'right',
   },
   filterBox: {
     backgroundColor: '#f1f5f9',
-    padding: 10,
-    borderRadius: 6,
-    marginVertical: 10,
+    padding: 8,
+    borderRadius: 4,
+    marginVertical: 8,
   },
   filterRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 15,
+    gap: 10,
   },
   filterText: {
-    fontSize: 8,
+    fontSize: 7,
     color: '#475569',
   },
-  summaryBox: {
-    backgroundColor: '#f0fdf4',
-    padding: 12,
-    borderRadius: 6,
-    border: '1px solid #bbf7d0',
-    marginVertical: 10,
+  // ✅ KÜÇÜK KARTLAR
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginVertical: 6,
   },
-  summaryText: {
-    fontSize: 9,
+  statCard: {
+    backgroundColor: '#f8fafc',
+    padding: 4,
+    borderRadius: 3,
+    width: '23%',
+    border: '1px solid #e2e8f0',
+  },
+  statLabel: {
+    fontSize: 5,
+    color: '#64748b',
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    fontSize: 7,
+    fontWeight: 'bold',
     color: '#0f172a',
-    lineHeight: 1.6,
+    marginTop: 1,
   },
-  summaryBold: {
+  statValueGreen: {
+    fontSize: 7,
     fontWeight: 'bold',
-  },
-  summaryGreen: {
     color: '#10b981',
-    fontWeight: 'bold',
+    marginTop: 1,
   },
-  summaryRed: {
+  statValueRed: {
+    fontSize: 7,
+    fontWeight: 'bold',
     color: '#ef4444',
-    fontWeight: 'bold',
+    marginTop: 1,
   },
-  summaryAmber: {
+  statValueAmber: {
+    fontSize: 7,
+    fontWeight: 'bold',
     color: '#f59e0b',
-    fontWeight: 'bold',
+    marginTop: 1,
   },
+  // ✅ TABLO - KÜÇÜK
   table: {
-    marginTop: 8,
+    marginTop: 6,
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#0f172a',
-    padding: 6,
-    borderRadius: 4,
+    padding: 4,
+    borderRadius: 3,
   },
   tableHeaderCell: {
-    fontSize: 7,
+    fontSize: 6,
     fontWeight: 'bold',
     color: '#ffffff',
     flex: 1,
@@ -106,107 +123,65 @@ const pdfStyles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
-    padding: 5,
+    padding: 4,
     borderBottom: '1px solid #e2e8f0',
     alignItems: 'center',
   },
   tableRowAlternate: {
     flexDirection: 'row',
-    padding: 5,
+    padding: 4,
     borderBottom: '1px solid #e2e8f0',
     backgroundColor: '#fafafa',
     alignItems: 'center',
   },
   tableCell: {
-    fontSize: 7,
+    fontSize: 6,
     color: '#0f172a',
     flex: 1,
   },
   priceCell: {
-    fontSize: 7,
+    fontSize: 6,
     fontWeight: 'bold',
     color: '#10b981',
     flex: 1,
     textAlign: 'right',
   },
   statusCell: {
-    fontSize: 7,
+    fontSize: 6,
     color: '#10b981',
     flex: 1,
     textAlign: 'center',
   },
   statusCellPending: {
-    fontSize: 7,
+    fontSize: 6,
     color: '#eab308',
     flex: 1,
     textAlign: 'center',
   },
   statusCellRejected: {
-    fontSize: 7,
+    fontSize: 6,
     color: '#ef4444',
     flex: 1,
     textAlign: 'center',
   },
   footer: {
     position: 'absolute',
-    bottom: 30,
-    left: 40,
-    right: 40,
+    bottom: 20,
+    left: 30,
+    right: 30,
     borderTop: '1px solid #e2e8f0',
-    paddingTop: 10,
+    paddingTop: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   footerText: {
-    fontSize: 7,
-    color: '#94a3b8',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginVertical: 8,
-  },
-  statCard: {
-    backgroundColor: '#f8fafc',
-    padding: 8,
-    borderRadius: 4,
-    width: '23%',
-    border: '1px solid #e2e8f0',
-  },
-  statLabel: {
     fontSize: 6,
-    color: '#64748b',
-    textTransform: 'uppercase',
-  },
-  statValue: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#0f172a',
-    marginTop: 2,
-  },
-  statValueGreen: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#10b981',
-    marginTop: 2,
-  },
-  statValueRed: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#ef4444',
-    marginTop: 2,
-  },
-  statValueAmber: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#f59e0b',
-    marginTop: 2,
+    color: '#94a3b8',
   },
 })
 
 // ============================================================
-// PDF BİLEŞENİ - MARKA SÜTUNU EKLENDİ
+// PDF BİLEŞENİ - KÜÇÜK KARTLAR
 // ============================================================
 const RaporPDF = ({ 
   data, 
@@ -237,7 +212,6 @@ const RaporPDF = ({
     })
   }
 
-  // Para birimi sembolü
   const getCurrencySymbol = (currency) => {
     switch(currency) {
       case 'TRY': return '₺'
@@ -252,13 +226,13 @@ const RaporPDF = ({
       <Page size="A4" style={pdfStyles.page}>
         <View style={pdfStyles.header}>
           <View style={pdfStyles.headerLeft}>
-            {logoUrl && <Image src={logoUrl} style={{ width: 100, height: 35, marginBottom: 4 }} />}
+            {logoUrl && <Image src={logoUrl} style={{ width: 80, height: 28, marginBottom: 3 }} />}
             <Text style={pdfStyles.companyName}>{firmaBilgileri?.ad || 'TermoEnerji'}</Text>
             <Text style={pdfStyles.reportTitle}>Fiyat Karsilastirma Raporu</Text>
           </View>
           <View>
             <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
-            <Text style={[pdfStyles.dateText, { marginTop: 3 }]}>Para Birimi: {paraBirimi} ({getCurrencySymbol(paraBirimi)})</Text>
+            <Text style={[pdfStyles.dateText, { marginTop: 2 }]}>Para Birimi: {paraBirimi} ({getCurrencySymbol(paraBirimi)})</Text>
           </View>
         </View>
 
@@ -271,6 +245,7 @@ const RaporPDF = ({
           </View>
         </View>
 
+        {/* ✅ KÜÇÜK KARTLAR */}
         {urunIstatistikleri && urunIstatistikleri.length > 0 && (
           <View style={pdfStyles.statsGrid}>
             {urunIstatistikleri.map((urun, index) => (
@@ -287,28 +262,28 @@ const RaporPDF = ({
         {/* ✅ TABLO - MARKA SÜTUNU EKLENDİ */}
         <View style={pdfStyles.table}>
           <View style={pdfStyles.tableHeader}>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.5 }]}>#</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.3 }]}>Urun</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Marka</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>Firma</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Kategori</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1, textAlign: 'right' }]}>Fiyat</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8, textAlign: 'center' }]}>Durum</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.4 }]}>#</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>Urun</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Marka</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Firma</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Kategori</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8, textAlign: 'right' }]}>Fiyat</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.6, textAlign: 'center' }]}>Durum</Text>
           </View>
           {data.map((item, index) => (
             <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowAlternate}>
-              <Text style={[pdfStyles.tableCell, { flex: 0.5 }]}>{index + 1}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 1.3 }]}>{item.urun_adi}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.marka || '-'}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 1.2 }]}>{item.firma_adi}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.kategori || 'Genel'}</Text>
-              <Text style={[pdfStyles.priceCell, { flex: 1 }]}>
+              <Text style={[pdfStyles.tableCell, { flex: 0.4 }]}>{index + 1}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 1.2 }]}>{item.urun_adi}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.marka || '-'}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.firma_adi}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.kategori || 'Genel'}</Text>
+              <Text style={[pdfStyles.priceCell, { flex: 0.8 }]}>
                 {formatPrice(item.fiyat, paraBirimi)}
               </Text>
               <Text style={[
                 item.durum === 'approved' ? pdfStyles.statusCell : 
                 item.durum === 'pending' ? pdfStyles.statusCellPending : pdfStyles.statusCellRejected,
-                { flex: 0.8 }
+                { flex: 0.6 }
               ]}>
                 {item.durum === 'approved' ? 'Aktif' : 
                  item.durum === 'pending' ? 'Beklemede' : 'Pasif'}
@@ -519,6 +494,7 @@ export default function RaporlarPage() {
           </div>
         </div>
 
+        {/* FİLTRELER */}
         <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <input
@@ -551,32 +527,34 @@ export default function RaporlarPage() {
           </div>
         </div>
 
+        {/* KÜÇÜK KARTLAR */}
         {urunIstatistikleri.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1.5 mb-4">
             {urunIstatistikleri.map((urun, index) => (
-              <div key={index} className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
-                <p className="text-xs font-semibold text-white truncate" title={urun.urunAdi}>
+              <div key={index} className="bg-slate-800/30 rounded-lg p-1.5 border border-slate-700/50">
+                <p className="text-[10px] font-semibold text-white truncate" title={urun.urunAdi}>
                   {urun.urunAdi}
                 </p>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs text-emerald-400 font-bold">
+                <div className="flex justify-between items-center mt-0.5">
+                  <span className="text-[10px] text-emerald-400 font-bold">
                     {formatPrice(urun.enUcuz, gorunenParaBirimi)}
                   </span>
-                  <span className="text-xs text-red-400 font-bold">
+                  <span className="text-[10px] text-red-400 font-bold">
                     {formatPrice(urun.enPahali, gorunenParaBirimi)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mt-0.5">
-                  <span className="text-[10px] text-amber-400">
+                <div className="flex justify-between items-center">
+                  <span className="text-[8px] text-amber-400">
                     Fark: {formatPrice(urun.fark, gorunenParaBirimi)}
                   </span>
-                  <span className="text-[10px] text-slate-500">{urun.adet} firma</span>
+                  <span className="text-[8px] text-slate-500">{urun.adet} firma</span>
                 </div>
               </div>
             ))}
           </div>
         )}
 
+        {/* PDF RAPOR BUTONU */}
         {selectedFiyatlar.length > 0 && (
           <div className="flex justify-end mb-4">
             <PDFDownloadLink
@@ -597,7 +575,7 @@ export default function RaporlarPage() {
               {({ loading }) => (
                 <button
                   disabled={loading}
-                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-1.5 rounded-lg transition disabled:opacity-50 flex items-center gap-2 text-sm"
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-3 py-1 rounded-lg transition disabled:opacity-50 flex items-center gap-2 text-xs"
                 >
                   PDF Rapor ({selectedFiyatlar.length})
                 </button>
@@ -606,6 +584,7 @@ export default function RaporlarPage() {
           </div>
         )}
 
+        {/* FİYAT LİSTESİ - MARKA SÜTUNU EKLENDİ */}
         {loading ? (
           <div className="text-center py-8">
             <p className="text-slate-400">Yukleniyor...</p>
