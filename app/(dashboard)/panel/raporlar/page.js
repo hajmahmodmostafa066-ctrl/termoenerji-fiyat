@@ -3,182 +3,66 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
 import { convertPrice, formatPrice, getKurlar, kurDegistiginde, getCurrencySymbol } from '../../../../lib/currency'
-import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 
 // ============================================================
-// PROFESYONEL FONT VE RENK TANIMLARI
-// ============================================================
-Font.register({
-  family: 'Roboto',
-  fonts: [
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf', fontWeight: 300 },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf', fontWeight: 400 },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-medium-webfont.ttf', fontWeight: 500 },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', fontWeight: 700 },
-  ]
-})
-
-const COLORS = {
-  primary: '#0f172a',
-  secondary: '#1e293b',
-  accent: '#10b981',
-  accentLight: '#d1fae5',
-  danger: '#ef4444',
-  warning: '#f59e0b',
-  info: '#3b82f6',
-  text: '#1e293b',
-  textLight: '#64748b',
-  border: '#e2e8f0',
-  background: '#f8fafc',
-  white: '#ffffff',
-}
-
-// ============================================================
-// GELİŞMİŞ PDF STILLERI
+// PDF STILLERI
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 50,
-    backgroundColor: COLORS.white,
-    fontFamily: 'Roboto',
+    padding: 40,
+    backgroundColor: '#ffffff',
+    fontFamily: 'Helvetica',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 25,
+    alignItems: 'center',
+    borderBottom: '2px solid #10b981',
     paddingBottom: 15,
-    borderBottom: `2px solid ${COLORS.accent}`,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  companyLogo: {
-    width: 120,
-    height: 45,
-    marginBottom: 8,
-    objectFit: 'contain',
+    marginBottom: 20,
   },
   companyName: {
-    fontSize: 22,
-    fontWeight: 700,
-    color: COLORS.primary,
-    letterSpacing: 1,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0f172a',
   },
   companySub: {
     fontSize: 9,
-    color: COLORS.textLight,
+    color: '#64748b',
     marginTop: 2,
-    lineHeight: 1.4,
   },
-  headerRight: {
-    alignItems: 'flex-end',
-    flexShrink: 0,
-    marginLeft: 20,
-  },
-  reportBadge: {
-    backgroundColor: COLORS.accent,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-    marginBottom: 6,
-  },
-  reportBadgeText: {
-    fontSize: 10,
-    fontWeight: 700,
-    color: COLORS.white,
-    letterSpacing: 0.5,
+  reportTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    marginBottom: 10,
   },
   dateText: {
     fontSize: 9,
-    color: COLORS.textLight,
-    marginTop: 2,
+    color: '#64748b',
+    textAlign: 'right',
   },
-  summaryContainer: {
-    backgroundColor: COLORS.background,
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 20,
-    border: `1px solid ${COLORS.border}`,
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  summaryItem: {
-    flex: 1,
-    minWidth: '22%',
+  filterBox: {
+    backgroundColor: '#f1f5f9',
     padding: 10,
-    backgroundColor: COLORS.white,
-    borderRadius: 6,
-    border: `1px solid ${COLORS.border}`,
+    borderRadius: 4,
+    marginVertical: 10,
   },
-  summaryLabel: {
-    fontSize: 7,
-    fontWeight: 500,
-    color: COLORS.textLight,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: COLORS.primary,
-    marginTop: 4,
-  },
-  summaryValueGreen: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: COLORS.accent,
-    marginTop: 4,
-  },
-  summaryValueRed: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: COLORS.danger,
-    marginTop: 4,
-  },
-  summaryValueAmber: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: COLORS.warning,
-    marginTop: 4,
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    padding: 12,
-    backgroundColor: COLORS.white,
-    borderRadius: 6,
-    border: `1px solid ${COLORS.border}`,
-    marginBottom: 20,
-  },
-  filterTag: {
-    backgroundColor: COLORS.background,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    border: `1px solid ${COLORS.border}`,
-  },
-  filterTagText: {
+  filterText: {
     fontSize: 8,
-    color: COLORS.textLight,
+    color: '#475569',
   },
-  filterTagBold: {
-    fontWeight: 500,
-    color: COLORS.primary,
-  },
+  
+  // Ürün İstatistik Kartları
   statsContainer: {
-    marginBottom: 20,
+    marginVertical: 12,
   },
   statsTitle: {
     fontSize: 12,
-    fontWeight: 700,
-    color: COLORS.primary,
-    marginBottom: 10,
-    letterSpacing: 0.5,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    marginBottom: 8,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -186,19 +70,18 @@ const pdfStyles = StyleSheet.create({
     gap: 6,
   },
   statCard: {
-    width: '24%',
-    backgroundColor: COLORS.white,
+    backgroundColor: '#f8fafc',
     padding: 8,
     borderRadius: 4,
-    border: `1px solid ${COLORS.border}`,
-    minWidth: 120,
+    border: '1px solid #e2e8f0',
+    width: '23%',
+    minWidth: 100,
   },
   statProductName: {
     fontSize: 8,
-    fontWeight: 700,
-    color: COLORS.primary,
-    marginBottom: 4,
-    textOverflow: 'ellipsis',
+    fontWeight: 'bold',
+    color: '#0f172a',
+    marginBottom: 3,
   },
   statRow: {
     flexDirection: 'row',
@@ -207,176 +90,123 @@ const pdfStyles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 6,
-    color: COLORS.textLight,
-    textTransform: 'uppercase',
-  },
-  statValue: {
-    fontSize: 8,
-    fontWeight: 700,
+    color: '#64748b',
   },
   statValueGreen: {
     fontSize: 8,
-    fontWeight: 700,
-    color: COLORS.accent,
+    fontWeight: 'bold',
+    color: '#10b981',
   },
   statValueRed: {
     fontSize: 8,
-    fontWeight: 700,
-    color: COLORS.danger,
+    fontWeight: 'bold',
+    color: '#ef4444',
   },
   statValueAmber: {
     fontSize: 8,
-    fontWeight: 700,
-    color: COLORS.warning,
+    fontWeight: 'bold',
+    color: '#f59e0b',
   },
   statFirmaCount: {
     fontSize: 7,
-    color: COLORS.textLight,
-    marginTop: 2,
+    color: '#94a3b8',
     textAlign: 'center',
+    marginTop: 2,
   },
-  tableContainer: {
-    marginTop: 10,
-    border: `1px solid ${COLORS.border}`,
-    borderRadius: 6,
-    overflow: 'hidden',
+  
+  // Tablo
+  table: {
+    marginTop: 8,
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: COLORS.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    backgroundColor: '#0f172a',
+    padding: 8,
+    borderRadius: 4,
   },
   tableHeaderCell: {
-    fontSize: 8,
-    fontWeight: 700,
-    color: COLORS.white,
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    flex: 1,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    padding: 6,
+    borderBottom: '1px solid #e2e8f0',
     alignItems: 'center',
   },
   tableRowAlternate: {
     flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.background,
-    alignItems: 'center',
-  },
-  tableRowLast: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    padding: 6,
+    borderBottom: '1px solid #e2e8f0',
+    backgroundColor: '#fafafa',
     alignItems: 'center',
   },
   tableCell: {
-    fontSize: 8,
-    color: COLORS.text,
+    fontSize: 7,
+    color: '#0f172a',
+    flex: 1,
   },
   tableCellBold: {
-    fontSize: 8,
-    fontWeight: 700,
-    color: COLORS.primary,
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    flex: 1,
   },
-  tableCellPrice: {
-    fontSize: 8,
-    fontWeight: 700,
-    color: COLORS.accent,
+  priceCell: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: '#10b981',
+    flex: 1,
     textAlign: 'right',
   },
-  tableCellPriceHigh: {
-    fontSize: 8,
-    fontWeight: 700,
-    color: COLORS.danger,
+  priceCellHigh: {
+    fontSize: 7,
+    fontWeight: 'bold',
+    color: '#ef4444',
+    flex: 1,
     textAlign: 'right',
   },
-  statusBadge: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 10,
+  statusCell: {
+    fontSize: 7,
+    color: '#10b981',
+    flex: 1,
     textAlign: 'center',
   },
-  statusText: {
+  statusCellPending: {
     fontSize: 7,
-    fontWeight: 600,
+    color: '#eab308',
+    flex: 1,
+    textAlign: 'center',
   },
-  tag: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 8,
-    marginLeft: 4,
-  },
-  tagCheap: {
-    backgroundColor: '#dcfce7',
-  },
-  tagExpensive: {
-    backgroundColor: '#fee2e2',
-  },
-  tagText: {
-    fontSize: 6,
-    fontWeight: 700,
-  },
-  tagTextCheap: {
-    color: '#16a34a',
-  },
-  tagTextExpensive: {
-    color: '#dc2626',
+  statusCellRejected: {
+    fontSize: 7,
+    color: '#ef4444',
+    flex: 1,
+    textAlign: 'center',
   },
   footer: {
     position: 'absolute',
     bottom: 30,
-    left: 50,
-    right: 50,
-    borderTop: `1px solid ${COLORS.border}`,
-    paddingTop: 12,
+    left: 40,
+    right: 40,
+    borderTop: '1px solid #e2e8f0',
+    paddingTop: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   footerText: {
     fontSize: 7,
-    color: COLORS.textLight,
-  },
-  footerBold: {
-    fontWeight: 500,
-    color: COLORS.primary,
-  },
-  watermark: {
-    position: 'absolute',
-    top: '40%',
-    left: '25%',
-    fontSize: 60,
-    color: '#f1f5f9',
-    transform: 'rotate(-30deg)',
-    opacity: 0.3,
+    color: '#94a3b8',
   },
 })
 
 // ============================================================
 // PDF BİLEŞENİ
 // ============================================================
-const RaporPDF = ({ 
-  data, 
-  firmaBilgileri, 
-  logoUrl, 
-  baslik, 
-  kategori, 
-  firma, 
-  paraBirimi, 
-  urunIstatistikleri,
-  toplamFiyat,
-  ortalamaFiyat,
-  minFiyat,
-  maxFiyat
-}) => {
+const RaporPDF = ({ data, firmaBilgileri, logoUrl, baslik, kategori, firma, paraBirimi, urunIstatistikleri }) => {
   const formatPrice = (price, currency = 'TRY') => {
     if (price === null || price === undefined) return '-'
     const symbol = getCurrencySymbol(currency)
@@ -397,106 +227,41 @@ const RaporPDF = ({
     })
   }
 
-  const formatDateShort = (date) => {
-    if (!date) return '-'
-    return new Date(date).toLocaleString('tr-TR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    })
-  }
-
-  const getStatusStyle = (status) => {
-    switch(status) {
-      case 'approved': return { bg: '#dcfce7', color: '#16a34a', text: 'Aktif' }
-      case 'pending': return { bg: '#fef9c3', color: '#ca8a04', text: 'Beklemede' }
-      default: return { bg: '#fee2e2', color: '#dc2626', text: 'Pasif' }
-    }
-  }
-
-  const colWidths = {
-    no: '6%',
-    product: '20%',
-    brand: '12%',
-    company: '16%',
-    category: '12%',
-    price: '14%',
-    status: '10%',
-    tags: '10%',
-  }
-
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
-        <Text style={pdfStyles.watermark}>RAPOR</Text>
-
+        {/* HEADER */}
         <View style={pdfStyles.header}>
-          <View style={pdfStyles.headerLeft}>
-            {logoUrl && <Image src={logoUrl} style={pdfStyles.companyLogo} />}
+          <View>
+            {logoUrl && <Image src={logoUrl} style={{ width: 100, height: 35, marginBottom: 4 }} />}
             <Text style={pdfStyles.companyName}>{firmaBilgileri?.ad || 'TermoEnerji'}</Text>
             {firmaBilgileri?.adres && <Text style={pdfStyles.companySub}>{firmaBilgileri.adres}</Text>}
-            {firmaBilgileri?.telefon && <Text style={pdfStyles.companySub}>📞 {firmaBilgileri.telefon}</Text>}
-            {firmaBilgileri?.email && <Text style={pdfStyles.companySub}>✉️ {firmaBilgileri.email}</Text>}
+            {firmaBilgileri?.telefon && <Text style={pdfStyles.companySub}>Tel: {firmaBilgileri.telefon}</Text>}
           </View>
-          <View style={pdfStyles.headerRight}>
-            <View style={pdfStyles.reportBadge}>
-              <Text style={pdfStyles.reportBadgeText}>FİYAT RAPORU</Text>
-            </View>
-            <Text style={pdfStyles.dateText}>📅 Oluşturma: {formatDate(new Date())}</Text>
-            <Text style={pdfStyles.dateText}>💰 Para Birimi: {paraBirimi}</Text>
-            <Text style={pdfStyles.dateText}>📊 Toplam: {data.length} kayıt</Text>
+          <View>
+            <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
+            <Text style={[pdfStyles.dateText, { marginTop: 3 }]}>Para Birimi: {paraBirimi}</Text>
           </View>
         </View>
 
-        <View style={pdfStyles.summaryContainer}>
-          <View style={pdfStyles.summaryGrid}>
-            <View style={pdfStyles.summaryItem}>
-              <Text style={pdfStyles.summaryLabel}>Toplam Kayıt</Text>
-              <Text style={pdfStyles.summaryValue}>{data.length}</Text>
-            </View>
-            <View style={pdfStyles.summaryItem}>
-              <Text style={pdfStyles.summaryLabel}>Toplam Fiyat</Text>
-              <Text style={pdfStyles.summaryValueGreen}>{formatPrice(toplamFiyat, paraBirimi)}</Text>
-            </View>
-            <View style={pdfStyles.summaryItem}>
-              <Text style={pdfStyles.summaryLabel}>Ortalama Fiyat</Text>
-              <Text style={pdfStyles.summaryValue}>{formatPrice(ortalamaFiyat, paraBirimi)}</Text>
-            </View>
-            <View style={pdfStyles.summaryItem}>
-              <Text style={pdfStyles.summaryLabel}>Fiyat Aralığı</Text>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 }}>
-                <Text style={pdfStyles.summaryValueGreen}>{formatPrice(minFiyat, paraBirimi)}</Text>
-                <Text style={pdfStyles.summaryValueRed}>{formatPrice(maxFiyat, paraBirimi)}</Text>
-              </View>
-            </View>
+        {/* FİLTRE BİLGİLERİ */}
+        <View style={pdfStyles.filterBox}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+            <Text style={pdfStyles.filterText}>🔍 Arama: {baslik || 'Tümü'}</Text>
+            <Text style={pdfStyles.filterText}>📂 Kategori: {kategori || 'Tüm Kategoriler'}</Text>
+            <Text style={pdfStyles.filterText}>🏢 Firma: {firma || 'Tüm Firmalar'}</Text>
+            <Text style={pdfStyles.filterText}>📦 Toplam: {data.length} kayıt</Text>
           </View>
         </View>
 
-        <View style={pdfStyles.filterContainer}>
-          <View style={pdfStyles.filterTag}>
-            <Text style={pdfStyles.filterTagText}>
-              🔍 <Text style={pdfStyles.filterTagBold}>{baslik || 'Tümü'}</Text>
-            </Text>
-          </View>
-          <View style={pdfStyles.filterTag}>
-            <Text style={pdfStyles.filterTagText}>
-              📂 <Text style={pdfStyles.filterTagBold}>{kategori || 'Tüm Kategoriler'}</Text>
-            </Text>
-          </View>
-          <View style={pdfStyles.filterTag}>
-            <Text style={pdfStyles.filterTagText}>
-              🏢 <Text style={pdfStyles.filterTagBold}>{firma || 'Tüm Firmalar'}</Text>
-            </Text>
-          </View>
-        </View>
-
+        {/* ÜRÜN BAZLI FİYAT ANALİZİ KARTLARI */}
         {urunIstatistikleri && urunIstatistikleri.length > 0 && (
           <View style={pdfStyles.statsContainer}>
             <Text style={pdfStyles.statsTitle}>📊 Ürün Bazlı Fiyat Analizi</Text>
             <View style={pdfStyles.statsGrid}>
-              {urunIstatistikleri.slice(0, 8).map((urun, index) => (
+              {urunIstatistikleri.map((urun, index) => (
                 <View key={index} style={pdfStyles.statCard}>
-                  <Text style={pdfStyles.statProductName} numberOfLines={1}>{urun.urunAdi}</Text>
+                  <Text style={pdfStyles.statProductName}>{urun.urunAdi}</Text>
                   <View style={pdfStyles.statRow}>
                     <Text style={pdfStyles.statLabel}>En Ucuz</Text>
                     <Text style={pdfStyles.statValueGreen}>{formatPrice(urun.enUcuz, paraBirimi)}</Text>
@@ -516,84 +281,49 @@ const RaporPDF = ({
           </View>
         )}
 
-        <View style={pdfStyles.tableContainer}>
+        {/* TABLO */}
+        <View style={pdfStyles.table}>
           <View style={pdfStyles.tableHeader}>
-            <Text style={[pdfStyles.tableHeaderCell, { width: colWidths.no, textAlign: 'center' }]}>#</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { width: colWidths.product }]}>Ürün</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { width: colWidths.brand }]}>Marka</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { width: colWidths.company }]}>Firma</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { width: colWidths.category }]}>Kategori</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { width: colWidths.price, textAlign: 'right' }]}>Fiyat</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { width: colWidths.status, textAlign: 'center' }]}>Durum</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { width: colWidths.tags, textAlign: 'center' }]}>Etiket</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.4 }]}>#</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.3 }]}>Ürün</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Marka</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Firma</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Kategori</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8, textAlign: 'right' }]}>Fiyat</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.6, textAlign: 'center' }]}>Durum</Text>
           </View>
           
-          {data.slice(0, 20).map((item, index) => {
-            const isLast = index === data.length - 1 || index === 19
-            const statusInfo = getStatusStyle(item.durum)
-            const etiket = item._etiket || null
-            
-            return (
-              <View key={index} style={[
-                isLast ? pdfStyles.tableRowLast : (index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowAlternate)
+          {data.map((item, index) => (
+            <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowAlternate}>
+              <Text style={[pdfStyles.tableCell, { flex: 0.4 }]}>{index + 1}</Text>
+              <Text style={[pdfStyles.tableCellBold, { flex: 1.3 }]}>{item.urun_adi}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.marka || '-'}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.firma_adi}</Text>
+              <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.kategori || 'Genel'}</Text>
+              <Text style={[
+                item._etiket === 'ucuz' ? pdfStyles.priceCell : 
+                item._etiket === 'pahali' ? pdfStyles.priceCellHigh : 
+                pdfStyles.priceCell,
+                { flex: 0.8 }
               ]}>
-                <Text style={[pdfStyles.tableCell, { width: colWidths.no, textAlign: 'center' }]}>{index + 1}</Text>
-                <Text style={[pdfStyles.tableCellBold, { width: colWidths.product }]}>{item.urun_adi}</Text>
-                <Text style={[pdfStyles.tableCell, { width: colWidths.brand }]}>{item.marka || '-'}</Text>
-                <Text style={[pdfStyles.tableCell, { width: colWidths.company }]}>{item.firma_adi}</Text>
-                <Text style={[pdfStyles.tableCell, { width: colWidths.category }]}>{item.kategori || 'Genel'}</Text>
-                <Text style={[
-                  etiket === 'ucuz' ? pdfStyles.tableCellPrice : 
-                  etiket === 'pahali' ? pdfStyles.tableCellPriceHigh : 
-                  pdfStyles.tableCellPrice,
-                  { width: colWidths.price }
-                ]}>
-                  {formatPrice(item._convertedPrice || item.fiyat, paraBirimi)}
-                </Text>
-                <View style={{ width: colWidths.status, alignItems: 'center' }}>
-                  <View style={[pdfStyles.statusBadge, { backgroundColor: statusInfo.bg }]}>
-                    <Text style={[pdfStyles.statusText, { color: statusInfo.color }]}>{statusInfo.text}</Text>
-                  </View>
-                </View>
-                <View style={{ width: colWidths.tags, alignItems: 'center' }}>
-                  {etiket === 'ucuz' && (
-                    <View style={[pdfStyles.tag, pdfStyles.tagCheap]}>
-                      <Text style={[pdfStyles.tagText, pdfStyles.tagTextCheap]}>⭐ En Ucuz</Text>
-                    </View>
-                  )}
-                  {etiket === 'pahali' && (
-                    <View style={[pdfStyles.tag, pdfStyles.tagExpensive]}>
-                      <Text style={[pdfStyles.tagText, pdfStyles.tagTextExpensive]}>⚠️ En Pahalı</Text>
-                    </View>
-                  )}
-                  {!etiket && <Text style={{ fontSize: 6, color: COLORS.textLight }}>-</Text>}
-                </View>
-              </View>
-            )
-          })}
+                {formatPrice(item._convertedPrice || item.fiyat, paraBirimi)}
+              </Text>
+              <Text style={[
+                item.durum === 'approved' ? pdfStyles.statusCell : 
+                item.durum === 'pending' ? pdfStyles.statusCellPending : pdfStyles.statusCellRejected,
+                { flex: 0.6, textAlign: 'center' }
+              ]}>
+                {item.durum === 'approved' ? 'Aktif' : 
+                 item.durum === 'pending' ? 'Beklemede' : 'Pasif'}
+              </Text>
+            </View>
+          ))}
         </View>
 
-        {data.length > 20 && (
-          <View style={{ marginTop: 8, alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 7, color: COLORS.textLight, fontStyle: 'italic' }}>
-              * {data.length - 20} kayıt daha gösterilmemiştir
-            </Text>
-          </View>
-        )}
-
+        {/* FOOTER */}
         <View style={pdfStyles.footer} fixed>
-          <View>
-            <Text style={pdfStyles.footerText}>
-              © {new Date().getFullYear()} <Text style={pdfStyles.footerBold}>{firmaBilgileri?.ad || 'TermoEnerji'}</Text>
-            </Text>
-            <Text style={[pdfStyles.footerText, { marginTop: 2 }]}>Tüm hakları saklıdır.</Text>
-          </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={pdfStyles.footerText}>
-              Rapor No: <Text style={pdfStyles.footerBold}>#{new Date().getTime().toString().slice(-8)}</Text>
-            </Text>
-            <Text style={[pdfStyles.footerText, { marginTop: 2 }]}>{formatDate(new Date())}</Text>
-          </View>
+          <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'} - Tüm hakları saklıdır.</Text>
+          <Text style={pdfStyles.footerText}>Bu rapor {formatDate(new Date())} tarihinde oluşturulmuştur.</Text>
         </View>
       </Page>
     </Document>
@@ -618,94 +348,59 @@ export default function RaporlarPage() {
   const [gorunenParaBirimi, setGorunenParaBirimi] = useState('TRY')
   const [kurlar, setKurlar] = useState({ usdTry: 34.50, eurTry: 37.20 })
   const [urunIstatistikleri, setUrunIstatistikleri] = useState([])
-  const [toplamFiyat, setToplamFiyat] = useState(0)
-  const [ortalamaFiyat, setOrtalamaFiyat] = useState(0)
-  const [minFiyat, setMinFiyat] = useState(0)
-  const [maxFiyat, setMaxFiyat] = useState(0)
 
   // ============================================================
-  // VERİLERİ ÇEKEN useEffect'ler
+  // VERİLERİ ÇEK
   // ============================================================
-  
-  // 1. Fiyat verilerini ve diğer verileri çek
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
       try {
-        // Fiyat verilerini çek
-        const { data: fiyatData, error: fiyatError } = await supabase
+        const { data: fiyatData } = await supabase
           .from('fiyat_teklifleri')
           .select('*')
           .order('created_at', { ascending: false })
         
-        if (fiyatError) {
-          console.error('Fiyat verisi çekme hatası:', fiyatError)
-        } else {
-          setFiyatlar(fiyatData || [])
-          setFilteredFiyatlar(fiyatData || [])
-        }
+        setFiyatlar(fiyatData || [])
+        setFilteredFiyatlar(fiyatData || [])
 
-        // Firmaları çek
-        const { data: firmalarData, error: firmalarError } = await supabase
-          .from('firmalar')
-          .select('ad')
-        
-        if (!firmalarError) {
-          setFirmalar(firmalarData || [])
-        }
+        const { data: firmalarData } = await supabase.from('firmalar').select('ad')
+        setFirmalar(firmalarData || [])
 
-        // Kategorileri çek
-        const { data: kategoriData, error: kategoriError } = await supabase
-          .from('kategoriler')
-          .select('ad')
-        
-        if (!kategoriError) {
-          setKategoriler(kategoriData || [])
-        }
+        const { data: kategoriData } = await supabase.from('kategoriler').select('ad')
+        setKategoriler(kategoriData || [])
 
-        // Firma bilgilerini çek
-        const { data: firmaData, error: firmaError } = await supabase
+        const { data: firmaData } = await supabase
           .from('firma_bilgileri')
           .select('*')
           .maybeSingle()
         
-        if (!firmaError && firmaData) {
+        if (firmaData) {
           setFirmaBilgileri(firmaData)
           setLogoUrl(firmaData.logo_url || '')
         }
-
       } catch (error) {
         console.error('Veri yükleme hatası:', error)
       } finally {
         setLoading(false)
       }
     }
-    
     loadData()
   }, [])
 
-  // 2. Kurları çek
+  // Kurları çek
   useEffect(() => {
     const loadKurlar = async () => {
-      try {
-        const k = await getKurlar()
-        setKurlar(k)
-      } catch (error) {
-        console.error('Kur çekme hatası:', error)
-      }
+      const k = await getKurlar()
+      setKurlar(k)
     }
     loadKurlar()
-    
-    const unsubscribe = kurDegistiginde((yeniKurlar) => {
-      setKurlar(yeniKurlar)
-    })
-    
+    const unsubscribe = kurDegistiginde((yeniKurlar) => setKurlar(yeniKurlar))
     return () => unsubscribe()
   }, [])
 
-  // 3. Filtreleme ve istatistik hesaplama
+  // Filtreleme ve istatistik
   useEffect(() => {
-    // Filtrele
     let filtered = [...fiyatlar]
     
     if (arama.trim()) {
@@ -713,24 +408,19 @@ export default function RaporlarPage() {
         item.urun_adi?.toLowerCase().includes(arama.toLowerCase())
       )
     }
-    
     if (filtreKategori) {
       filtered = filtered.filter(item => item.kategori === filtreKategori)
     }
-    
     if (filtreFirma) {
       filtered = filtered.filter(item => item.firma_adi === filtreFirma)
     }
-    
     setFilteredFiyatlar(filtered)
 
     // Ürün istatistikleri
     const urunGruplari = {}
     filtered.forEach(item => {
       const urunAdi = item.urun_adi || 'Bilinmiyor'
-      if (!urunGruplari[urunAdi]) {
-        urunGruplari[urunAdi] = []
-      }
+      if (!urunGruplari[urunAdi]) urunGruplari[urunAdi] = []
       urunGruplari[urunAdi].push(item)
     })
 
@@ -755,38 +445,12 @@ export default function RaporlarPage() {
         adet: items.length
       }
     })
-    
     setUrunIstatistikleri(istatistikler)
-
-    // Fiyat istatistikleri
-    const fiyatlarTL = filtered.map(item => {
-      const fiyat = parseFloat(item.fiyat)
-      const paraBirimi = item.para_birimi || 'TRY'
-      return convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
-    })
-    
-    if (fiyatlarTL.length > 0) {
-      const toplam = fiyatlarTL.reduce((a, b) => a + b, 0)
-      const ortalama = toplam / fiyatlarTL.length
-      const min = Math.min(...fiyatlarTL)
-      const max = Math.max(...fiyatlarTL)
-      
-      setToplamFiyat(convertPrice(toplam, 'TRY', gorunenParaBirimi, kurlar))
-      setOrtalamaFiyat(convertPrice(ortalama, 'TRY', gorunenParaBirimi, kurlar))
-      setMinFiyat(convertPrice(min, 'TRY', gorunenParaBirimi, kurlar))
-      setMaxFiyat(convertPrice(max, 'TRY', gorunenParaBirimi, kurlar))
-    } else {
-      setToplamFiyat(0)
-      setOrtalamaFiyat(0)
-      setMinFiyat(0)
-      setMaxFiyat(0)
-    }
   }, [arama, filtreKategori, filtreFirma, fiyatlar, gorunenParaBirimi, kurlar])
 
   // ============================================================
   // YARDIMCI FONKSİYONLAR
   // ============================================================
-
   const toggleSecim = (id) => {
     setSeciliIds(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -795,7 +459,7 @@ export default function RaporlarPage() {
 
   const getUrunEtiketi = (item) => {
     const urunItems = filteredFiyatlar.filter(i => i.urun_adi === item.urun_adi)
-    if (urunItems.length === 0) return null
+    if (urunItems.length < 2) return null
     
     const tlFiyatlar = urunItems.map(i => {
       const fiyat = parseFloat(i.fiyat)
@@ -807,8 +471,8 @@ export default function RaporlarPage() {
     const maxFiyat = Math.max(...tlFiyatlar)
     const mevcutTL = convertPrice(parseFloat(item.fiyat), item.para_birimi || 'TRY', 'TRY', kurlar)
     
-    if (mevcutTL === minFiyat && tlFiyatlar.length > 1) return 'ucuz'
-    if (mevcutTL === maxFiyat && tlFiyatlar.length > 1) return 'pahali'
+    if (mevcutTL === minFiyat) return 'ucuz'
+    if (mevcutTL === maxFiyat) return 'pahali'
     return null
   }
 
@@ -817,10 +481,8 @@ export default function RaporlarPage() {
     if (isNaN(parsedFiyat) || !parsedFiyat) {
       return { original: '-', converted: '-', convertedValue: 0 }
     }
-    
     const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
     const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
-    
     return {
       original: formatPrice(parsedFiyat, paraBirimi),
       converted: formatPrice(converted, gorunenParaBirimi),
@@ -828,7 +490,6 @@ export default function RaporlarPage() {
     }
   }
 
-  // PDF için verileri hazırla
   const getPreparedData = () => {
     return filteredFiyatlar.filter(item => seciliIds.includes(item.id)).map(item => {
       const etiket = getUrunEtiketi(item)
@@ -844,44 +505,41 @@ export default function RaporlarPage() {
   return (
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* HEADER */}
         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">📊 Fiyat Raporlama</h1>
-            <p className="text-slate-400 text-sm">
-              {filteredFiyatlar.length} kayıt gösteriliyor
-            </p>
+            <h1 className="text-2xl font-bold text-white">📊 Raporlar</h1>
+            <p className="text-slate-400 text-sm">{filteredFiyatlar.length} kayıt</p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-700">
-              <button 
-                onClick={() => setGorunenParaBirimi('TRY')} 
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                  gorunenParaBirimi === 'TRY' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                ₺ TL
-              </button>
-              <button 
-                onClick={() => setGorunenParaBirimi('USD')} 
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                  gorunenParaBirimi === 'USD' ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                $ USD
-              </button>
-              <button 
-                onClick={() => setGorunenParaBirimi('EUR')} 
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                  gorunenParaBirimi === 'EUR' ? 'bg-purple-500/20 text-purple-400' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                € EUR              </button>
-            </div>
+          <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-700">
+            <button 
+              onClick={() => setGorunenParaBirimi('TRY')} 
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                gorunenParaBirimi === 'TRY' ? 'bg-emerald-500/20 text-emerald-400' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              TL
+            </button>
+            <button 
+              onClick={() => setGorunenParaBirimi('USD')} 
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                gorunenParaBirimi === 'USD' ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              USD
+            </button>
+            <button 
+              onClick={() => setGorunenParaBirimi('EUR')} 
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                gorunenParaBirimi === 'EUR' ? 'bg-purple-500/20 text-purple-400' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              EUR
+            </button>
           </div>
         </div>
 
-        {/* Filtreler */}
+        {/* FİLTRELER */}
         <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <input 
@@ -912,13 +570,11 @@ export default function RaporlarPage() {
               ))}
             </select>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">
-                {seciliIds.length} seçili
-              </span>
+              <span className="text-xs text-slate-400">{seciliIds.length} seçili</span>
               {seciliIds.length > 0 && (
                 <button 
                   onClick={() => setSeciliIds([])} 
-                  className="text-xs text-red-400 hover:text-red-300 transition"
+                  className="text-xs text-red-400 hover:text-red-300"
                 >
                   Temizle
                 </button>
@@ -927,46 +583,12 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* İstatistikler */}
-        {filteredFiyatlar.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-            <div className="bg-slate-800/30 rounded-lg p-3 border border-slate-700/50">
-              <p className="text-xs text-slate-400">Toplam Kayıt</p>
-              <p className="text-lg font-bold text-white">{filteredFiyatlar.length}</p>
-            </div>
-            <div className="bg-slate-800/30 rounded-lg p-3 border border-slate-700/50">
-              <p className="text-xs text-slate-400">Toplam Fiyat</p>
-              <p className="text-lg font-bold text-emerald-400">
-                {formatPrice(toplamFiyat, gorunenParaBirimi)}
-              </p>
-            </div>
-            <div className="bg-slate-800/30 rounded-lg p-3 border border-slate-700/50">
-              <p className="text-xs text-slate-400">Ortalama Fiyat</p>
-              <p className="text-lg font-bold text-white">
-                {formatPrice(ortalamaFiyat, gorunenParaBirimi)}
-              </p>
-            </div>
-            <div className="bg-slate-800/30 rounded-lg p-3 border border-slate-700/50">
-              <p className="text-xs text-slate-400">Fiyat Aralığı</p>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-bold text-emerald-400">
-                  {formatPrice(minFiyat, gorunenParaBirimi)}
-                </span>
-                <span className="text-xs text-slate-500">-</span>
-                <span className="text-sm font-bold text-red-400">
-                  {formatPrice(maxFiyat, gorunenParaBirimi)}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Ürün İstatistikleri */}
+        {/* ÜRÜN İSTATİSTİKLERİ */}
         {urunIstatistikleri.length > 0 && (
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-white mb-2">📊 Ürün Bazlı Fiyat Analizi</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {urunIstatistikleri.slice(0, 4).map((urun, index) => (
+              {urunIstatistikleri.map((urun, index) => (
                 <div key={index} className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
                   <p className="text-xs font-medium text-white truncate">{urun.urunAdi}</p>
                   <div className="flex justify-between items-center mt-1">
@@ -989,7 +611,7 @@ export default function RaporlarPage() {
           </div>
         )}
 
-        {/* PDF İndirme Butonu */}
+        {/* PDF BUTONU */}
         {seciliIds.length > 0 && (
           <div className="flex justify-end mb-4">
             <PDFDownloadLink 
@@ -1003,43 +625,30 @@ export default function RaporlarPage() {
                   firma={filtreFirma || 'Tüm Firmalar'}
                   paraBirimi={gorunenParaBirimi}
                   urunIstatistikleri={urunIstatistikleri}
-                  toplamFiyat={toplamFiyat}
-                  ortalamaFiyat={ortalamaFiyat}
-                  minFiyat={minFiyat}
-                  maxFiyat={maxFiyat}
                 />
               } 
-              fileName={`Fiyat_Raporu_${new Date().toISOString().split('T')[0]}.pdf`}
+              fileName={`rapor_${new Date().toISOString().split('T')[0]}.pdf`}
             >
               {({ loading }) => (
                 <button 
                   disabled={loading} 
-                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2 font-medium"
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2 text-sm"
                 >
-                  {loading ? (
-                    <>
-                      <span className="animate-spin">⏳</span>
-                      PDF Oluşturuluyor...
-                    </>
-                  ) : (
-                    <>
-                      📄 PDF Rapor İndir ({seciliIds.length} kayıt)
-                    </>
-                  )}
+                  {loading ? '⏳ Oluşturuluyor...' : `📄 PDF Rapor (${seciliIds.length})`}
                 </button>
               )}
             </PDFDownloadLink>
           </div>
         )}
 
-        {/* Tablo */}
+        {/* TABLO */}
         {loading ? (
           <div className="text-center py-8">
-            <p className="text-slate-400">⏳ Yükleniyor...</p>
+            <p className="text-slate-400">Yükleniyor...</p>
           </div>
         ) : filteredFiyatlar.length === 0 ? (
           <div className="text-center py-8 bg-slate-800/50 rounded-xl border border-slate-700">
-            <p className="text-slate-400">📭 Henüz fiyat kaydı bulunmuyor</p>
+            <p className="text-slate-400">Henüz fiyat bulunmuyor</p>
           </div>
         ) : (
           <div className="overflow-x-auto bg-slate-800/50 rounded-xl border border-slate-700">
@@ -1065,8 +674,7 @@ export default function RaporlarPage() {
                   <th className="text-left py-2 px-3 text-slate-400 font-medium text-xs">Firma</th>
                   <th className="text-left py-2 px-3 text-slate-400 font-medium text-xs hidden lg:table-cell">Kategori</th>
                   <th className="text-right py-2 px-3 text-slate-400 font-medium text-xs">Fiyat</th>
-                  <th className="text-center py-2 px-3 text-slate-400 font-medium text-xs hidden sm:table-cell">Durum</th>
-                  <th className="text-center py-2 px-3 text-slate-400 font-medium text-xs hidden xl:table-cell">Etiket</th>
+                  <th className="text-center py-2 px-3 text-slate-400 font-medium text-xs">Durum</th>
                 </tr>
               </thead>
               <tbody>
@@ -1088,10 +696,10 @@ export default function RaporlarPage() {
                       <td className="py-2 px-3 text-white text-xs font-medium">
                         {item.urun_adi}
                         {etiket === 'ucuz' && (
-                          <span className="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">⭐ En Ucuz</span>
+                          <span className="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">En Ucuz</span>
                         )}
                         {etiket === 'pahali' && (
-                          <span className="ml-1 text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">⚠️ En Pahalı</span>
+                          <span className="ml-1 text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">En Pahalı</span>
                         )}
                       </td>
                       <td className="py-2 px-3 text-slate-300 text-xs hidden md:table-cell">{item.marka || '-'}</td>
@@ -1109,7 +717,7 @@ export default function RaporlarPage() {
                           <span className="text-[9px] text-slate-500">{fiyatlar.original}</span>
                         </div>
                       </td>
-                      <td className="py-2 px-3 text-center hidden sm:table-cell">
+                      <td className="py-2 px-3 text-center">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full ${
                           item.durum === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 
                           item.durum === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : 
@@ -1119,15 +727,6 @@ export default function RaporlarPage() {
                            item.durum === 'pending' ? 'Beklemede' : 
                            'Reddedildi'}
                         </span>
-                      </td>
-                      <td className="py-2 px-3 text-center hidden xl:table-cell">
-                        {etiket === 'ucuz' && (
-                          <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">⭐</span>
-                        )}
-                        {etiket === 'pahali' && (
-                          <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">⚠️</span>
-                        )}
-                        {!etiket && <span className="text-xs text-slate-500">-</span>}
                       </td>
                     </tr>
                   )
