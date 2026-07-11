@@ -390,7 +390,7 @@ export default function RaporlarPage() {
 
     setFilteredFiyatlar(filtered)
 
-    // Ürün bazında istatistikler
+    // ✅ ÜRÜN BAZINDA İSTATİSTİKLER - DOĞRU PARA BİRİMİ İLE
     const urunGruplari = {}
     filtered.forEach(item => {
       const urunAdi = item.urun_adi || 'Bilinmiyor'
@@ -402,13 +402,21 @@ export default function RaporlarPage() {
 
     const istatistikler = Object.keys(urunGruplari).map(urunAdi => {
       const items = urunGruplari[urunAdi]
-      const fiyatlar = items.map(i => parseFloat(i.fiyat))
-      const enUcuz = Math.min(...fiyatlar)
-      const enPahali = Math.max(...fiyatlar)
       
-      // DOĞRU ÇEVİRİ
-      const enUcuzConverted = convertPrice(enUcuz, 'TRY', gorunenParaBirimi, kurlar)
-      const enPahaliConverted = convertPrice(enPahali, 'TRY', gorunenParaBirimi, kurlar)
+      // ✅ Her ürünün kendi para birimine göre TL'ye çevir
+      const tlFiyatlar = items.map(item => {
+        const fiyat = parseFloat(item.fiyat)
+        const paraBirimi = item.para_birimi || 'TRY'
+        // Ürünün kendi para biriminden TL'ye çevir
+        return convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
+      })
+      
+      const enUcuzTL = Math.min(...tlFiyatlar)
+      const enPahaliTL = Math.max(...tlFiyatlar)
+      
+      // ✅ TL'den hedef para birimine çevir
+      const enUcuzConverted = convertPrice(enUcuzTL, 'TRY', gorunenParaBirimi, kurlar)
+      const enPahaliConverted = convertPrice(enPahaliTL, 'TRY', gorunenParaBirimi, kurlar)
       
       return {
         urunAdi: urunAdi,
@@ -430,25 +438,34 @@ export default function RaporlarPage() {
 
   const selectedFiyatlar = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
 
-  // Ürün bazında en ucuz/en pahalı işaretleme
+  // ✅ ÜRÜN BAZINDA en ucuz/en pahalı işaretleme - DOĞRU
   const getUrunEtiketi = (item) => {
     const urunItems = filteredFiyatlar.filter(i => i.urun_adi === item.urun_adi)
     if (urunItems.length === 0) return null
     
-    const fiyatlar = urunItems.map(i => parseFloat(i.fiyat))
-    const minFiyat = Math.min(...fiyatlar)
-    const maxFiyat = Math.max(...fiyatlar)
+    // Her ürünün fiyatını TL'ye çevir
+    const tlFiyatlar = urunItems.map(i => {
+      const fiyat = parseFloat(i.fiyat)
+      const paraBirimi = i.para_birimi || 'TRY'
+      return convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
+    })
     
-    if (parseFloat(item.fiyat) === minFiyat) return 'ucuz'
-    if (parseFloat(item.fiyat) === maxFiyat) return 'pahali'
+    const minFiyat = Math.min(...tlFiyatlar)
+    const maxFiyat = Math.max(...tlFiyatlar)
+    const mevcutTL = convertPrice(parseFloat(item.fiyat), item.para_birimi || 'TRY', 'TRY', kurlar)
+    
+    if (mevcutTL === minFiyat) return 'ucuz'
+    if (mevcutTL === maxFiyat) return 'pahali'
     return null
   }
 
-  // ✅ DOĞRU FİYAT ÇEVİRİSİ
+  // ✅ FİYAT ÇEVİRİSİ - DOĞRU
   const getConvertedPrice = (fiyat, paraBirimi) => {
     const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
     if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
-    const converted = convertPrice(parsedFiyat, paraBirimi, gorunenParaBirimi, kurlar)
+    // Önce TL'ye çevir, sonra hedef para birimine
+    const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
+    const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
     return formatPrice(converted, gorunenParaBirimi)
   }
 
@@ -532,7 +549,7 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* ✅ KÜÇÜK KARTLAR - ÜRÜN BAZINDA KARŞILAŞTIRMA */}
+        {/* ✅ KÜÇÜK KARTLAR - DOĞRU FİYATLAR */}
         {urunIstatistikleri.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
             {urunIstatistikleri.map((urun, index) => (
