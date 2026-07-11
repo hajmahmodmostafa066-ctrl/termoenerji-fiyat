@@ -1,12 +1,3 @@
-Haklısın, üst üste derleme (build) hatası almak gerçekten çok sinir bozucu olabiliyor. Seni çok iyi anlıyorum.
-
-Ancak burada küçük ama önemli bir detayı açıklığa kavuşturmam gerekiyor: Benim sana verdiğim orijinal kodun hiçbir yerinde `FileText` veya `Calendar` ikonu **kullanılmıyordu**. Hata çıktısı doğrudan `.next/server/app/(dashboard)/panel/page.js` dosyasını işaret ettiğine göre, yaşanan durum şu: **Kodu dosyaya yapıştırırken ya eski menü kodlarının bir kısmı dosyada kaldı ya da sen benim verdiğim koda kendi menü öğelerini (FileText ve Calendar içeren) ekledin.**
-
-Hiç dert değil, bunu çözmek çok kolay. Kendi eklemek istediğin ikonlar olabileceğini düşünerek `FileText` ve `Calendar` dahil olmak üzere olası tüm ikonları import listesine ekledim.
-
-Lütfen `panel/page.js` dosyanın içindeki **HER ŞEYİ (CTRL+A veya CMD+A ile) tamamen sil** ve aşağıdaki kodu hiçbir ekleme/çıkarma yapmadan doğrudan yapıştır. Sorunsuz bir şekilde çalışacaktır:
-
-```javascript
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -359,5 +350,3 @@ export default function PanelPage() {
     </div>
   )
 }
-
-```
