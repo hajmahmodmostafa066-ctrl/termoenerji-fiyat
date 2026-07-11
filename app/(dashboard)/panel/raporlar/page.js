@@ -3,198 +3,213 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
 import { convertPrice, formatPrice, getKurlar, kurDegistiginde, getCurrencySymbol } from '../../../../lib/currency'
-import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
 
 // ============================================================
-// PDF STILLERI
+// TÜRKÇE KARAKTER DESTEĞİ İÇİN FONT TANIMLAMASI
+// ============================================================
+Font.register({
+  family: 'Roboto',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5Q.ttf', fontWeight: 'normal' },
+    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlvAw.ttf', fontWeight: 'bold' }
+  ]
+})
+
+// ============================================================
+// PROFESYONEL PDF STILLERI
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: 30,
     backgroundColor: '#ffffff',
-    fontFamily: 'Helvetica',
+    fontFamily: 'Roboto',
   },
-  header: {
+  // Üst Bilgi (Header)
+  headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottom: '2px solid #10b981',
-    paddingBottom: 15,
-    marginBottom: 20,
+    backgroundColor: '#0f172a',
+    padding: 20,
+    borderRadius: 8,
+    marginBottom: 15,
   },
-  companyName: {
-    fontSize: 20,
+  headerLeft: {
+    flex: 1,
+  },
+  companyTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#0f172a',
+    color: '#ffffff',
+    marginBottom: 4,
   },
-  companySub: {
+  companyAddress: {
     fontSize: 9,
-    color: '#64748b',
-    marginTop: 2,
+    color: '#94a3b8',
   },
-  reportTitle: {
+  headerRight: {
+    alignItems: 'flex-end',
+  },
+  reportMainTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#0f172a',
-    marginBottom: 10,
+    color: '#10b981', // Zümrüt yeşili vurgu
+    marginBottom: 4,
   },
-  dateText: {
+  reportDate: {
     fontSize: 9,
-    color: '#64748b',
-    textAlign: 'right',
-  },
-  filterBox: {
-    backgroundColor: '#f8fafc',
-    padding: 10,
-    borderRadius: 6,
-    marginVertical: 10,
-    border: '1px solid #e2e8f0',
-  },
-  filterText: {
-    fontSize: 8,
-    color: '#475569',
+    color: '#cbd5e1',
   },
   
-  // Ürün İstatistik Kartları
-  statsContainer: {
-    marginVertical: 12,
+  // Özet Bilgi Kutusu
+  summaryBox: {
+    flexDirection: 'row',
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 15,
   },
-  statsTitle: {
-    fontSize: 12,
+  summaryItem: {
+    flex: 1,
+  },
+  summaryLabel: {
+    fontSize: 7,
+    color: '#64748b',
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  summaryValue: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#0f172a',
+  },
+
+  // Ürün İstatistikleri Bölümü
+  sectionTitle: {
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#0f172a',
     marginBottom: 8,
+    borderBottom: '1px solid #e2e8f0',
+    paddingBottom: 4,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
+    marginBottom: 15,
   },
   statCard: {
+    width: '31%', // Yan yana 3 adet
     backgroundColor: '#ffffff',
-    padding: 10,
+    border: '1px solid #cbd5e1',
     borderRadius: 6,
-    border: '1px solid #e2e8f0',
-    width: '23%',
-    minWidth: 110,
+    padding: 10,
   },
   statProductName: {
     fontSize: 9,
     fontWeight: 'bold',
-    color: '#0f172a',
-    marginBottom: 4,
+    color: '#1e293b',
+    marginBottom: 6,
+    borderBottom: '1px dashed #e2e8f0',
+    paddingBottom: 4,
   },
   statRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 3,
+    marginBottom: 3,
   },
   statLabel: {
-    fontSize: 7,
+    fontSize: 8,
     color: '#64748b',
   },
-  statValueGreen: {
+  statValueMin: {
     fontSize: 8,
     fontWeight: 'bold',
     color: '#10b981',
   },
-  statValueRed: {
+  statValueMax: {
     fontSize: 8,
     fontWeight: 'bold',
     color: '#ef4444',
   },
-  statValueAmber: {
+  statValueDiff: {
     fontSize: 8,
     fontWeight: 'bold',
     color: '#f59e0b',
   },
-  statFirmaCount: {
+  statCount: {
     fontSize: 7,
     color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 6,
-    paddingTop: 4,
-    borderTop: '1px dashed #e2e8f0',
+    marginTop: 4,
+    textAlign: 'right',
   },
-  
-  // Tablo
+
+  // Tablo Tasarımı
   table: {
-    marginTop: 12,
+    width: '100%',
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#0f172a',
-    padding: 10,
-    borderRadius: 6,
+    backgroundColor: '#f1f5f9',
+    borderTop: '1px solid #cbd5e1',
+    borderBottom: '1px solid #cbd5e1',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
   },
   tableHeaderCell: {
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: 'bold',
-    color: '#ffffff',
+    color: '#475569',
     flex: 1,
-    textTransform: 'uppercase',
   },
   tableRow: {
     flexDirection: 'row',
-    padding: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     borderBottom: '1px solid #f1f5f9',
-    alignItems: 'center',
   },
-  tableRowAlternate: {
+  tableRowStriped: {
     flexDirection: 'row',
-    padding: 8,
-    borderBottom: '1px solid #f1f5f9',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     backgroundColor: '#fafafa',
-    alignItems: 'center',
+    borderBottom: '1px solid #f1f5f9',
   },
   tableCell: {
-    fontSize: 7,
+    fontSize: 8,
     color: '#334155',
     flex: 1,
   },
   tableCellBold: {
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: 'bold',
     color: '#0f172a',
     flex: 1,
   },
   priceCell: {
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: 'bold',
     color: '#10b981',
     flex: 1,
     textAlign: 'right',
   },
   priceCellHigh: {
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: 'bold',
     color: '#ef4444',
     flex: 1,
     textAlign: 'right',
   },
-  statusCell: {
-    fontSize: 7,
-    color: '#10b981',
-    flex: 1,
-    textAlign: 'center',
-  },
-  statusCellPending: {
-    fontSize: 7,
-    color: '#f59e0b',
-    flex: 1,
-    textAlign: 'center',
-  },
-  statusCellRejected: {
-    fontSize: 7,
-    color: '#ef4444',
-    flex: 1,
-    textAlign: 'center',
-  },
+  
+  // Alt Bilgi (Footer)
   footer: {
     position: 'absolute',
-    bottom: 30,
-    left: 40,
-    right: 40,
+    bottom: 20,
+    left: 30,
+    right: 30,
     borderTop: '1px solid #e2e8f0',
     paddingTop: 10,
     flexDirection: 'row',
@@ -209,14 +224,18 @@ const pdfStyles = StyleSheet.create({
 // ============================================================
 // PDF BİLEŞENİ
 // ============================================================
-const RaporPDF = ({ data, firmaBilgileri, logoUrl, baslik, kategori, firma, paraBirimi, urunIstatistikleri }) => {
-  const formatPriceLocal = (price, currency = 'TRY') => {
+const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikler }) => {
+  
+  // Para birimi ikonları yerine uluslararası kodları kullanıyoruz (Sorunsuz Render için)
+  const formatPriceForPDF = (price, currency = 'TRY') => {
     if (price === null || price === undefined) return '-'
-    const symbol = getCurrencySymbol(currency)
-    return `${symbol}${new Intl.NumberFormat('tr-TR', {
+    const safeCurrencyCode = currency === 'TRY' ? 'TL' : currency
+    const formattedAmount = new Intl.NumberFormat('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(price)}`
+    }).format(price)
+    
+    return `${formattedAmount} ${safeCurrencyCode}`
   }
 
   const formatDate = (date) => {
@@ -233,95 +252,107 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, baslik, kategori, firma, para
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
-        <View style={pdfStyles.header}>
-          <View>
-            {logoUrl && <Image src={logoUrl} style={{ width: 100, height: 35, marginBottom: 6 }} />}
-            <Text style={pdfStyles.companyName}>{firmaBilgileri?.ad || 'TermoEnerji'}</Text>
-            {firmaBilgileri?.adres && <Text style={pdfStyles.companySub}>{firmaBilgileri.adres}</Text>}
-            {firmaBilgileri?.telefon && <Text style={pdfStyles.companySub}>Tel: {firmaBilgileri.telefon}</Text>}
+        
+        {/* KURUMSAL ÜST BİLGİ (HEADER) */}
+        <View style={pdfStyles.headerContainer}>
+          <View style={pdfStyles.headerLeft}>
+            {logoUrl && <Image src={logoUrl} style={{ width: 110, height: 40, marginBottom: 8 }} />}
+            <Text style={pdfStyles.companyTitle}>{firmaBilgileri?.ad || 'TermoEnerji Sistemleri'}</Text>
+            {firmaBilgileri?.adres && <Text style={pdfStyles.companyAddress}>{firmaBilgileri.adres}</Text>}
+            {firmaBilgileri?.telefon && <Text style={pdfStyles.companyAddress}>Tel: {firmaBilgileri.telefon}</Text>}
           </View>
-          <View>
-            <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
-            <Text style={[pdfStyles.dateText, { marginTop: 4 }]}>Para Birimi: {paraBirimi}</Text>
-          </View>
-        </View>
-
-        <View style={pdfStyles.filterBox}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
-            <Text style={pdfStyles.filterText}>Arama: {baslik || 'Tümü'}</Text>
-            <Text style={pdfStyles.filterText}>Kategori: {kategori || 'Tüm Kategoriler'}</Text>
-            <Text style={pdfStyles.filterText}>Firma: {firma || 'Tüm Firmalar'}</Text>
-            <Text style={pdfStyles.filterText}>Toplam: {data.length} kayıt</Text>
+          <View style={pdfStyles.headerRight}>
+            <Text style={pdfStyles.reportMainTitle}>FİYAT ANALİZ RAPORU</Text>
+            <Text style={pdfStyles.reportDate}>{formatDate(new Date())}</Text>
           </View>
         </View>
 
-        {urunIstatistikleri && urunIstatistikleri.length > 0 && (
-          <View style={pdfStyles.statsContainer}>
-            <Text style={pdfStyles.statsTitle}>Ürün Bazlı Fiyat Analizi</Text>
+        {/* RAPOR ÖZETİ (FİLTRELER) */}
+        <View style={pdfStyles.summaryBox}>
+          <View style={pdfStyles.summaryItem}>
+            <Text style={pdfStyles.summaryLabel}>Rapor Para Birimi</Text>
+            <Text style={pdfStyles.summaryValue}>{paraBirimi === 'TRY' ? 'Türk Lirası (TL)' : paraBirimi}</Text>
+          </View>
+          <View style={pdfStyles.summaryItem}>
+            <Text style={pdfStyles.summaryLabel}>Listelenen Ürün</Text>
+            <Text style={pdfStyles.summaryValue}>{data.length} Adet</Text>
+          </View>
+          <View style={pdfStyles.summaryItem}>
+            <Text style={pdfStyles.summaryLabel}>Analiz Edilen Çeşit</Text>
+            <Text style={pdfStyles.summaryValue}>{seciliIstatistikler.length} Farklı Ürün</Text>
+          </View>
+        </View>
+
+        {/* SADECE SEÇİLİ ÜRÜNLERİN İSTATİSTİKLERİ */}
+        {seciliIstatistikler && seciliIstatistikler.length > 0 && (
+          <View>
+            <Text style={pdfStyles.sectionTitle}>Seçili Ürünlerin Fiyat Analizi</Text>
             <View style={pdfStyles.statsGrid}>
-              {urunIstatistikleri.map((urun, index) => (
+              {seciliIstatistikler.map((urun, index) => (
                 <View key={index} style={pdfStyles.statCard}>
                   <Text style={pdfStyles.statProductName}>{urun.urunAdi}</Text>
+                  
                   <View style={pdfStyles.statRow}>
-                    <Text style={pdfStyles.statLabel}>En Ucuz</Text>
-                    <Text style={pdfStyles.statValueGreen}>{formatPriceLocal(urun.enUcuz, paraBirimi)}</Text>
+                    <Text style={pdfStyles.statLabel}>En Uygun:</Text>
+                    <Text style={pdfStyles.statValueMin}>{formatPriceForPDF(urun.enUcuz, paraBirimi)}</Text>
                   </View>
+                  
                   <View style={pdfStyles.statRow}>
-                    <Text style={pdfStyles.statLabel}>En Pahalı</Text>
-                    <Text style={pdfStyles.statValueRed}>{formatPriceLocal(urun.enPahali, paraBirimi)}</Text>
+                    <Text style={pdfStyles.statLabel}>En Yüksek:</Text>
+                    <Text style={pdfStyles.statValueMax}>{formatPriceForPDF(urun.enPahali, paraBirimi)}</Text>
                   </View>
+                  
                   <View style={pdfStyles.statRow}>
-                    <Text style={pdfStyles.statLabel}>Fark</Text>
-                    <Text style={pdfStyles.statValueAmber}>{formatPriceLocal(urun.fark, paraBirimi)}</Text>
+                    <Text style={pdfStyles.statLabel}>Fiyat Farkı:</Text>
+                    <Text style={pdfStyles.statValueDiff}>{formatPriceForPDF(urun.fark, paraBirimi)}</Text>
                   </View>
-                  <Text style={pdfStyles.statFirmaCount}>{urun.adet} firma</Text>
+                  
+                  <Text style={pdfStyles.statCount}>{urun.adet} Teklif Arasında</Text>
                 </View>
               ))}
             </View>
           </View>
         )}
 
-        <View style={pdfStyles.table}>
-          <View style={pdfStyles.tableHeader}>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.4 }]}>#</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.3 }]}>Ürün</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Marka</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Firma</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Kategori</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8, textAlign: 'right' }]}>Fiyat</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 0.6, textAlign: 'center' }]}>Durum</Text>
-          </View>
-          
-          {data.map((item, index) => (
-            <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowAlternate}>
-              <Text style={[pdfStyles.tableCell, { flex: 0.4 }]}>{index + 1}</Text>
-              <Text style={[pdfStyles.tableCellBold, { flex: 1.3 }]}>{item.urun_adi}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.marka || '-'}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.firma_adi}</Text>
-              <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.kategori || 'Genel'}</Text>
-              <Text style={[
-                item._etiket === 'ucuz' ? pdfStyles.priceCell : 
-                item._etiket === 'pahali' ? pdfStyles.priceCellHigh : 
-                pdfStyles.priceCell,
-                { flex: 0.8 }
-              ]}>
-                {formatPriceLocal(item._convertedPrice || item.fiyat, paraBirimi)}
-              </Text>
-              <Text style={[
-                item.durum === 'approved' ? pdfStyles.statusCell : 
-                item.durum === 'pending' ? pdfStyles.statusCellPending : pdfStyles.statusCellRejected,
-                { flex: 0.6, textAlign: 'center' }
-              ]}>
-                {item.durum === 'approved' ? 'Aktif' : 
-                 item.durum === 'pending' ? 'Beklemede' : 'Pasif'}
-              </Text>
+        {/* DETAYLI TEKLİF TABLOSU */}
+        <View>
+          <Text style={pdfStyles.sectionTitle}>Detaylı Fiyat Teklifleri (Seçilenler)</Text>
+          <View style={pdfStyles.table}>
+            <View style={pdfStyles.tableHeader}>
+              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.3 }]}>#</Text>
+              <Text style={[pdfStyles.tableHeaderCell, { flex: 1.5 }]}>ÜRÜN TANIMI</Text>
+              <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>MARKA</Text>
+              <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>TEDARİKÇİ FİRMA</Text>
+              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.9, textAlign: 'right' }]}>BİRİM FİYAT</Text>
             </View>
-          ))}
+            
+            {data.map((item, index) => (
+              <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowStriped}>
+                <Text style={[pdfStyles.tableCell, { flex: 0.3 }]}>{index + 1}</Text>
+                <Text style={[pdfStyles.tableCellBold, { flex: 1.5 }]}>{item.urun_adi}</Text>
+                <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.marka || '-'}</Text>
+                <Text style={[pdfStyles.tableCell, { flex: 1.2 }]}>{item.firma_adi}</Text>
+                
+                {/* En ucuz ise yeşil, en pahalı ise kırmızı renkli font */}
+                <Text style={[
+                  item._etiket === 'ucuz' ? pdfStyles.priceCell : 
+                  item._etiket === 'pahali' ? pdfStyles.priceCellHigh : 
+                  [pdfStyles.tableCell, { fontWeight: 'bold' }],
+                  { flex: 0.9, textAlign: 'right' }
+                ]}>
+                  {formatPriceForPDF(item._convertedPrice || item.fiyat, paraBirimi)}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
 
+        {/* FOOTER */}
         <View style={pdfStyles.footer} fixed>
-          <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'} - Tüm hakları saklıdır.</Text>
-          <Text style={pdfStyles.footerText}>Bu rapor {formatDate(new Date())} tarihinde oluşturulmuştur.</Text>
+          <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'} - Gizli ve Şirket İçi Belgedir.</Text>
+          <Text style={pdfStyles.footerText} render={({ pageNumber, totalPages }) => (
+            `Sayfa ${pageNumber} / ${totalPages}`
+          )} />
         </View>
       </Page>
     </Document>
@@ -485,6 +516,7 @@ export default function RaporlarPage() {
     }
   }
 
+  // Sadece ekranda işaretli olanların datasını çeker
   const getPreparedData = () => {
     return filteredFiyatlar.filter(item => seciliIds.includes(item.id)).map(item => {
       const etiket = getUrunEtiketi(item)
@@ -493,6 +525,40 @@ export default function RaporlarPage() {
         ...item,
         _etiket: etiket,
         _convertedPrice: converted.convertedValue,
+      }
+    })
+  }
+
+  // PDF içine gönderilmek üzere SADECE SEÇİLİ ürünlerin istatistiklerini hesaplar
+  const getSelectedIstatistikler = () => {
+    const selectedData = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
+    const urunGruplari = {}
+    
+    selectedData.forEach(item => {
+      const urunAdi = item.urun_adi || 'Bilinmiyor'
+      if (!urunGruplari[urunAdi]) urunGruplari[urunAdi] = []
+      urunGruplari[urunAdi].push(item)
+    })
+
+    return Object.keys(urunGruplari).map(urunAdi => {
+      const items = urunGruplari[urunAdi]
+      const tlFiyatlar = items.map(item => {
+        const fiyat = parseFloat(item.fiyat)
+        const paraBirimi = item.para_birimi || 'TRY'
+        return convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
+      })
+      
+      const enUcuzTL = Math.min(...tlFiyatlar)
+      const enPahaliTL = Math.max(...tlFiyatlar)
+      const enUcuzConverted = convertPrice(enUcuzTL, 'TRY', gorunenParaBirimi, kurlar)
+      const enPahaliConverted = convertPrice(enPahaliTL, 'TRY', gorunenParaBirimi, kurlar)
+      
+      return {
+        urunAdi: urunAdi,
+        enUcuz: enUcuzConverted,
+        enPahali: enPahaliConverted,
+        fark: enPahaliConverted - enUcuzConverted,
+        adet: items.length
       }
     })
   }
@@ -515,7 +581,7 @@ export default function RaporlarPage() {
             <p className="text-slate-400 text-sm mt-1 ml-11">{filteredFiyatlar.length} kayıt listeleniyor</p>
           </div>
           
-          {/* CURRENCY TOGGLE (Segmented Control) */}
+          {/* CURRENCY TOGGLE */}
           <div className="flex items-center bg-slate-900/80 p-1 rounded-xl border border-slate-700/50 backdrop-blur-sm">
             {['TRY', 'USD', 'EUR'].map((currency) => (
               <button 
@@ -600,14 +666,14 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* ÜRÜN İSTATİSTİKLERİ */}
+        {/* EKRAN İÇİN GENEL ÜRÜN İSTATİSTİKLERİ */}
         {urunIstatistikleri.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
               <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
-              Ürün Bazlı Fiyat Analizi
+              Genel Fiyat Analizi (Filtrelenenler)
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {urunIstatistikleri.map((urun, index) => (
@@ -637,7 +703,7 @@ export default function RaporlarPage() {
         <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
           {/* Tablo Üst Araç Çubuğu */}
           <div className="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/80">
-            <h3 className="text-sm font-medium text-slate-300">Fiyat Teklifleri</h3>
+            <h3 className="text-sm font-medium text-slate-300">Fiyat Teklifleri Tablosu</h3>
             {seciliIds.length > 0 && (
               <PDFDownloadLink 
                 document={
@@ -645,14 +711,11 @@ export default function RaporlarPage() {
                     data={getPreparedData()}
                     firmaBilgileri={firmaBilgileri}
                     logoUrl={logoUrl}
-                    baslik={arama || 'Tümü'}
-                    kategori={filtreKategori || 'Tüm Kategoriler'}
-                    firma={filtreFirma || 'Tüm Firmalar'}
                     paraBirimi={gorunenParaBirimi}
-                    urunIstatistikleri={urunIstatistikleri}
+                    seciliIstatistikler={getSelectedIstatistikler()} // Sadece seçilenlerin analizini PDF'e bas
                   />
                 } 
-                fileName={`rapor_${new Date().toISOString().split('T')[0]}.pdf`}
+                fileName={`Analiz_Raporu_${new Date().toISOString().split('T')[0]}.pdf`}
               >
                 {({ loading: pdfLoading }) => (
                   <button 
@@ -672,7 +735,7 @@ export default function RaporlarPage() {
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        PDF İndir ({seciliIds.length})
+                        Seçili Kayıtları İndir ({seciliIds.length})
                       </>
                     )}
                   </button>
