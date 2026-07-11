@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../../../lib/supabase'
+import { supabase } from '../../../../lib/supabase'
 // Olası tüm ikonları buraya ekledim, eksik ikon hatası almayacaksın.
 import { 
   LayoutDashboard, 
