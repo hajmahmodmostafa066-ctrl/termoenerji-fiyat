@@ -10,7 +10,7 @@ import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 50,
+    padding: 40,
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
   },
@@ -18,60 +18,60 @@ const pdfStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottom: '3px solid #10b981',
-    paddingBottom: 20,
-    marginBottom: 25,
+    borderBottom: '2px solid #10b981',
+    paddingBottom: 15,
+    marginBottom: 20,
   },
   headerLeft: {
     flexDirection: 'column',
   },
   companyName: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#0f172a',
   },
   companySub: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#64748b',
     marginTop: 2,
   },
   reportTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#0f172a',
-    marginTop: 6,
+    marginTop: 4,
   },
   dateText: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#64748b',
     textAlign: 'right',
   },
   filterBox: {
     backgroundColor: '#f1f5f9',
-    padding: 14,
-    borderRadius: 8,
-    marginVertical: 15,
+    padding: 10,
+    borderRadius: 6,
+    marginVertical: 10,
   },
   filterRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 20,
+    gap: 15,
   },
   filterText: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#475569',
   },
   summaryBox: {
     backgroundColor: '#f0fdf4',
-    padding: 16,
-    borderRadius: 8,
+    padding: 12,
+    borderRadius: 6,
     border: '1px solid #bbf7d0',
-    marginVertical: 12,
+    marginVertical: 10,
   },
   summaryText: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#0f172a',
-    lineHeight: 1.8,
+    lineHeight: 1.6,
   },
   summaryBold: {
     fontWeight: 'bold',
@@ -89,16 +89,16 @@ const pdfStyles = StyleSheet.create({
     fontWeight: 'bold',
   },
   table: {
-    marginTop: 10,
+    marginTop: 8,
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#0f172a',
-    padding: 10,
-    borderRadius: 6,
+    padding: 6,
+    borderRadius: 4,
   },
   tableHeaderCell: {
-    fontSize: 8,
+    fontSize: 7,
     fontWeight: 'bold',
     color: '#ffffff',
     flex: 1,
@@ -106,50 +106,43 @@ const pdfStyles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
-    padding: 8,
+    padding: 5,
     borderBottom: '1px solid #e2e8f0',
     alignItems: 'center',
   },
   tableRowAlternate: {
     flexDirection: 'row',
-    padding: 8,
+    padding: 5,
     borderBottom: '1px solid #e2e8f0',
     backgroundColor: '#fafafa',
     alignItems: 'center',
   },
   tableCell: {
-    fontSize: 8,
+    fontSize: 7,
     color: '#0f172a',
     flex: 1,
   },
   priceCell: {
-    fontSize: 8,
+    fontSize: 7,
     fontWeight: 'bold',
     color: '#10b981',
     flex: 1,
     textAlign: 'right',
   },
-  priceCellHigh: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#ef4444',
-    flex: 1,
-    textAlign: 'right',
-  },
   statusCell: {
-    fontSize: 8,
+    fontSize: 7,
     color: '#10b981',
     flex: 1,
     textAlign: 'center',
   },
   statusCellPending: {
-    fontSize: 8,
+    fontSize: 7,
     color: '#eab308',
     flex: 1,
     textAlign: 'center',
   },
   statusCellRejected: {
-    fontSize: 8,
+    fontSize: 7,
     color: '#ef4444',
     flex: 1,
     textAlign: 'center',
@@ -157,55 +150,55 @@ const pdfStyles = StyleSheet.create({
   footer: {
     position: 'absolute',
     bottom: 30,
-    left: 50,
-    right: 50,
+    left: 40,
+    right: 40,
     borderTop: '1px solid #e2e8f0',
-    paddingTop: 12,
+    paddingTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   footerText: {
-    fontSize: 8,
+    fontSize: 7,
     color: '#94a3b8',
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginVertical: 10,
+    gap: 6,
+    marginVertical: 8,
   },
   statCard: {
     backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 6,
+    padding: 8,
+    borderRadius: 4,
     width: '23%',
     border: '1px solid #e2e8f0',
   },
   statLabel: {
-    fontSize: 7,
+    fontSize: 6,
     color: '#64748b',
     textTransform: 'uppercase',
   },
   statValue: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#0f172a',
     marginTop: 2,
   },
   statValueGreen: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#10b981',
     marginTop: 2,
   },
   statValueRed: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#ef4444',
     marginTop: 2,
   },
   statValueAmber: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#f59e0b',
     marginTop: 2,
@@ -247,28 +240,18 @@ const RaporPDF = ({
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
-        {/* HEADER */}
         <View style={pdfStyles.header}>
           <View style={pdfStyles.headerLeft}>
-            {logoUrl && (
-              <Image src={logoUrl} style={{ width: 130, height: 45, marginBottom: 5 }} />
-            )}
+            {logoUrl && <Image src={logoUrl} style={{ width: 100, height: 35, marginBottom: 4 }} />}
             <Text style={pdfStyles.companyName}>{firmaBilgileri?.ad || 'TermoEnerji'}</Text>
-            {firmaBilgileri?.adres && (
-              <Text style={pdfStyles.companySub}>{firmaBilgileri.adres}</Text>
-            )}
-            {firmaBilgileri?.telefon && (
-              <Text style={pdfStyles.companySub}>Tel: {firmaBilgileri.telefon}</Text>
-            )}
             <Text style={pdfStyles.reportTitle}>Fiyat Karsilastirma Raporu</Text>
           </View>
           <View>
             <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
-            <Text style={[pdfStyles.dateText, { marginTop: 4 }]}>Para Birimi: {paraBirimi}</Text>
+            <Text style={[pdfStyles.dateText, { marginTop: 3 }]}>Para Birimi: {paraBirimi}</Text>
           </View>
         </View>
 
-        {/* FİLTRE BİLGİSİ */}
         <View style={pdfStyles.filterBox}>
           <View style={pdfStyles.filterRow}>
             <Text style={pdfStyles.filterText}>Arama: {baslik || 'Tumu'}</Text>
@@ -278,26 +261,23 @@ const RaporPDF = ({
           </View>
         </View>
 
-        {/* ÜRÜN BAZINDA İSTATİSTİKLER */}
         {urunIstatistikleri && urunIstatistikleri.length > 0 && (
           <View style={pdfStyles.statsGrid}>
             {urunIstatistikleri.map((urun, index) => (
               <View key={index} style={pdfStyles.statCard}>
                 <Text style={pdfStyles.statLabel}>{urun.urunAdi}</Text>
-                <Text style={pdfStyles.statValueGreen}>En Ucuz: {formatPrice(urun.enUcuz, paraBirimi)}</Text>
-                <Text style={pdfStyles.statValueRed}>En Pahali: {formatPrice(urun.enPahali, paraBirimi)}</Text>
+                <Text style={pdfStyles.statValueGreen}>{formatPrice(urun.enUcuz, paraBirimi)}</Text>
+                <Text style={pdfStyles.statValueRed}>{formatPrice(urun.enPahali, paraBirimi)}</Text>
                 <Text style={pdfStyles.statValueAmber}>Fark: {formatPrice(urun.fark, paraBirimi)}</Text>
-                <Text style={pdfStyles.statLabel}>Teklif: {urun.adet} adet</Text>
               </View>
             ))}
           </View>
         )}
 
-        {/* TABLO */}
         <View style={pdfStyles.table}>
           <View style={pdfStyles.tableHeader}>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 0.5 }]}>#</Text>
-            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.5 }]}>Urun Adi</Text>
+            <Text style={[pdfStyles.tableHeaderCell, { flex: 1.5 }]}>Urun</Text>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>Firma</Text>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Kategori</Text>
             <Text style={[pdfStyles.tableHeaderCell, { flex: 1, textAlign: 'right' }]}>Fiyat</Text>
@@ -324,10 +304,9 @@ const RaporPDF = ({
           ))}
         </View>
 
-        {/* FOOTER */}
         <View style={pdfStyles.footer} fixed>
-          <Text style={pdfStyles.footerText}>Telif {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'} - Tum haklari saklidir.</Text>
-          <Text style={pdfStyles.footerText}>Rapor {formatDate(new Date())} tarihinde olusturulmustur.</Text>
+          <Text style={pdfStyles.footerText}>Telif {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'}</Text>
+          <Text style={pdfStyles.footerText}>Rapor {formatDate(new Date())}</Text>
         </View>
       </Page>
     </Document>
@@ -411,7 +390,7 @@ export default function RaporlarPage() {
 
     setFilteredFiyatlar(filtered)
 
-    // ✅ ÜRÜN BAZINDA İSTATİSTİKLER (Aynı ürünün farklı firmalardaki fiyatları)
+    // Ürün bazında istatistikler
     const urunGruplari = {}
     filtered.forEach(item => {
       const urunAdi = item.urun_adi || 'Bilinmiyor'
@@ -427,7 +406,7 @@ export default function RaporlarPage() {
       const enUcuz = Math.min(...fiyatlar)
       const enPahali = Math.max(...fiyatlar)
       
-      // Fiyatları hedef para birimine çevir
+      // DOĞRU ÇEVİRİ
       const enUcuzConverted = convertPrice(enUcuz, 'TRY', gorunenParaBirimi, kurlar)
       const enPahaliConverted = convertPrice(enPahali, 'TRY', gorunenParaBirimi, kurlar)
       
@@ -451,7 +430,7 @@ export default function RaporlarPage() {
 
   const selectedFiyatlar = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
 
-  // ✅ ÜRÜN BAZINDA en ucuz/en pahalı işaretleme
+  // Ürün bazında en ucuz/en pahalı işaretleme
   const getUrunEtiketi = (item) => {
     const urunItems = filteredFiyatlar.filter(i => i.urun_adi === item.urun_adi)
     if (urunItems.length === 0) return null
@@ -465,7 +444,7 @@ export default function RaporlarPage() {
     return null
   }
 
-  // Fiyat çevirisi
+  // ✅ DOĞRU FİYAT ÇEVİRİSİ
   const getConvertedPrice = (fiyat, paraBirimi) => {
     const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
     if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
@@ -481,12 +460,12 @@ export default function RaporlarPage() {
           <div>
             <h1 className="text-2xl font-bold text-white">Raporlar</h1>
             <p className="text-slate-400 text-sm">
-              {filteredFiyatlar.length} kayit gosteriliyor
+              {filteredFiyatlar.length} kayit
             </p>
           </div>
 
           {/* Para Birimi Seçici */}
-          <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1 border border-slate-700">
+          <div className="flex items-center gap-1 bg-slate-800/50 rounded-lg p-1 border border-slate-700">
             <button
               onClick={() => setGorunenParaBirimi('TRY')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
@@ -521,19 +500,19 @@ export default function RaporlarPage() {
         </div>
 
         {/* FİLTRELER */}
-        <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <input
               type="text"
               value={arama}
               onChange={(e) => setArama(e.target.value)}
-              placeholder="Urun adi ara..."
-              className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              placeholder="Urun ara..."
+              className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
             />
             <select
               value={filtreKategori}
               onChange={(e) => setFiltreKategori(e.target.value)}
-              className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
             >
               <option value="">Tum Kategoriler</option>
               {kategoriler.map((k, i) => (
@@ -543,7 +522,7 @@ export default function RaporlarPage() {
             <select
               value={filtreFirma}
               onChange={(e) => setFiltreFirma(e.target.value)}
-              className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
             >
               <option value="">Tum Firmalar</option>
               {firmalar.map((f, i) => (
@@ -553,35 +532,28 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* ÜRÜN BAZINDA İSTATİSTİK KARTLARI */}
+        {/* ✅ KÜÇÜK KARTLAR - ÜRÜN BAZINDA KARŞILAŞTIRMA */}
         {urunIstatistikleri.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
             {urunIstatistikleri.map((urun, index) => (
-              <div key={index} className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-sm font-semibold text-white truncate" title={urun.urunAdi}>
+              <div key={index} className="bg-slate-800/30 rounded-lg p-2 border border-slate-700/50">
+                <p className="text-xs font-semibold text-white truncate" title={urun.urunAdi}>
                   {urun.urunAdi}
                 </p>
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <div>
-                    <p className="text-xs text-slate-400">En Ucuz</p>
-                    <p className="text-sm font-bold text-emerald-400">
-                      {formatPrice(urun.enUcuz, gorunenParaBirimi)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">En Pahali</p>
-                    <p className="text-sm font-bold text-red-400">
-                      {formatPrice(urun.enPahali, gorunenParaBirimi)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400">Fark</p>
-                    <p className="text-sm font-bold text-amber-400">
-                      {formatPrice(urun.fark, gorunenParaBirimi)}
-                    </p>
-                  </div>
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-xs text-emerald-400 font-bold">
+                    {formatPrice(urun.enUcuz, gorunenParaBirimi)}
+                  </span>
+                  <span className="text-xs text-red-400 font-bold">
+                    {formatPrice(urun.enPahali, gorunenParaBirimi)}
+                  </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-2">{urun.adet} teklif</p>
+                <div className="flex justify-between items-center mt-0.5">
+                  <span className="text-[10px] text-amber-400">
+                    Fark: {formatPrice(urun.fark, gorunenParaBirimi)}
+                  </span>
+                  <span className="text-[10px] text-slate-500">{urun.adet} firma</span>
+                </div>
               </div>
             ))}
           </div>
@@ -608,7 +580,7 @@ export default function RaporlarPage() {
               {({ loading }) => (
                 <button
                   disabled={loading}
-                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50 flex items-center gap-2"
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-1.5 rounded-lg transition disabled:opacity-50 flex items-center gap-2 text-sm"
                 >
                   PDF Rapor ({selectedFiyatlar.length})
                 </button>
@@ -619,11 +591,11 @@ export default function RaporlarPage() {
 
         {/* FİYAT LİSTESİ */}
         {loading ? (
-          <div className="text-center py-12">
+          <div className="text-center py-8">
             <p className="text-slate-400">Yukleniyor...</p>
           </div>
         ) : filteredFiyatlar.length === 0 ? (
-          <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
+          <div className="text-center py-8 bg-slate-800/50 rounded-xl border border-slate-700">
             <p className="text-slate-400">Henuz fiyat bulunmuyor</p>
           </div>
         ) : (
@@ -631,7 +603,7 @@ export default function RaporlarPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-700 bg-slate-800">
-                  <th className="py-3 px-4 text-slate-400 font-medium w-10">
+                  <th className="py-2 px-3 text-slate-400 font-medium w-8">
                     <input
                       type="checkbox"
                       onChange={() => {
@@ -642,14 +614,14 @@ export default function RaporlarPage() {
                         }
                       }}
                       checked={seciliIds.length === filteredFiyatlar.length && filteredFiyatlar.length > 0}
-                      className="w-4 h-4 accent-emerald-500"
+                      className="w-3 h-3 accent-emerald-500"
                     />
                   </th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Urun</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Firma</th>
-                  <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">Kategori</th>
-                  <th className="text-right py-3 px-4 text-slate-400 font-medium">Fiyat</th>
-                  <th className="text-center py-3 px-4 text-slate-400 font-medium">Durum</th>
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium text-xs">Urun</th>
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium text-xs">Firma</th>
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium text-xs hidden md:table-cell">Kategori</th>
+                  <th className="text-right py-2 px-3 text-slate-400 font-medium text-xs">Fiyat</th>
+                  <th className="text-center py-2 px-3 text-slate-400 font-medium text-xs">Durum</th>
                 </tr>
               </thead>
               <tbody>
@@ -665,47 +637,47 @@ export default function RaporlarPage() {
                         isSelected ? 'bg-emerald-500/5' : ''
                       }`}
                     >
-                      <td className="py-3 px-4">
+                      <td className="py-2 px-3">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleSecim(item.id)}
-                          className="w-4 h-4 accent-emerald-500"
+                          className="w-3 h-3 accent-emerald-500"
                         />
                       </td>
-                      <td className="py-3 px-4 text-white font-medium">
+                      <td className="py-2 px-3 text-white text-xs font-medium">
                         {item.urun_adi}
                         {etiket === 'ucuz' && (
-                          <span className="ml-2 text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
+                          <span className="ml-1 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
                             En Ucuz
                           </span>
                         )}
                         {etiket === 'pahali' && (
-                          <span className="ml-2 text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">
+                          <span className="ml-1 text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">
                             En Pahali
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-slate-300">{item.firma_adi}</td>
-                      <td className="py-3 px-4 text-slate-400 hidden md:table-cell">
+                      <td className="py-2 px-3 text-slate-300 text-xs">{item.firma_adi}</td>
+                      <td className="py-2 px-3 text-slate-400 text-xs hidden md:table-cell">
                         {item.kategori || '-'}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-2 px-3 text-right">
                         <div className="flex flex-col items-end">
-                          <span className={`font-bold ${
+                          <span className={`text-xs font-bold ${
                             etiket === 'ucuz' ? 'text-emerald-400' : 
                             etiket === 'pahali' ? 'text-red-400' : 
                             'text-white'
                           }`}>
                             {convertedPrice}
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-[10px] text-slate-500">
                             {formatPrice(item.fiyat, item.para_birimi)}
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
+                      <td className="py-2 px-3 text-center">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${
                           item.durum === 'approved' ? 'bg-emerald-500/20 text-emerald-400' :
                           item.durum === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
                           'bg-red-500/20 text-red-400'
