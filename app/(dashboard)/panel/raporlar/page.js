@@ -7,7 +7,7 @@ import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image, Font } 
 import { X, TrendingUp, TrendingDown, Building2, DollarSign, ChevronRight, BarChart3 } from 'lucide-react'
 
 // ============================================================
-// FONT TANIMLAMASI (TTF GARANTİLİ CDN LİNKLERİ İLE DEĞİŞTİRİLDİ - ÇÖKME ENGELLENDİ)
+// FONT TANIMLAMASI
 // ============================================================
 Font.register({
   family: 'Roboto',
@@ -18,7 +18,7 @@ Font.register({
 })
 
 // ============================================================
-// PDF STILLERI (TAMAMEN REACT-PDF KURALLARINA UYUMLANDI)
+// PDF STILLERI (5'Lİ KART SİSTEMİNE GÖRE KÜÇÜLTÜLDÜ VE AYARLANDI)
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
@@ -113,46 +113,60 @@ const pdfStyles = StyleSheet.create({
     borderLeftColor: '#0f172a',
     borderLeftStyle: 'solid',
   },
+  // KARTLAR İÇİN YENİ 5'Lİ GRID SİSTEMİ
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     marginBottom: 10,
   },
   statCard: {
-    width: '48%',
+    width: '18.8%', // Yüzde 100'ü 5'e bölüp aralardaki margin (1.5%) boşluklarını düştük
+    marginRight: '1.5%',
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderStyle: 'solid',
     borderRadius: 4,
-    padding: 10,
+    padding: 6,
     marginBottom: 10,
   },
+  statCardLastInRow: {
+    marginRight: 0, // Her 5. elemanda sağ boşluğu sıfırlıyoruz
+  },
   statProductName: {
-    fontSize: 9,
+    fontSize: 7.5,
     fontWeight: 'bold',
     color: '#0f172a',
-    marginBottom: 8,
-    paddingBottom: 6,
+    marginBottom: 6,
+    paddingBottom: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
     borderBottomStyle: 'solid',
   },
-  statRow: {
+  statSection: {
+    marginBottom: 5,
+  },
+  statLabel: { fontSize: 5.5, color: '#64748b', marginBottom: 2, textTransform: 'uppercase' },
+  statCompanyText: { fontSize: 5.5, color: '#334155', marginTop: 2, fontStyle: 'italic' },
+  statValueMinContainer: { backgroundColor: '#d1fae5', paddingVertical: 2, paddingHorizontal: 4, borderRadius: 2, alignSelf: 'flex-start' },
+  statValueMinText: { fontSize: 7, fontWeight: 'bold', color: '#059669' },
+  statValueMaxContainer: { backgroundColor: '#fee2e2', paddingVertical: 2, paddingHorizontal: 4, borderRadius: 2, alignSelf: 'flex-start' },
+  statValueMaxText: { fontSize: 7, fontWeight: 'bold', color: '#dc2626' },
+  statDiffSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginTop: 4,
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    borderTopStyle: 'dashed',
   },
-  statLabel: { fontSize: 8, color: '#475569' },
-  statValueMinContainer: { backgroundColor: '#d1fae5', paddingVertical: 2, paddingHorizontal: 4, borderRadius: 3 },
-  statValueMinText: { fontSize: 8, fontWeight: 'bold', color: '#059669' },
-  statValueMaxContainer: { backgroundColor: '#fee2e2', paddingVertical: 2, paddingHorizontal: 4, borderRadius: 3 },
-  statValueMaxText: { fontSize: 8, fontWeight: 'bold', color: '#dc2626' },
-  statValueDiff: { fontSize: 8, fontWeight: 'bold', color: '#d97706' },
-  statCount: { fontSize: 7, color: '#64748b', marginTop: 6, textAlign: 'right' },
-  table: { width: '100%', marginBottom: 20 },
+  statValueDiffLabel: { fontSize: 5.5, color: '#64748b', textTransform: 'uppercase' },
+  statValueDiff: { fontSize: 6.5, fontWeight: 'bold', color: '#d97706' },
+  
+  table: { width: '100%', marginBottom: 20, marginTop: 10 },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#1e293b',
@@ -178,7 +192,6 @@ const pdfStyles = StyleSheet.create({
     borderBottomStyle: 'solid',
     alignItems: 'center',
   },
-  // Sütun Genişlikleri (Flex yerine sabit yüzdeler kullanıldı - Çökme engellendi)
   col1: { width: '5%' },
   col2: { width: '35%', paddingRight: 5 },
   col3: { width: '15%', paddingRight: 5 },
@@ -187,7 +200,6 @@ const pdfStyles = StyleSheet.create({
   tableHeaderCell: { fontSize: 7, fontWeight: 'bold', color: '#ffffff' },
   tableCell: { fontSize: 8, color: '#334155' },
   tableCellBold: { fontSize: 8, fontWeight: 'bold', color: '#0f172a' },
-  // Fiyat Etiketleri (Text içi arkaplan React-PDF'i bozar, View içine alındı)
   tagMinContainer: { backgroundColor: '#d1fae5', paddingVertical: 3, paddingHorizontal: 6, borderRadius: 3 },
   tagMinText: { fontSize: 8, fontWeight: 'bold', color: '#059669' },
   tagMaxContainer: { backgroundColor: '#fee2e2', paddingVertical: 3, paddingHorizontal: 6, borderRadius: 3 },
@@ -227,15 +239,10 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
   const formatDate = (date) => {
     if (!date) return '-'
     return new Date(date).toLocaleString('tr-TR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
     })
   }
 
-  // Güvenli Logo Kontrolü
   const hasValidLogo = logoUrl && typeof logoUrl === 'string' && logoUrl.startsWith('http')
 
   return (
@@ -278,28 +285,35 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
           <View wrap={false}>
             <Text style={pdfStyles.sectionTitle}>Seçili Ürünlerin Detaylı Analizi</Text>
             <View style={pdfStyles.statsGrid}>
-              {seciliIstatistikler.map((urun, index) => (
-                <View key={index} style={pdfStyles.statCard}>
-                  <Text style={pdfStyles.statProductName}>{urun.urunAdi}</Text>
-                  <View style={pdfStyles.statRow}>
-                    <Text style={pdfStyles.statLabel}>En Uygun Fiyat:</Text>
-                    <View style={pdfStyles.statValueMinContainer}>
-                      <Text style={pdfStyles.statValueMinText}>{formatPriceForPDF(urun.enUcuz, paraBirimi)}</Text>
+              {seciliIstatistikler.map((urun, index) => {
+                const isLastInRow = (index + 1) % 5 === 0;
+                return (
+                  <View key={index} style={[pdfStyles.statCard, isLastInRow ? pdfStyles.statCardLastInRow : {}]}>
+                    <Text style={pdfStyles.statProductName}>{urun.urunAdi}</Text>
+                    
+                    <View style={pdfStyles.statSection}>
+                      <Text style={pdfStyles.statLabel}>EN UYGUN FİYAT</Text>
+                      <View style={pdfStyles.statValueMinContainer}>
+                        <Text style={pdfStyles.statValueMinText}>{formatPriceForPDF(urun.enUcuz, paraBirimi)}</Text>
+                      </View>
+                      <Text style={pdfStyles.statCompanyText}>{urun.enUcuzFirma}</Text>
+                    </View>
+                    
+                    <View style={pdfStyles.statSection}>
+                      <Text style={pdfStyles.statLabel}>EN YÜKSEK FİYAT</Text>
+                      <View style={pdfStyles.statValueMaxContainer}>
+                        <Text style={pdfStyles.statValueMaxText}>{formatPriceForPDF(urun.enPahali, paraBirimi)}</Text>
+                      </View>
+                      <Text style={pdfStyles.statCompanyText}>{urun.enPahaliFirma}</Text>
+                    </View>
+                    
+                    <View style={pdfStyles.statDiffSection}>
+                      <Text style={pdfStyles.statValueDiffLabel}>FARK ({urun.adet} Firma)</Text>
+                      <Text style={pdfStyles.statValueDiff}>{formatPriceForPDF(urun.fark, paraBirimi)}</Text>
                     </View>
                   </View>
-                  <View style={pdfStyles.statRow}>
-                    <Text style={pdfStyles.statLabel}>En Yüksek Fiyat:</Text>
-                    <View style={pdfStyles.statValueMaxContainer}>
-                      <Text style={pdfStyles.statValueMaxText}>{formatPriceForPDF(urun.enPahali, paraBirimi)}</Text>
-                    </View>
-                  </View>
-                  <View style={[pdfStyles.statRow, { marginTop: 4, paddingTop: 4, borderTopWidth: 1, borderTopColor: '#e2e8f0', borderTopStyle: 'solid' }]}>
-                    <Text style={pdfStyles.statLabel}>Maksimum Fark:</Text>
-                    <Text style={pdfStyles.statValueDiff}>{formatPriceForPDF(urun.fark, paraBirimi)}</Text>
-                  </View>
-                  <Text style={pdfStyles.statCount}>* {urun.adet} firma teklifi</Text>
-                </View>
-              ))}
+                )
+              })}
             </View>
           </View>
         )}
@@ -631,23 +645,31 @@ export default function RaporlarPage() {
       urunGruplari[urunAdi].push(item)
     })
 
+    // YENİ: Firma isimlerini ekleyerek istatistikleri oluşturuyoruz
     const istatistikler = Object.keys(urunGruplari).map(urunAdi => {
       const items = urunGruplari[urunAdi]
-      const tlFiyatlar = items.map(item => {
+      
+      const siraliItems = items.map(item => {
         const fiyat = parseFloat(item.fiyat)
         const paraBirimi = item.para_birimi || 'TRY'
-        return convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
-      })
-      
-      const enUcuzTL = Math.min(...tlFiyatlar)
-      const enPahaliTL = Math.max(...tlFiyatlar)
-      const enUcuzConverted = convertPrice(enUcuzTL, 'TRY', gorunenParaBirimi, kurlar)
-      const enPahaliConverted = convertPrice(enPahaliTL, 'TRY', gorunenParaBirimi, kurlar)
+        return {
+          ...item,
+          tlFiyat: convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
+        }
+      }).sort((a, b) => a.tlFiyat - b.tlFiyat)
+
+      const enUcuzItem = siraliItems[0]
+      const enPahaliItem = siraliItems[siraliItems.length - 1]
+
+      const enUcuzConverted = convertPrice(enUcuzItem.tlFiyat, 'TRY', gorunenParaBirimi, kurlar)
+      const enPahaliConverted = convertPrice(enPahaliItem.tlFiyat, 'TRY', gorunenParaBirimi, kurlar)
       
       return {
         urunAdi: urunAdi,
         enUcuz: enUcuzConverted,
+        enUcuzFirma: enUcuzItem.firma_adi, // PDF ve UI için firma eklendi
         enPahali: enPahaliConverted,
+        enPahaliFirma: enPahaliItem.firma_adi, // PDF ve UI için firma eklendi
         fark: enPahaliConverted - enUcuzConverted,
         adet: items.length
       }
@@ -725,21 +747,28 @@ export default function RaporlarPage() {
 
     return Object.keys(urunGruplari).map(urunAdi => {
       const items = urunGruplari[urunAdi]
-      const tlFiyatlar = items.map(item => {
+      
+      const siraliItems = items.map(item => {
         const fiyat = parseFloat(item.fiyat)
         const paraBirimi = item.para_birimi || 'TRY'
-        return convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
-      })
-      
-      const enUcuzTL = Math.min(...tlFiyatlar)
-      const enPahaliTL = Math.max(...tlFiyatlar)
-      const enUcuzConverted = convertPrice(enUcuzTL, 'TRY', gorunenParaBirimi, kurlar)
-      const enPahaliConverted = convertPrice(enPahaliTL, 'TRY', gorunenParaBirimi, kurlar)
+        return {
+          ...item,
+          tlFiyat: convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
+        }
+      }).sort((a, b) => a.tlFiyat - b.tlFiyat)
+
+      const enUcuzItem = siraliItems[0]
+      const enPahaliItem = siraliItems[siraliItems.length - 1]
+
+      const enUcuzConverted = convertPrice(enUcuzItem.tlFiyat, 'TRY', gorunenParaBirimi, kurlar)
+      const enPahaliConverted = convertPrice(enPahaliItem.tlFiyat, 'TRY', gorunenParaBirimi, kurlar)
       
       return {
         urunAdi: urunAdi,
         enUcuz: enUcuzConverted,
+        enUcuzFirma: enUcuzItem.firma_adi, // PDF listesi için
         enPahali: enPahaliConverted,
+        enPahaliFirma: enPahaliItem.firma_adi, // PDF listesi için
         fark: enPahaliConverted - enUcuzConverted,
         adet: items.length
       }
@@ -855,32 +884,43 @@ export default function RaporlarPage() {
               Genel Fiyat Analizi (Filtrelenenler)
               <span className="text-xs text-slate-500 font-normal">(Kartlara tıklayarak detayları görün)</span>
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* UI İÇİN GRID 5'LİYE AYARLANDI (lg:grid-cols-5) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {urunIstatistikleri.map((urun, index) => (
                 <div 
                   key={index} 
                   onClick={() => handleDetayAc(urun)}
-                  className="bg-slate-900/40 rounded-xl p-4 border border-slate-700/50 shadow-sm hover:border-emerald-500/50 hover:shadow-emerald-500/10 hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                  className="bg-slate-900/40 rounded-xl p-3 border border-slate-700/50 shadow-sm hover:border-emerald-500/50 hover:shadow-emerald-500/10 hover:shadow-lg transition-all duration-300 cursor-pointer group"
                 >
                   <div className="flex items-start justify-between">
                     <p className="text-sm font-semibold text-white truncate flex-1" title={urun.urunAdi}>
                       {urun.urunAdi}
                     </p>
-                    <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0 ml-2" />
+                    <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0 ml-1" />
                   </div>
-                  <div className="space-y-2 mt-3">
-                    <div className="flex justify-between items-center bg-slate-950/50 p-2 rounded-lg">
-                      <span className="text-xs text-slate-400">Min</span>
-                      <span className="text-sm text-emerald-400 font-bold">{formatPrice(urun.enUcuz, gorunenParaBirimi)}</span>
+                  
+                  {/* UI İÇİNDE YENİ, FİRMA GÖSTEREN VE DAHA COMPACT KART YAPISI */}
+                  <div className="space-y-1.5 mt-2">
+                    <div className="flex justify-between items-center bg-slate-950/50 p-1.5 rounded-lg border border-emerald-500/10">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wider">En Uygun</span>
+                        <span className="text-[10px] text-slate-300 truncate max-w-[75px]" title={urun.enUcuzFirma}>{urun.enUcuzFirma}</span>
+                      </div>
+                      <span className="text-xs text-emerald-400 font-bold">{formatPrice(urun.enUcuz, gorunenParaBirimi)}</span>
                     </div>
-                    <div className="flex justify-between items-center bg-slate-950/50 p-2 rounded-lg">
-                      <span className="text-xs text-slate-400">Max</span>
-                      <span className="text-sm text-red-400 font-bold">{formatPrice(urun.enPahali, gorunenParaBirimi)}</span>
+                    
+                    <div className="flex justify-between items-center bg-slate-950/50 p-1.5 rounded-lg border border-red-500/10">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wider">En Yüksek</span>
+                        <span className="text-[10px] text-slate-300 truncate max-w-[75px]" title={urun.enPahaliFirma}>{urun.enPahaliFirma}</span>
+                      </div>
+                      <span className="text-xs text-red-400 font-bold">{formatPrice(urun.enPahali, gorunenParaBirimi)}</span>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-700/50">
-                    <span className="text-xs text-amber-400/90 font-medium">Fark: {formatPrice(urun.fark, gorunenParaBirimi)}</span>
-                    <span className="text-[11px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">{urun.adet} firma</span>
+
+                  <div className="flex justify-between items-center mt-2.5 pt-2.5 border-t border-slate-700/50">
+                    <span className="text-[10px] text-amber-400/90 font-medium">Fark: {formatPrice(urun.fark, gorunenParaBirimi)}</span>
+                    <span className="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-full">{urun.adet} firma</span>
                   </div>
                 </div>
               ))}
