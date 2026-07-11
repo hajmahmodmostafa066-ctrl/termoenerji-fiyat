@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
 import { convertPrice, formatPrice, getKurlar, kurDegistiginde, getCurrencySymbol } from '../../../../lib/currency'
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
+import { X, TrendingUp, TrendingDown, Building2, DollarSign, ChevronRight, BarChart3 } from 'lucide-react'
 
 // ============================================================
-// TÜRKÇE KARAKTER DESTEĞİ İÇİN FONT TANIMLAMASI
+// FONT TANIMLAMASI
 // ============================================================
 Font.register({
   family: 'Roboto',
@@ -17,7 +18,7 @@ Font.register({
 })
 
 // ============================================================
-// PROFESYONEL PDF STILLERI
+// PDF STILLERI
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
@@ -271,6 +272,181 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
 }
 
 // ============================================================
+// DETAY MODALI BİLEŞENİ
+// ============================================================
+const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi }) => {
+  if (!urun) return null
+
+  const formatPrice = (price, currency = 'TRY') => {
+    if (price === null || price === undefined) return '-'
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: currency
+    }).format(price)
+  }
+
+  // Fiyatları sırala (en ucuzdan en pahalıya)
+  const sortedFiyatlar = [...firmaDetaylari].sort((a, b) => a.fiyat - b.fiyat)
+  const enUcuz = sortedFiyatlar[0]
+  const enPahali = sortedFiyatlar[sortedFiyatlar.length - 1]
+  const fark = enPahali?.fiyat - enUcuz?.fiyat || 0
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-700/50 shadow-2xl">
+        {/* Modal Header */}
+        <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4 flex items-center justify-between z-10">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-emerald-400" />
+              {urun.urunAdi}
+            </h2>
+            <p className="text-sm text-slate-400">{firmaDetaylari.length} firma tarafından teklif verilmiş</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-800 rounded-lg transition text-slate-400 hover:text-white"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        {/* İçerik */}
+        <div className="p-6 space-y-6">
+          {/* Özet Kartları */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+              <p className="text-xs text-slate-400">Toplam Teklif</p>
+              <p className="text-2xl font-bold text-white">{firmaDetaylari.length}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-emerald-500/30">
+              <p className="text-xs text-slate-400">💚 En Ucuz</p>
+              <p className="text-2xl font-bold text-emerald-400">
+                {formatPrice(enUcuz?.fiyat, gorunenParaBirimi)}
+              </p>
+              <p className="text-xs text-slate-400">{enUcuz?.firma_adi}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-red-500/30">
+              <p className="text-xs text-slate-400">❤️ En Pahalı</p>
+              <p className="text-2xl font-bold text-red-400">
+                {formatPrice(enPahali?.fiyat, gorunenParaBirimi)}
+              </p>
+              <p className="text-xs text-slate-400">{enPahali?.firma_adi}</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-amber-500/30">
+              <p className="text-xs text-slate-400">💰 Fiyat Farkı</p>
+              <p className="text-2xl font-bold text-amber-400">
+                {formatPrice(fark, gorunenParaBirimi)}
+              </p>
+              <p className="text-xs text-slate-400">En yüksek - En düşük</p>
+            </div>
+          </div>
+
+          {/* Firma Bazında Fiyat Listesi */}
+          <div>
+            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-emerald-400" />
+              Firma Bazında Fiyatlar
+            </h3>
+            <div className="overflow-x-auto bg-slate-800/30 rounded-xl border border-slate-700/50">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700 bg-slate-800/50">
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium">#</th>
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium">Firma</th>
+                    <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">Marka</th>
+                    <th className="text-right py-3 px-4 text-slate-400 font-medium">Fiyat</th>
+                    <th className="text-center py-3 px-4 text-slate-400 font-medium">Durum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedFiyatlar.map((item, index) => {
+                    const isEnUcuz = item.fiyat === enUcuz?.fiyat
+                    const isEnPahali = item.fiyat === enPahali?.fiyat
+                    
+                    return (
+                      <tr key={item.id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition">
+                        <td className="py-3 px-4 text-slate-500 text-xs">{index + 1}</td>
+                        <td className="py-3 px-4 text-white font-medium">
+                          {item.firma_adi}
+                          {isEnUcuz && (
+                            <span className="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">En Ucuz</span>
+                          )}
+                          {isEnPahali && (
+                            <span className="ml-2 text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">En Pahalı</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-slate-400 hidden md:table-cell">{item.marka || '-'}</td>
+                        <td className={`py-3 px-4 font-bold text-right ${
+                          isEnUcuz ? 'text-emerald-400' : 
+                          isEnPahali ? 'text-red-400' : 
+                          'text-white'
+                        }`}>
+                          {formatPrice(item.fiyat, gorunenParaBirimi)}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            item.durum === 'approved' ? 'bg-emerald-500/20 text-emerald-400' :
+                            item.durum === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            {item.durum === 'approved' ? '✅ Onaylandı' :
+                             item.durum === 'pending' ? '⏳ Beklemede' : '❌ Reddedildi'}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Grafik Benzeri Görsel (CSS ile) */}
+          <div>
+            <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-400" />
+              Fiyat Karşılaştırma Grafiği
+            </h3>
+            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
+              {sortedFiyatlar.map((item, index) => {
+                const maxFiyat = sortedFiyatlar[sortedFiyatlar.length - 1]?.fiyat || 1
+                const yuzde = (item.fiyat / maxFiyat) * 100
+                const isEnUcuz = item.fiyat === enUcuz?.fiyat
+                const isEnPahali = item.fiyat === enPahali?.fiyat
+                
+                return (
+                  <div key={item.id} className="flex items-center gap-4 mb-2">
+                    <span className="text-xs text-slate-400 w-24 truncate">{item.firma_adi}</span>
+                    <div className="flex-1 h-6 bg-slate-700/30 rounded-lg overflow-hidden">
+                      <div
+                        className={`h-full rounded-lg transition-all duration-500 ${
+                          isEnUcuz ? 'bg-emerald-500' :
+                          isEnPahali ? 'bg-red-500' :
+                          'bg-blue-500'
+                        }`}
+                        style={{ width: `${Math.max(yuzde, 5)}%` }}
+                      />
+                    </div>
+                    <span className={`text-xs font-bold w-20 text-right ${
+                      isEnUcuz ? 'text-emerald-400' :
+                      isEnPahali ? 'text-red-400' :
+                      'text-white'
+                    }`}>
+                      {formatPrice(item.fiyat, gorunenParaBirimi)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
 // ANA SAYFA
 // ============================================================
 export default function RaporlarPage() {
@@ -288,6 +464,11 @@ export default function RaporlarPage() {
   const [gorunenParaBirimi, setGorunenParaBirimi] = useState('TRY')
   const [kurlar, setKurlar] = useState({ usdTry: 34.50, eurTry: 37.20 })
   const [urunIstatistikleri, setUrunIstatistikleri] = useState([])
+
+  // ===== DETAY MODALI STATE'LERİ =====
+  const [detayModalAcik, setDetayModalAcik] = useState(false)
+  const [detayUrun, setDetayUrun] = useState(null)
+  const [detayFirmaDetaylari, setDetayFirmaDetaylari] = useState([])
 
   // ============================================================
   // VERİLERİ ÇEK
@@ -387,6 +568,16 @@ export default function RaporlarPage() {
     })
     setUrunIstatistikleri(istatistikler)
   }, [arama, filtreKategori, filtreFirma, fiyatlar, gorunenParaBirimi, kurlar])
+
+  // ============================================================
+  // DETAY MODALI AÇ
+  // ============================================================
+  const handleDetayAc = (urun) => {
+    const firmaDetaylari = filteredFiyatlar.filter(item => item.urun_adi === urun.urunAdi)
+    setDetayUrun(urun)
+    setDetayFirmaDetaylari(firmaDetaylari)
+    setDetayModalAcik(true)
+  }
 
   // ============================================================
   // YARDIMCI FONKSİYONLAR
@@ -577,7 +768,7 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* GENEL ÜRÜN İSTATİSTİKLERİ */}
+        {/* GENEL ÜRÜN İSTATİSTİKLERİ - TIKLANABİLİR KARTLAR */}
         {urunIstatistikleri.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
@@ -585,12 +776,22 @@ export default function RaporlarPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
               Genel Fiyat Analizi (Filtrelenenler)
+              <span className="text-xs text-slate-500 font-normal">(Kartlara tıklayarak detayları görün)</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {urunIstatistikleri.map((urun, index) => (
-                <div key={index} className="bg-slate-900/40 rounded-xl p-4 border border-slate-700/50 shadow-sm hover:border-slate-600/50 transition-colors group">
-                  <p className="text-sm font-semibold text-white truncate mb-3" title={urun.urunAdi}>{urun.urunAdi}</p>
-                  <div className="space-y-2">
+                <div 
+                  key={index} 
+                  onClick={() => handleDetayAc(urun)}
+                  className="bg-slate-900/40 rounded-xl p-4 border border-slate-700/50 shadow-sm hover:border-emerald-500/50 hover:shadow-emerald-500/10 hover:shadow-lg transition-all duration-300 cursor-pointer group"
+                >
+                  <div className="flex items-start justify-between">
+                    <p className="text-sm font-semibold text-white truncate flex-1" title={urun.urunAdi}>
+                      {urun.urunAdi}
+                    </p>
+                    <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0 ml-2" />
+                  </div>
+                  <div className="space-y-2 mt-3">
                     <div className="flex justify-between items-center bg-slate-950/50 p-2 rounded-lg">
                       <span className="text-xs text-slate-400">Min</span>
                       <span className="text-sm text-emerald-400 font-bold">{formatPrice(urun.enUcuz, gorunenParaBirimi)}</span>
@@ -779,6 +980,20 @@ export default function RaporlarPage() {
           </div>
         </div>
       </div>
+
+      {/* DETAY MODALI */}
+      {detayModalAcik && detayUrun && (
+        <DetayModal 
+          urun={detayUrun}
+          firmaDetaylari={detayFirmaDetaylari}
+          onClose={() => {
+            setDetayModalAcik(false)
+            setDetayUrun(null)
+            setDetayFirmaDetaylari([])
+          }}
+          gorunenParaBirimi={gorunenParaBirimi}
+        />
+      )}
     </div>
   )
 }
