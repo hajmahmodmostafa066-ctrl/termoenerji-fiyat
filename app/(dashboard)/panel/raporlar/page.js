@@ -6,7 +6,7 @@ import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 
 // ============================================================
-// PDF STILLERI - ULTRA PROFESYONEL (KARAKTER SORUNU ÇÖZÜLDÜ)
+// PDF STILLERI
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
@@ -136,13 +136,6 @@ const pdfStyles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
   },
-  priceCellAmber: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: '#f59e0b',
-    flex: 1,
-    textAlign: 'right',
-  },
   statusCell: {
     fontSize: 8,
     color: '#10b981',
@@ -220,7 +213,7 @@ const pdfStyles = StyleSheet.create({
 })
 
 // ============================================================
-// PDF BİLEŞENİ - KATEGORİ BAZINDA
+// PDF BİLEŞENİ
 // ============================================================
 const RaporPDF = ({ 
   data, 
@@ -230,7 +223,7 @@ const RaporPDF = ({
   kategori, 
   firma,
   paraBirimi,
-  kategoriIstatistikleri
+  urunIstatistikleri
 }) => {
   const formatPrice = (price, currency = 'TRY') => {
     if (price === null || price === undefined) return '-'
@@ -267,7 +260,7 @@ const RaporPDF = ({
             {firmaBilgileri?.telefon && (
               <Text style={pdfStyles.companySub}>Tel: {firmaBilgileri.telefon}</Text>
             )}
-            <Text style={pdfStyles.reportTitle}>Fiyat Karşılaştırma Raporu</Text>
+            <Text style={pdfStyles.reportTitle}>Fiyat Karsilastirma Raporu</Text>
           </View>
           <View>
             <Text style={pdfStyles.dateText}>Tarih: {formatDate(new Date())}</Text>
@@ -285,16 +278,16 @@ const RaporPDF = ({
           </View>
         </View>
 
-        {/* KATEGORİ BAZINDA İSTATİSTİKLER */}
-        {kategoriIstatistikleri && kategoriIstatistikleri.length > 0 && (
+        {/* ÜRÜN BAZINDA İSTATİSTİKLER */}
+        {urunIstatistikleri && urunIstatistikleri.length > 0 && (
           <View style={pdfStyles.statsGrid}>
-            {kategoriIstatistikleri.map((kat, index) => (
+            {urunIstatistikleri.map((urun, index) => (
               <View key={index} style={pdfStyles.statCard}>
-                <Text style={pdfStyles.statLabel}>{kat.kategori}</Text>
-                <Text style={pdfStyles.statValueGreen}>En Ucuz: {formatPrice(kat.enUcuz, paraBirimi)}</Text>
-                <Text style={pdfStyles.statValueRed}>En Pahali: {formatPrice(kat.enPahali, paraBirimi)}</Text>
-                <Text style={pdfStyles.statValueAmber}>Fark: {formatPrice(kat.fark, paraBirimi)}</Text>
-                <Text style={pdfStyles.statLabel}>Teklif: {kat.adet} adet</Text>
+                <Text style={pdfStyles.statLabel}>{urun.urunAdi}</Text>
+                <Text style={pdfStyles.statValueGreen}>En Ucuz: {formatPrice(urun.enUcuz, paraBirimi)}</Text>
+                <Text style={pdfStyles.statValueRed}>En Pahali: {formatPrice(urun.enPahali, paraBirimi)}</Text>
+                <Text style={pdfStyles.statValueAmber}>Fark: {formatPrice(urun.fark, paraBirimi)}</Text>
+                <Text style={pdfStyles.statLabel}>Teklif: {urun.adet} adet</Text>
               </View>
             ))}
           </View>
@@ -358,12 +351,11 @@ export default function RaporlarPage() {
   const [seciliIds, setSeciliIds] = useState([])
   const [gorunenParaBirimi, setGorunenParaBirimi] = useState('TRY')
   const [kurlar, setKurlar] = useState({ usdTry: 34.50, eurTry: 37.20 })
-  const [kategoriIstatistikleri, setKategoriIstatistikleri] = useState([])
+  const [urunIstatistikleri, setUrunIstatistikleri] = useState([])
 
   // Tüm fiyatları yükle
   useEffect(() => {
     const loadData = async () => {
-      // Fiyatları çek
       const { data: fiyatData } = await supabase
         .from('fiyat_teklifleri')
         .select('*')
@@ -373,7 +365,6 @@ export default function RaporlarPage() {
       setFilteredFiyatlar(fiyatData || [])
       setLoading(false)
 
-      // Firmaları ve kategorileri çek
       const { data: firmalarData } = await supabase.from('firmalar').select('ad')
       const { data: kategoriData } = await supabase.from('kategoriler').select('ad')
       const { data: firmaData } = await supabase.from('firma_bilgileri').select('*').maybeSingle()
@@ -402,7 +393,7 @@ export default function RaporlarPage() {
     return () => unsubscribe()
   }, [])
 
-  // Filtreleme ve kategori istatistikleri
+  // Filtreleme ve ürün bazında istatistikler
   useEffect(() => {
     let filtered = [...fiyatlar]
 
@@ -420,32 +411,37 @@ export default function RaporlarPage() {
 
     setFilteredFiyatlar(filtered)
 
-    // KATEGORİ BAZINDA İSTATİSTİKLER
-    const kategoriGruplari = {}
+    // ✅ ÜRÜN BAZINDA İSTATİSTİKLER (Aynı ürünün farklı firmalardaki fiyatları)
+    const urunGruplari = {}
     filtered.forEach(item => {
-      const kat = item.kategori || 'Kategorisiz'
-      if (!kategoriGruplari[kat]) {
-        kategoriGruplari[kat] = []
+      const urunAdi = item.urun_adi || 'Bilinmiyor'
+      if (!urunGruplari[urunAdi]) {
+        urunGruplari[urunAdi] = []
       }
-      kategoriGruplari[kat].push(item)
+      urunGruplari[urunAdi].push(item)
     })
 
-    const istatistikler = Object.keys(kategoriGruplari).map(kat => {
-      const items = kategoriGruplari[kat]
-      const fiyatlar = items.map(i => i.fiyat)
+    const istatistikler = Object.keys(urunGruplari).map(urunAdi => {
+      const items = urunGruplari[urunAdi]
+      const fiyatlar = items.map(i => parseFloat(i.fiyat))
       const enUcuz = Math.min(...fiyatlar)
       const enPahali = Math.max(...fiyatlar)
+      
+      // Fiyatları hedef para birimine çevir
+      const enUcuzConverted = convertPrice(enUcuz, 'TRY', gorunenParaBirimi, kurlar)
+      const enPahaliConverted = convertPrice(enPahali, 'TRY', gorunenParaBirimi, kurlar)
+      
       return {
-        kategori: kat,
-        enUcuz: enUcuz,
-        enPahali: enPahali,
-        fark: enPahali - enUcuz,
+        urunAdi: urunAdi,
+        enUcuz: enUcuzConverted,
+        enPahali: enPahaliConverted,
+        fark: enPahaliConverted - enUcuzConverted,
         adet: items.length
       }
     })
 
-    setKategoriIstatistikleri(istatistikler)
-  }, [arama, filtreKategori, filtreFirma, fiyatlar])
+    setUrunIstatistikleri(istatistikler)
+  }, [arama, filtreKategori, filtreFirma, fiyatlar, gorunenParaBirimi, kurlar])
 
   const toggleSecim = (id) => {
     setSeciliIds(prev =>
@@ -455,19 +451,21 @@ export default function RaporlarPage() {
 
   const selectedFiyatlar = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
 
-  // Kategori bazında en ucuz/en pahalı işaretleme
-  const getKategoriEtiketi = (item) => {
-    const kategoriItems = filteredFiyatlar.filter(i => i.kategori === item.kategori)
-    if (kategoriItems.length === 0) return null
+  // ✅ ÜRÜN BAZINDA en ucuz/en pahalı işaretleme
+  const getUrunEtiketi = (item) => {
+    const urunItems = filteredFiyatlar.filter(i => i.urun_adi === item.urun_adi)
+    if (urunItems.length === 0) return null
     
-    const minFiyat = Math.min(...kategoriItems.map(i => i.fiyat))
-    const maxFiyat = Math.max(...kategoriItems.map(i => i.fiyat))
+    const fiyatlar = urunItems.map(i => parseFloat(i.fiyat))
+    const minFiyat = Math.min(...fiyatlar)
+    const maxFiyat = Math.max(...fiyatlar)
     
-    if (item.fiyat === minFiyat) return 'ucuz'
-    if (item.fiyat === maxFiyat) return 'pahali'
+    if (parseFloat(item.fiyat) === minFiyat) return 'ucuz'
+    if (parseFloat(item.fiyat) === maxFiyat) return 'pahali'
     return null
   }
 
+  // Fiyat çevirisi
   const getConvertedPrice = (fiyat, paraBirimi) => {
     const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
     if (isNaN(parsedFiyat) || !parsedFiyat) return '-'
@@ -555,33 +553,35 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* KATEGORİ BAZINDA İSTATİSTİK KARTLARI */}
-        {kategoriIstatistikleri.length > 0 && (
+        {/* ÜRÜN BAZINDA İSTATİSTİK KARTLARI */}
+        {urunIstatistikleri.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {kategoriIstatistikleri.map((kat, index) => (
+            {urunIstatistikleri.map((urun, index) => (
               <div key={index} className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-sm font-semibold text-white">{kat.kategori}</p>
+                <p className="text-sm font-semibold text-white truncate" title={urun.urunAdi}>
+                  {urun.urunAdi}
+                </p>
                 <div className="grid grid-cols-3 gap-2 mt-2">
                   <div>
                     <p className="text-xs text-slate-400">En Ucuz</p>
                     <p className="text-sm font-bold text-emerald-400">
-                      {getConvertedPrice(kat.enUcuz, 'TRY')}
+                      {formatPrice(urun.enUcuz, gorunenParaBirimi)}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-400">En Pahali</p>
                     <p className="text-sm font-bold text-red-400">
-                      {getConvertedPrice(kat.enPahali, 'TRY')}
+                      {formatPrice(urun.enPahali, gorunenParaBirimi)}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-400">Fark</p>
                     <p className="text-sm font-bold text-amber-400">
-                      {getConvertedPrice(kat.fark, 'TRY')}
+                      {formatPrice(urun.fark, gorunenParaBirimi)}
                     </p>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500 mt-2">{kat.adet} teklif</p>
+                <p className="text-xs text-slate-500 mt-2">{urun.adet} teklif</p>
               </div>
             ))}
           </div>
@@ -600,7 +600,7 @@ export default function RaporlarPage() {
                   kategori={filtreKategori || 'Tum Kategoriler'}
                   firma={filtreFirma || 'Tum Firmalar'}
                   paraBirimi={gorunenParaBirimi}
-                  kategoriIstatistikleri={kategoriIstatistikleri}
+                  urunIstatistikleri={urunIstatistikleri}
                 />
               }
               fileName={`rapor_${new Date().toISOString().split('T')[0]}.pdf`}
@@ -655,7 +655,8 @@ export default function RaporlarPage() {
               <tbody>
                 {filteredFiyatlar.map((item) => {
                   const isSelected = seciliIds.includes(item.id)
-                  const etiket = getKategoriEtiketi(item)
+                  const etiket = getUrunEtiketi(item)
+                  const convertedPrice = getConvertedPrice(item.fiyat, item.para_birimi)
 
                   return (
                     <tr 
@@ -689,15 +690,19 @@ export default function RaporlarPage() {
                       <td className="py-3 px-4 text-slate-400 hidden md:table-cell">
                         {item.kategori || '-'}
                       </td>
-                      <td className={`py-3 px-4 font-bold text-right ${
-                        etiket === 'ucuz' ? 'text-emerald-400' : 
-                        etiket === 'pahali' ? 'text-red-400' : 
-                        'text-white'
-                      }`}>
-                        {getConvertedPrice(item.fiyat, item.para_birimi)}
-                        <span className="text-xs text-slate-500 ml-1">
-                          ({item.para_birimi})
-                        </span>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex flex-col items-end">
+                          <span className={`font-bold ${
+                            etiket === 'ucuz' ? 'text-emerald-400' : 
+                            etiket === 'pahali' ? 'text-red-400' : 
+                            'text-white'
+                          }`}>
+                            {convertedPrice}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {formatPrice(item.fiyat, item.para_birimi)}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-center">
                         <span className={`text-xs px-2 py-1 rounded-full ${
