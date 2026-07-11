@@ -18,141 +18,198 @@ Font.register({
 })
 
 // ============================================================
-// PDF STILLERI
+// PDF STILLERI (TAMAMEN YENİLENDİ VE GÜZELLEŞTİRİLDİ)
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 30,
+    paddingTop: 45,
+    paddingBottom: 55,
+    paddingHorizontal: 40,
     backgroundColor: '#ffffff',
     fontFamily: 'Roboto',
+  },
+  topAccent: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 8,
+    backgroundColor: '#10b981', // Kurumsal yeşil vurgu
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#0f172a',
-    padding: 20,
-    borderRadius: 8,
-    marginBottom: 15,
+    alignItems: 'flex-start',
+    borderBottom: '1.5px solid #e2e8f0',
+    paddingBottom: 20,
+    marginBottom: 20,
   },
-  headerLeft: { flex: 1 },
+  headerLeft: { flex: 1.5, paddingRight: 10 },
+  logo: { width: 130, height: 45, objectFit: 'contain', marginBottom: 12 },
   companyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 4,
-  },
-  companyAddress: { fontSize: 9, color: '#94a3b8' },
-  headerRight: { alignItems: 'flex-end' },
-  reportMainTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#10b981',
-    marginBottom: 4,
-  },
-  reportDate: { fontSize: 9, color: '#cbd5e1' },
-  summaryBox: {
-    flexDirection: 'row',
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
-    borderRadius: 6,
-    padding: 10,
-    marginBottom: 15,
-  },
-  summaryItem: { flex: 1 },
-  summaryLabel: {
-    fontSize: 7,
-    color: '#64748b',
-    textTransform: 'uppercase',
-    marginBottom: 2,
-  },
-  summaryValue: { fontSize: 9, fontWeight: 'bold', color: '#0f172a' },
-  sectionTitle: {
-    fontSize: 11,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#0f172a',
-    marginBottom: 8,
-    borderBottom: '1px solid #e2e8f0',
-    paddingBottom: 4,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  companyAddress: { fontSize: 9, color: '#475569', marginBottom: 3, lineHeight: 1.4 },
+  headerRight: { flex: 1, alignItems: 'flex-end' },
+  reportMainTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#10b981',
+    marginBottom: 10,
+    letterSpacing: 0.5,
+  },
+  reportDateContainer: {
+    backgroundColor: '#f8fafc',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    border: '1px solid #e2e8f0',
+    alignItems: 'flex-end',
+  },
+  reportDateLabel: { fontSize: 7, color: '#64748b', marginBottom: 3, textTransform: 'uppercase', fontWeight: 'bold' },
+  reportDate: { fontSize: 10, fontWeight: 'bold', color: '#0f172a' },
+  summaryBox: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 25,
+  },
+  summaryItem: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+    borderLeft: '4px solid #10b981',
+    borderRadius: 4,
+    padding: 12,
+    borderTop: '1px solid #f1f5f9',
+    borderRight: '1px solid #f1f5f9',
+    borderBottom: '1px solid #f1f5f9',
+  },
+  summaryLabel: {
+    fontSize: 8,
+    color: '#64748b',
+    textTransform: 'uppercase',
+    marginBottom: 6,
+    fontWeight: 'bold',
+  },
+  summaryValue: { fontSize: 14, fontWeight: 'bold', color: '#0f172a' },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    marginBottom: 15,
+    borderLeft: '3px solid #0f172a',
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 15,
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 25,
   },
   statCard: {
-    width: '31%',
+    width: '48%', // Daha ferah görünüm için 3 yerine 2 kolon
     backgroundColor: '#ffffff',
-    border: '1px solid #cbd5e1',
+    border: '1px solid #e2e8f0',
     borderRadius: 6,
-    padding: 10,
+    padding: 12,
+    marginBottom: 12,
   },
   statProductName: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 6,
-    borderBottom: '1px dashed #e2e8f0',
-    paddingBottom: 4,
+    color: '#0f172a',
+    marginBottom: 10,
+    paddingBottom: 8,
+    borderBottom: '1px solid #e2e8f0',
   },
   statRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 3,
+    alignItems: 'center',
+    marginBottom: 6,
   },
-  statLabel: { fontSize: 8, color: '#64748b' },
-  statValueMin: { fontSize: 8, fontWeight: 'bold', color: '#10b981' },
-  statValueMax: { fontSize: 8, fontWeight: 'bold', color: '#ef4444' },
-  statValueDiff: { fontSize: 8, fontWeight: 'bold', color: '#f59e0b' },
-  statCount: { fontSize: 7, color: '#94a3b8', marginTop: 4, textAlign: 'right' },
-  table: { width: '100%' },
+  statLabel: { fontSize: 9, color: '#475569' },
+  statValueMin: { fontSize: 9, fontWeight: 'bold', color: '#059669', backgroundColor: '#d1fae5', padding: '3 6', borderRadius: 4 },
+  statValueMax: { fontSize: 9, fontWeight: 'bold', color: '#dc2626', backgroundColor: '#fee2e2', padding: '3 6', borderRadius: 4 },
+  statValueDiff: { fontSize: 9, fontWeight: 'bold', color: '#d97706' },
+  statCount: { fontSize: 8, color: '#64748b', marginTop: 8, textAlign: 'right', fontStyle: 'italic' },
+  table: { width: '100%', marginBottom: 30 },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
-    borderTop: '1px solid #cbd5e1',
-    borderBottom: '1px solid #cbd5e1',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    backgroundColor: '#1e293b',
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
   tableHeaderCell: {
     fontSize: 8,
     fontWeight: 'bold',
-    color: '#475569',
-    flex: 1,
+    color: '#ffffff',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderBottom: '1px solid #f1f5f9',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottom: '1px solid #e2e8f0',
+    alignItems: 'center',
   },
   tableRowStriped: {
     flexDirection: 'row',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    backgroundColor: '#fafafa',
-    borderBottom: '1px solid #f1f5f9',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#f8fafc',
+    borderBottom: '1px solid #e2e8f0',
+    alignItems: 'center',
   },
-  tableCell: { fontSize: 8, color: '#334155', flex: 1 },
-  tableCellBold: { fontSize: 8, fontWeight: 'bold', color: '#0f172a', flex: 1 },
-  priceCell: { fontSize: 8, fontWeight: 'bold', color: '#10b981', flex: 1, textAlign: 'right' },
-  priceCellHigh: { fontSize: 8, fontWeight: 'bold', color: '#ef4444', flex: 1, textAlign: 'right' },
+  tableCell: { fontSize: 9, color: '#334155' },
+  tableCellBold: { fontSize: 9, fontWeight: 'bold', color: '#0f172a' },
+  priceTagMin: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#059669',
+    backgroundColor: '#d1fae5',
+    padding: '4 8',
+    borderRadius: 4,
+    textAlign: 'right',
+  },
+  priceTagMax: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#dc2626',
+    backgroundColor: '#fee2e2',
+    padding: '4 8',
+    borderRadius: 4,
+    textAlign: 'right',
+  },
+  priceNormal: { fontSize: 9, fontWeight: 'bold', color: '#0f172a', textAlign: 'right', padding: '4 8' },
   footer: {
     position: 'absolute',
-    bottom: 20,
-    left: 30,
-    right: 30,
-    borderTop: '1px solid #e2e8f0',
-    paddingTop: 10,
+    bottom: 30,
+    left: 40,
+    right: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTop: '1px solid #e2e8f0',
+    paddingTop: 12,
   },
-  footerText: { fontSize: 7, color: '#94a3b8' },
+  footerText: { fontSize: 8, color: '#94a3b8' },
+  footerPageNumber: { fontSize: 8, fontWeight: 'bold', color: '#64748b' },
 })
 
 // ============================================================
-// PDF BİLEŞENİ
+// PDF BİLEŞENİ (DÜZENLENDİ)
 // ============================================================
 const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikler }) => {
   const formatPriceForPDF = (price, currency = 'TRY') => {
@@ -179,16 +236,21 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
+        <View style={pdfStyles.topAccent} fixed />
+        
         <View style={pdfStyles.headerContainer}>
           <View style={pdfStyles.headerLeft}>
-            {logoUrl && <Image src={logoUrl} style={{ width: 110, height: 40, marginBottom: 8 }} />}
+            {logoUrl && <Image src={logoUrl} style={pdfStyles.logo} />}
             <Text style={pdfStyles.companyTitle}>{firmaBilgileri?.ad || 'TermoEnerji Sistemleri'}</Text>
             {firmaBilgileri?.adres && <Text style={pdfStyles.companyAddress}>{firmaBilgileri.adres}</Text>}
             {firmaBilgileri?.telefon && <Text style={pdfStyles.companyAddress}>Tel: {firmaBilgileri.telefon}</Text>}
           </View>
           <View style={pdfStyles.headerRight}>
             <Text style={pdfStyles.reportMainTitle}>FİYAT ANALİZ RAPORU</Text>
-            <Text style={pdfStyles.reportDate}>{formatDate(new Date())}</Text>
+            <View style={pdfStyles.reportDateContainer}>
+              <Text style={pdfStyles.reportDateLabel}>Oluşturulma Tarihi</Text>
+              <Text style={pdfStyles.reportDate}>{formatDate(new Date())}</Text>
+            </View>
           </View>
         </View>
 
@@ -198,35 +260,35 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
             <Text style={pdfStyles.summaryValue}>{paraBirimi === 'TRY' ? 'Türk Lirası (TL)' : paraBirimi}</Text>
           </View>
           <View style={pdfStyles.summaryItem}>
-            <Text style={pdfStyles.summaryLabel}>Listelenen Ürün</Text>
+            <Text style={pdfStyles.summaryLabel}>Listelenen Teklif</Text>
             <Text style={pdfStyles.summaryValue}>{data.length} Adet</Text>
           </View>
           <View style={pdfStyles.summaryItem}>
-            <Text style={pdfStyles.summaryLabel}>Analiz Edilen Çeşit</Text>
-            <Text style={pdfStyles.summaryValue}>{seciliIstatistikler.length} Farklı Ürün</Text>
+            <Text style={pdfStyles.summaryLabel}>Analiz Edilen Ürün</Text>
+            <Text style={pdfStyles.summaryValue}>{seciliIstatistikler.length} Çeşit</Text>
           </View>
         </View>
 
         {seciliIstatistikler && seciliIstatistikler.length > 0 && (
-          <View>
-            <Text style={pdfStyles.sectionTitle}>Seçili Ürünlerin Fiyat Analizi</Text>
+          <View wrap={false}>
+            <Text style={pdfStyles.sectionTitle}>Seçili Ürünlerin Detaylı Analizi</Text>
             <View style={pdfStyles.statsGrid}>
               {seciliIstatistikler.map((urun, index) => (
                 <View key={index} style={pdfStyles.statCard}>
                   <Text style={pdfStyles.statProductName}>{urun.urunAdi}</Text>
                   <View style={pdfStyles.statRow}>
-                    <Text style={pdfStyles.statLabel}>En Uygun:</Text>
+                    <Text style={pdfStyles.statLabel}>En Uygun Fiyat:</Text>
                     <Text style={pdfStyles.statValueMin}>{formatPriceForPDF(urun.enUcuz, paraBirimi)}</Text>
                   </View>
                   <View style={pdfStyles.statRow}>
-                    <Text style={pdfStyles.statLabel}>En Yüksek:</Text>
+                    <Text style={pdfStyles.statLabel}>En Yüksek Fiyat:</Text>
                     <Text style={pdfStyles.statValueMax}>{formatPriceForPDF(urun.enPahali, paraBirimi)}</Text>
                   </View>
-                  <View style={pdfStyles.statRow}>
-                    <Text style={pdfStyles.statLabel}>Fiyat Farkı:</Text>
+                  <View style={[pdfStyles.statRow, { marginTop: 6, paddingTop: 6, borderTop: '1px dashed #e2e8f0' }]}>
+                    <Text style={pdfStyles.statLabel}>Maksimum Fark:</Text>
                     <Text style={pdfStyles.statValueDiff}>{formatPriceForPDF(urun.fark, paraBirimi)}</Text>
                   </View>
-                  <Text style={pdfStyles.statCount}>{urun.adet} Teklif Arasında</Text>
+                  <Text style={pdfStyles.statCount}>* Toplam {urun.adet} firma teklifi üzerinden hesaplanmıştır.</Text>
                 </View>
               ))}
             </View>
@@ -234,29 +296,31 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
         )}
 
         <View>
-          <Text style={pdfStyles.sectionTitle}>Detaylı Fiyat Teklifleri (Seçilenler)</Text>
+          <Text style={pdfStyles.sectionTitle}>Tedarikçi Fiyat Teklifleri Listesi</Text>
           <View style={pdfStyles.table}>
-            <View style={pdfStyles.tableHeader}>
-              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.3 }]}>#</Text>
+            <View style={pdfStyles.tableHeader} fixed>
+              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.2 }]}>#</Text>
               <Text style={[pdfStyles.tableHeaderCell, { flex: 1.5 }]}>ÜRÜN TANIMI</Text>
-              <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>MARKA</Text>
+              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>MARKA</Text>
               <Text style={[pdfStyles.tableHeaderCell, { flex: 1.2 }]}>TEDARİKÇİ FİRMA</Text>
-              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.9, textAlign: 'right' }]}>BİRİM FİYAT</Text>
+              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8, textAlign: 'right' }]}>BİRİM FİYAT</Text>
             </View>
+            
             {data.map((item, index) => (
-              <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowStriped}>
-                <Text style={[pdfStyles.tableCell, { flex: 0.3 }]}>{index + 1}</Text>
-                <Text style={[pdfStyles.tableCellBold, { flex: 1.5 }]}>{item.urun_adi}</Text>
-                <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.marka || '-'}</Text>
-                <Text style={[pdfStyles.tableCell, { flex: 1.2 }]}>{item.firma_adi}</Text>
-                <Text style={[
-                  item._etiket === 'ucuz' ? pdfStyles.priceCell : 
-                  item._etiket === 'pahali' ? pdfStyles.priceCellHigh : 
-                  [pdfStyles.tableCell, { fontWeight: 'bold' }],
-                  { flex: 0.9, textAlign: 'right' }
-                ]}>
-                  {formatPriceForPDF(item._convertedPrice || item.fiyat, paraBirimi)}
-                </Text>
+              <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowStriped} wrap={false}>
+                <Text style={[pdfStyles.tableCell, { flex: 0.2 }]}>{index + 1}</Text>
+                <Text style={[pdfStyles.tableCellBold, { flex: 1.5, paddingRight: 5 }]}>{item.urun_adi}</Text>
+                <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.marka || '-'}</Text>
+                <Text style={[pdfStyles.tableCell, { flex: 1.2, paddingRight: 5 }]}>{item.firma_adi}</Text>
+                <View style={{ flex: 0.8, alignItems: 'flex-end' }}>
+                  <Text style={
+                    item._etiket === 'ucuz' ? pdfStyles.priceTagMin : 
+                    item._etiket === 'pahali' ? pdfStyles.priceTagMax : 
+                    pdfStyles.priceNormal
+                  }>
+                    {formatPriceForPDF(item._convertedPrice || item.fiyat, paraBirimi)}
+                  </Text>
+                </View>
               </View>
             ))}
           </View>
@@ -264,7 +328,7 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
 
         <View style={pdfStyles.footer} fixed>
           <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'} - Gizli ve Şirket İçi Belgedir.</Text>
-          <Text style={pdfStyles.footerText} render={({ pageNumber, totalPages }) => `Sayfa ${pageNumber} / ${totalPages}`} />
+          <Text style={pdfStyles.footerPageNumber} render={({ pageNumber, totalPages }) => `Sayfa ${pageNumber} / ${totalPages}`} />
         </View>
       </Page>
     </Document>
@@ -272,7 +336,7 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
 }
 
 // ============================================================
-// DETAY MODALI BİLEŞENİ - DÜZELTİLDİ
+// DETAY MODALI BİLEŞENİ - DÜZELTİLDİ (Dokunulmadı)
 // ============================================================
 const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }) => {
   if (!urun) return null
@@ -474,7 +538,7 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
 }
 
 // ============================================================
-// ANA SAYFA
+// ANA SAYFA (Dokunulmadı)
 // ============================================================
 export default function RaporlarPage() {
   const [fiyatlar, setFiyatlar] = useState([])
