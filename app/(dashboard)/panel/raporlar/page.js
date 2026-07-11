@@ -272,24 +272,45 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
 }
 
 // ============================================================
-// DETAY MODALI BİLEŞENİ
+// DETAY MODALI BİLEŞENİ - DÜZELTİLDİ
 // ============================================================
-const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi }) => {
+const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }) => {
   if (!urun) return null
 
-  const formatPrice = (price, currency = 'TRY') => {
+  // ✅ DOĞRU FİYAT ÇEVİRİSİ
+  const getConvertedPrice = (fiyat, paraBirimi) => {
+    const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
+    if (isNaN(parsedFiyat) || !parsedFiyat) return { original: '-', converted: '-', convertedValue: 0 }
+    
+    // Önce TL'ye çevir
+    const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
+    // TL'den hedef para birimine çevir
+    const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
+    
+    return {
+      original: formatPrice(parsedFiyat, paraBirimi),
+      converted: formatPrice(converted, gorunenParaBirimi),
+      convertedValue: converted
+    }
+  }
+
+  // Fiyatları sırala (en ucuzdan en pahalıya - ÇEVRİLMİŞ FİYATA GÖRE)
+  const sortedFiyatlar = [...firmaDetaylari].map(item => ({
+    ...item,
+    _converted: getConvertedPrice(item.fiyat, item.para_birimi || 'TRY')
+  })).sort((a, b) => a._converted.convertedValue - b._converted.convertedValue)
+
+  const enUcuz = sortedFiyatlar[0]
+  const enPahali = sortedFiyatlar[sortedFiyatlar.length - 1]
+  const fark = (enPahali?._converted?.convertedValue || 0) - (enUcuz?._converted?.convertedValue || 0)
+
+  const formatPriceDisplay = (price, currency = 'TRY') => {
     if (price === null || price === undefined) return '-'
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: currency
     }).format(price)
   }
-
-  // Fiyatları sırala (en ucuzdan en pahalıya)
-  const sortedFiyatlar = [...firmaDetaylari].sort((a, b) => a.fiyat - b.fiyat)
-  const enUcuz = sortedFiyatlar[0]
-  const enPahali = sortedFiyatlar[sortedFiyatlar.length - 1]
-  const fark = enPahali?.fiyat - enUcuz?.fiyat || 0
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -322,21 +343,23 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi }) => {
             <div className="bg-slate-800/50 rounded-xl p-4 border border-emerald-500/30">
               <p className="text-xs text-slate-400">💚 En Ucuz</p>
               <p className="text-2xl font-bold text-emerald-400">
-                {formatPrice(enUcuz?.fiyat, gorunenParaBirimi)}
+                {enUcuz?._converted?.converted || '-'}
               </p>
               <p className="text-xs text-slate-400">{enUcuz?.firma_adi}</p>
+              <p className="text-xs text-slate-500">Orijinal: {enUcuz?._converted?.original || '-'}</p>
             </div>
             <div className="bg-slate-800/50 rounded-xl p-4 border border-red-500/30">
               <p className="text-xs text-slate-400">❤️ En Pahalı</p>
               <p className="text-2xl font-bold text-red-400">
-                {formatPrice(enPahali?.fiyat, gorunenParaBirimi)}
+                {enPahali?._converted?.converted || '-'}
               </p>
               <p className="text-xs text-slate-400">{enPahali?.firma_adi}</p>
+              <p className="text-xs text-slate-500">Orijinal: {enPahali?._converted?.original || '-'}</p>
             </div>
             <div className="bg-slate-800/50 rounded-xl p-4 border border-amber-500/30">
               <p className="text-xs text-slate-400">💰 Fiyat Farkı</p>
               <p className="text-2xl font-bold text-amber-400">
-                {formatPrice(fark, gorunenParaBirimi)}
+                {formatPriceDisplay(fark, gorunenParaBirimi)}
               </p>
               <p className="text-xs text-slate-400">En yüksek - En düşük</p>
             </div>
@@ -355,14 +378,15 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi }) => {
                     <th className="text-left py-3 px-4 text-slate-400 font-medium">#</th>
                     <th className="text-left py-3 px-4 text-slate-400 font-medium">Firma</th>
                     <th className="text-left py-3 px-4 text-slate-400 font-medium hidden md:table-cell">Marka</th>
-                    <th className="text-right py-3 px-4 text-slate-400 font-medium">Fiyat</th>
+                    <th className="text-right py-3 px-4 text-slate-400 font-medium">Çevrilmiş Fiyat</th>
+                    <th className="text-right py-3 px-4 text-slate-400 font-medium hidden md:table-cell">Orijinal Fiyat</th>
                     <th className="text-center py-3 px-4 text-slate-400 font-medium">Durum</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedFiyatlar.map((item, index) => {
-                    const isEnUcuz = item.fiyat === enUcuz?.fiyat
-                    const isEnPahali = item.fiyat === enPahali?.fiyat
+                    const isEnUcuz = item._converted.convertedValue === enUcuz?._converted?.convertedValue
+                    const isEnPahali = item._converted.convertedValue === enPahali?._converted?.convertedValue
                     
                     return (
                       <tr key={item.id} className="border-b border-slate-700/50 hover:bg-slate-800/30 transition">
@@ -382,7 +406,10 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi }) => {
                           isEnPahali ? 'text-red-400' : 
                           'text-white'
                         }`}>
-                          {formatPrice(item.fiyat, gorunenParaBirimi)}
+                          {item._converted.converted}
+                        </td>
+                        <td className="py-3 px-4 text-slate-400 text-xs text-right hidden md:table-cell">
+                          {item._converted.original}
                         </td>
                         <td className="py-3 px-4 text-center">
                           <span className={`text-xs px-2 py-1 rounded-full ${
@@ -402,18 +429,18 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi }) => {
             </div>
           </div>
 
-          {/* Grafik Benzeri Görsel (CSS ile) */}
+          {/* Grafik Benzeri Görsel */}
           <div>
             <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-400" />
               Fiyat Karşılaştırma Grafiği
             </h3>
             <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50">
-              {sortedFiyatlar.map((item, index) => {
-                const maxFiyat = sortedFiyatlar[sortedFiyatlar.length - 1]?.fiyat || 1
-                const yuzde = (item.fiyat / maxFiyat) * 100
-                const isEnUcuz = item.fiyat === enUcuz?.fiyat
-                const isEnPahali = item.fiyat === enPahali?.fiyat
+              {sortedFiyatlar.map((item) => {
+                const maxFiyat = sortedFiyatlar[sortedFiyatlar.length - 1]?._converted?.convertedValue || 1
+                const yuzde = (item._converted.convertedValue / maxFiyat) * 100
+                const isEnUcuz = item._converted.convertedValue === enUcuz?._converted?.convertedValue
+                const isEnPahali = item._converted.convertedValue === enPahali?._converted?.convertedValue
                 
                 return (
                   <div key={item.id} className="flex items-center gap-4 mb-2">
@@ -433,7 +460,7 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi }) => {
                       isEnPahali ? 'text-red-400' :
                       'text-white'
                     }`}>
-                      {formatPrice(item.fiyat, gorunenParaBirimi)}
+                      {item._converted.converted}
                     </span>
                   </div>
                 )
@@ -992,6 +1019,7 @@ export default function RaporlarPage() {
             setDetayFirmaDetaylari([])
           }}
           gorunenParaBirimi={gorunenParaBirimi}
+          kurlar={kurlar}
         />
       )}
     </div>
