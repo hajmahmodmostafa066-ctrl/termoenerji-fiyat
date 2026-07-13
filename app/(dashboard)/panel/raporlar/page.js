@@ -1,163 +1,210 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../../../../lib/supabase'
-import { convertPrice, formatPrice, getKurlar, kurDegistiginde, getCurrencySymbol } from '../../../../lib/currency'
-import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
-import { X, TrendingUp, TrendingDown, Building2, DollarSign, ChevronRight, BarChart3 } from 'lucide-react'
+import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../../lib/currency'
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import { X, TrendingUp, Building2, ChevronRight, BarChart3 } from 'lucide-react'
 
 // ============================================================
-// FONT TANIMLAMASI (Sizin çalışan yapınız korundu)
-// ============================================================
-Font.register({
-  family: 'Roboto',
-  fonts: [
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5Q.ttf', fontWeight: 'normal' },
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlvAw.ttf', fontWeight: 'bold' }
-  ]
-})
-
-// ============================================================
-// PDF STILLERI (Sizin çalışan yapınız baz alınarak 5'li kart ve firma eklendi)
+// PDF STILLERI (FONT HATASI ÇÖZÜLDÜ - STANDART FONT)
 // ============================================================
 const pdfStyles = StyleSheet.create({
   page: {
     padding: 20,
     backgroundColor: '#ffffff',
-    fontFamily: 'Roboto',
+    // Font tanımı kaldırıldı, varsayılan Helvetica kullanılacak
+  },
+  topAccent: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 6,
+    backgroundColor: '#10b981',
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#0f172a',
-    padding: 12,
-    borderRadius: 6,
-    marginBottom: 10,
+    alignItems: 'flex-start',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    borderBottomStyle: 'solid',
+    paddingBottom: 15,
+    marginBottom: 20,
+    marginTop: 10,
   },
-  headerLeft: { flex: 1 },
+  headerLeft: { width: '60%', paddingRight: 10 },
+  logo: { width: 120, height: 40, objectFit: 'contain', marginBottom: 10 },
   companyTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 2,
-  },
-  companyAddress: { fontSize: 7, color: '#94a3b8' },
-  headerRight: { alignItems: 'flex-end' },
-  reportMainTitle: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#10b981',
-    marginBottom: 2,
-  },
-  reportDate: { fontSize: 7, color: '#cbd5e1' },
-  summaryBox: {
-    flexDirection: 'row',
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
-    borderRadius: 4,
-    padding: 6,
-    marginBottom: 8,
-  },
-  summaryItem: { flex: 1 },
-  summaryLabel: {
-    fontSize: 6,
-    color: '#64748b',
-    textTransform: 'uppercase',
-    marginBottom: 1,
-  },
-  summaryValue: { fontSize: 8, fontWeight: 'bold', color: '#0f172a' },
-  sectionTitle: {
-    fontSize: 9,
-    fontWeight: 'bold',
     color: '#0f172a',
     marginBottom: 4,
-    borderBottom: '1px solid #e2e8f0',
-    paddingBottom: 3,
+    textTransform: 'uppercase',
   },
-  // KARTLAR - YAN YANA 5 ADET
+  companyAddress: { fontSize: 9, color: '#475569', marginBottom: 2 },
+  headerRight: { width: '40%', alignItems: 'flex-end' },
+  reportMainTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#10b981',
+    marginBottom: 8,
+  },
+  reportDateContainer: {
+    backgroundColor: '#f8fafc',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderStyle: 'solid',
+    alignItems: 'flex-end',
+  },
+  reportDateLabel: { fontSize: 7, color: '#64748b', marginBottom: 2, fontWeight: 'bold' },
+  reportDate: { fontSize: 9, fontWeight: 'bold', color: '#0f172a' },
+  summaryBox: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  summaryItem: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+    borderLeftWidth: 3,
+    borderLeftColor: '#10b981',
+    borderLeftStyle: 'solid',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    borderRightWidth: 1,
+    borderRightColor: '#f1f5f9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    borderRadius: 4,
+    padding: 10,
+    marginRight: 10,
+  },
+  summaryItemLast: {
+    marginRight: 0,
+  },
+  summaryLabel: { fontSize: 7, color: '#64748b', textTransform: 'uppercase', marginBottom: 4, fontWeight: 'bold' },
+  summaryValue: { fontSize: 12, fontWeight: 'bold', color: '#0f172a' },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    marginBottom: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#0f172a',
+    borderLeftStyle: 'solid',
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   statCard: {
-    width: '19%', // 5 kart yan yana
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    width: '18.8%', 
+    marginRight: '1.5%',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderStyle: 'solid',
     borderRadius: 4,
     padding: 6,
+    marginBottom: 10,
+  },
+  statCardLastInRow: {
+    marginRight: 0, 
   },
   statProductName: {
-    fontSize: 7,
+    fontSize: 7.5,
     fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: 4,
-    borderBottom: '1px solid #e2e8f0',
-    paddingBottom: 2,
+    color: '#0f172a',
+    marginBottom: 6,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    borderBottomStyle: 'solid',
   },
   statSection: {
-    marginBottom: 4,
+    marginBottom: 5,
   },
-  statLabel: { fontSize: 5, color: '#64748b', textTransform: 'uppercase' },
-  statCompany: { fontSize: 5, color: '#334155', marginTop: 1, fontStyle: 'italic' },
-  statValueMin: { fontSize: 6.5, fontWeight: 'bold', color: '#10b981' },
-  statValueMax: { fontSize: 6.5, fontWeight: 'bold', color: '#ef4444' },
-  statDiffRow: {
+  statLabel: { fontSize: 5.5, color: '#64748b', marginBottom: 2, textTransform: 'uppercase' },
+  statCompanyText: { fontSize: 5.5, color: '#334155', marginTop: 2 },
+  statValueMinContainer: { backgroundColor: '#d1fae5', paddingVertical: 2, paddingHorizontal: 4, borderRadius: 2, alignSelf: 'flex-start' },
+  statValueMinText: { fontSize: 7, fontWeight: 'bold', color: '#059669' },
+  statValueMaxContainer: { backgroundColor: '#fee2e2', paddingVertical: 2, paddingHorizontal: 4, borderRadius: 2, alignSelf: 'flex-start' },
+  statValueMaxText: { fontSize: 7, fontWeight: 'bold', color: '#dc2626' },
+  statDiffSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 2,
-    paddingTop: 2,
-    borderTop: '1px dashed #e2e8f0',
+    marginTop: 4,
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    borderTopStyle: 'dashed',
   },
-  statValueDiff: { fontSize: 6, fontWeight: 'bold', color: '#f59e0b' },
-  statCount: { fontSize: 5, color: '#94a3b8', textAlign: 'right', marginTop: 2 },
-  
-  table: { width: '100%' },
+  statValueDiffLabel: { fontSize: 5.5, color: '#64748b', textTransform: 'uppercase' },
+  statValueDiff: { fontSize: 6.5, fontWeight: 'bold', color: '#d97706' },
+  table: { width: '100%', marginBottom: 20, marginTop: 10 },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
-    borderTop: '1px solid #cbd5e1',
-    borderBottom: '1px solid #cbd5e1',
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-  },
-  tableHeaderCell: {
-    fontSize: 6,
-    fontWeight: 'bold',
-    color: '#475569',
-    flex: 1,
+    backgroundColor: '#1e293b',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
   },
   tableRow: {
     flexDirection: 'row',
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    borderBottom: '1px solid #f1f5f9',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    borderBottomStyle: 'solid',
+    alignItems: 'center',
   },
   tableRowStriped: {
     flexDirection: 'row',
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    backgroundColor: '#fafafa',
-    borderBottom: '1px solid #f1f5f9',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#f8fafc',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    borderBottomStyle: 'solid',
+    alignItems: 'center',
   },
-  tableCell: { fontSize: 6, color: '#334155', flex: 1 },
-  tableCellBold: { fontSize: 6, fontWeight: 'bold', color: '#0f172a', flex: 1 },
-  priceCell: { fontSize: 6, fontWeight: 'bold', color: '#10b981', flex: 1, textAlign: 'right' },
-  priceCellHigh: { fontSize: 6, fontWeight: 'bold', color: '#ef4444', flex: 1, textAlign: 'right' },
+  col1: { width: '5%' },
+  col2: { width: '35%', paddingRight: 5 },
+  col3: { width: '15%', paddingRight: 5 },
+  col4: { width: '25%', paddingRight: 5 },
+  col5: { width: '20%', alignItems: 'flex-end' },
+  tableHeaderCell: { fontSize: 7, fontWeight: 'bold', color: '#ffffff' },
+  tableCell: { fontSize: 8, color: '#334155' },
+  tableCellBold: { fontSize: 8, fontWeight: 'bold', color: '#0f172a' },
+  tagMinContainer: { backgroundColor: '#d1fae5', paddingVertical: 3, paddingHorizontal: 6, borderRadius: 3 },
+  tagMinText: { fontSize: 8, fontWeight: 'bold', color: '#059669' },
+  tagMaxContainer: { backgroundColor: '#fee2e2', paddingVertical: 3, paddingHorizontal: 6, borderRadius: 3 },
+  tagMaxText: { fontSize: 8, fontWeight: 'bold', color: '#dc2626' },
+  tagNormalText: { fontSize: 8, fontWeight: 'bold', color: '#0f172a', paddingVertical: 3, paddingHorizontal: 6 },
   footer: {
     position: 'absolute',
-    bottom: 15,
-    left: 20,
-    right: 20,
-    borderTop: '1px solid #e2e8f0',
-    paddingTop: 6,
+    bottom: 20,
+    left: 40,
+    right: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    borderTopStyle: 'solid',
+    paddingTop: 10,
   },
-  footerText: { fontSize: 6, color: '#94a3b8' },
+  footerText: { fontSize: 7, color: '#94a3b8' },
+  footerPageNumber: { fontSize: 7, fontWeight: 'bold', color: '#64748b' },
 })
 
 // ============================================================
@@ -176,106 +223,124 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
 
   const formatDate = (date) => {
     if (!date) return '-'
-    return new Date(date).toLocaleString('tr-TR', {
-      day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
-    })
+    const d = new Date(date)
+    return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
   }
+
+  const hasValidLogo = logoUrl && typeof logoUrl === 'string' && logoUrl.startsWith('http')
 
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
-        <View style={pdfStyles.headerContainer}>
+        <View style={pdfStyles.topAccent} fixed />
+        
+        <View style={pdfStyles.headerContainer} fixed>
           <View style={pdfStyles.headerLeft}>
-            {logoUrl && <Image src={logoUrl} style={{ width: 80, height: 28, marginBottom: 4 }} />}
-            <Text style={pdfStyles.companyTitle}>{firmaBilgileri?.ad || 'TermoEnerji Sistemleri'}</Text>
-            {firmaBilgileri?.adres && <Text style={pdfStyles.companyAddress}>{firmaBilgileri.adres}</Text>}
-            {firmaBilgileri?.telefon && <Text style={pdfStyles.companyAddress}>Tel: {firmaBilgileri.telefon}</Text>}
+            {hasValidLogo ? <Image src={logoUrl} style={pdfStyles.logo} /> : null}
+            <Text style={pdfStyles.companyTitle}>{firmaBilgileri?.ad ? firmaBilgileri.ad : 'TermoEnerji Sistemleri'}</Text>
+            {firmaBilgileri?.adres ? <Text style={pdfStyles.companyAddress}>{firmaBilgileri.adres}</Text> : null}
+            {firmaBilgileri?.telefon ? <Text style={pdfStyles.companyAddress}>Tel: {firmaBilgileri.telefon}</Text> : null}
           </View>
           <View style={pdfStyles.headerRight}>
-            <Text style={pdfStyles.reportMainTitle}>FİYAT ANALİZ RAPORU</Text>
-            <Text style={pdfStyles.reportDate}>{formatDate(new Date())}</Text>
+            <Text style={pdfStyles.reportMainTitle}>FIYAT ANALIZI</Text>
+            <View style={pdfStyles.reportDateContainer}>
+              <Text style={pdfStyles.reportDateLabel}>Olusturulma Tarihi</Text>
+              <Text style={pdfStyles.reportDate}>{formatDate(new Date())}</Text>
+            </View>
           </View>
         </View>
 
         <View style={pdfStyles.summaryBox}>
           <View style={pdfStyles.summaryItem}>
             <Text style={pdfStyles.summaryLabel}>Para Birimi</Text>
-            <Text style={pdfStyles.summaryValue}>{paraBirimi}</Text>
+            <Text style={pdfStyles.summaryValue}>{paraBirimi === 'TRY' ? 'Turk Lirasi (TL)' : paraBirimi}</Text>
           </View>
           <View style={pdfStyles.summaryItem}>
-            <Text style={pdfStyles.summaryLabel}>Toplam Kayıt</Text>
-            <Text style={pdfStyles.summaryValue}>{data.length}</Text>
+            <Text style={pdfStyles.summaryLabel}>Listelenen Teklif</Text>
+            <Text style={pdfStyles.summaryValue}>{data.length} Adet</Text>
           </View>
-          <View style={pdfStyles.summaryItem}>
-            <Text style={pdfStyles.summaryLabel}>Ürün Çeşidi</Text>
-            <Text style={pdfStyles.summaryValue}>{seciliIstatistikler.length}</Text>
+          <View style={[pdfStyles.summaryItem, pdfStyles.summaryItemLast]}>
+            <Text style={pdfStyles.summaryLabel}>Analiz Edilen Urun</Text>
+            <Text style={pdfStyles.summaryValue}>{seciliIstatistikler.length} Cesit</Text>
           </View>
         </View>
 
-        {/* 5'Lİ KART SİSTEMİ (PDF İÇİN) */}
-        {seciliIstatistikler && seciliIstatistikler.length > 0 && (
-          <View>
-            <Text style={pdfStyles.sectionTitle}>SEÇİLİ ÜRÜN ANALİZİ</Text>
+        {seciliIstatistikler && seciliIstatistikler.length > 0 ? (
+          <View wrap={false}>
+            <Text style={pdfStyles.sectionTitle}>SECILI URUN ANALIZI</Text>
             <View style={pdfStyles.statsGrid}>
-              {seciliIstatistikler.map((urun, index) => (
-                <View key={index} style={pdfStyles.statCard}>
-                  <Text style={pdfStyles.statProductName} numberOfLines={1}>{urun.urunAdi}</Text>
-                  
-                  <View style={pdfStyles.statSection}>
-                    <Text style={pdfStyles.statLabel}>En Uygun</Text>
-                    <Text style={pdfStyles.statValueMin}>{formatPriceForPDF(urun.enUcuz, paraBirimi)}</Text>
-                    <Text style={pdfStyles.statCompany}>{urun.enUcuzFirma}</Text>
+              {seciliIstatistikler.map((urun, index) => {
+                const isLastInRow = (index + 1) % 5 === 0;
+                return (
+                  <View key={index} style={[pdfStyles.statCard, isLastInRow ? pdfStyles.statCardLastInRow : {}]}>
+                    <Text style={pdfStyles.statProductName}>{urun.urunAdi}</Text>
+                    
+                    <View style={pdfStyles.statSection}>
+                      <Text style={pdfStyles.statLabel}>EN UYGUN</Text>
+                      <View style={pdfStyles.statValueMinContainer}>
+                        <Text style={pdfStyles.statValueMinText}>{formatPriceForPDF(urun.enUcuz, paraBirimi)}</Text>
+                      </View>
+                      <Text style={pdfStyles.statCompanyText}>{urun.enUcuzFirma}</Text>
+                    </View>
+                    
+                    <View style={pdfStyles.statSection}>
+                      <Text style={pdfStyles.statLabel}>EN YUKSEK</Text>
+                      <View style={pdfStyles.statValueMaxContainer}>
+                        <Text style={pdfStyles.statValueMaxText}>{formatPriceForPDF(urun.enPahali, paraBirimi)}</Text>
+                      </View>
+                      <Text style={pdfStyles.statCompanyText}>{urun.enPahaliFirma}</Text>
+                    </View>
+                    
+                    <View style={pdfStyles.statDiffSection}>
+                      <Text style={pdfStyles.statValueDiffLabel}>FARK</Text>
+                      <Text style={pdfStyles.statValueDiff}>{formatPriceForPDF(urun.fark, paraBirimi)}</Text>
+                    </View>
                   </View>
-                  
-                  <View style={pdfStyles.statSection}>
-                    <Text style={pdfStyles.statLabel}>En Yüksek</Text>
-                    <Text style={pdfStyles.statValueMax}>{formatPriceForPDF(urun.enPahali, paraBirimi)}</Text>
-                    <Text style={pdfStyles.statCompany}>{urun.enPahaliFirma}</Text>
-                  </View>
-                  
-                  <View style={pdfStyles.statDiffRow}>
-                    <Text style={pdfStyles.statLabel}>Fark</Text>
-                    <Text style={pdfStyles.statValueDiff}>{formatPriceForPDF(urun.fark, paraBirimi)}</Text>
-                  </View>
-                  <Text style={pdfStyles.statCount}>{urun.adet} firma</Text>
-                </View>
-              ))}
+                )
+              })}
             </View>
           </View>
-        )}
+        ) : null}
 
         <View>
-          <Text style={pdfStyles.sectionTitle}>TEKLİF TABLOSU</Text>
+          <Text style={pdfStyles.sectionTitle}>TEDARIKCI TEKLIFLERI</Text>
           <View style={pdfStyles.table}>
-            <View style={pdfStyles.tableHeader}>
-              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.3 }]}>#</Text>
-              <Text style={[pdfStyles.tableHeaderCell, { flex: 1.3 }]}>Ürün</Text>
-              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8 }]}>Marka</Text>
-              <Text style={[pdfStyles.tableHeaderCell, { flex: 1 }]}>Firma</Text>
-              <Text style={[pdfStyles.tableHeaderCell, { flex: 0.8, textAlign: 'right' }]}>Fiyat</Text>
+            <View style={pdfStyles.tableHeader} fixed>
+              <Text style={[pdfStyles.col1, pdfStyles.tableHeaderCell]}>#</Text>
+              <Text style={[pdfStyles.col2, pdfStyles.tableHeaderCell]}>URUN</Text>
+              <Text style={[pdfStyles.col3, pdfStyles.tableHeaderCell]}>MARKA</Text>
+              <Text style={[pdfStyles.col4, pdfStyles.tableHeaderCell]}>FIRMA</Text>
+              <Text style={[pdfStyles.col5, pdfStyles.tableHeaderCell, { textAlign: 'right' }]}>FIYAT</Text>
             </View>
+            
             {data.map((item, index) => (
-              <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowStriped}>
-                <Text style={[pdfStyles.tableCell, { flex: 0.3 }]}>{index + 1}</Text>
-                <Text style={[pdfStyles.tableCellBold, { flex: 1.3 }]}>{item.urun_adi}</Text>
-                <Text style={[pdfStyles.tableCell, { flex: 0.8 }]}>{item.marka || '-'}</Text>
-                <Text style={[pdfStyles.tableCell, { flex: 1 }]}>{item.firma_adi}</Text>
-                <Text style={[
-                  item._etiket === 'ucuz' ? pdfStyles.priceCell : 
-                  item._etiket === 'pahali' ? pdfStyles.priceCellHigh : 
-                  [pdfStyles.tableCell, { fontWeight: 'bold' }],
-                  { flex: 0.8, textAlign: 'right' }
-                ]}>
-                  {formatPriceForPDF(item._convertedPrice || item.fiyat, paraBirimi)}
-                </Text>
+              <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowStriped} wrap={false}>
+                <Text style={[pdfStyles.col1, pdfStyles.tableCell]}>{index + 1}</Text>
+                <Text style={[pdfStyles.col2, pdfStyles.tableCellBold]}>{item.urun_adi}</Text>
+                <Text style={[pdfStyles.col3, pdfStyles.tableCell]}>{item.marka ? item.marka : '-'}</Text>
+                <Text style={[pdfStyles.col4, pdfStyles.tableCell]}>{item.firma_adi}</Text>
+                
+                <View style={pdfStyles.col5}>
+                  {item._etiket === 'ucuz' ? (
+                    <View style={pdfStyles.tagMinContainer}>
+                      <Text style={pdfStyles.tagMinText}>{formatPriceForPDF(item._convertedPrice || item.fiyat, paraBirimi)}</Text>
+                    </View>
+                  ) : item._etiket === 'pahali' ? (
+                    <View style={pdfStyles.tagMaxContainer}>
+                      <Text style={pdfStyles.tagMaxText}>{formatPriceForPDF(item._convertedPrice || item.fiyat, paraBirimi)}</Text>
+                    </View>
+                  ) : (
+                    <Text style={pdfStyles.tagNormalText}>{formatPriceForPDF(item._convertedPrice || item.fiyat, paraBirimi)}</Text>
+                  )}
+                </View>
               </View>
             ))}
           </View>
         </View>
 
         <View style={pdfStyles.footer} fixed>
-          <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad || 'TermoEnerji'}</Text>
-          <Text style={pdfStyles.footerText} render={({ pageNumber, totalPages }) => `Sayfa ${pageNumber} / ${totalPages}`} />
+          <Text style={pdfStyles.footerText}>© {new Date().getFullYear()} {firmaBilgileri?.ad ? firmaBilgileri.ad : 'TermoEnerji'}</Text>
+          <Text style={pdfStyles.footerPageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
       </Page>
     </Document>
@@ -291,8 +356,10 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
   const getConvertedPrice = (fiyat, paraBirimi) => {
     const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
     if (isNaN(parsedFiyat) || !parsedFiyat) return { original: '-', converted: '-', convertedValue: 0 }
+    
     const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
     const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
+    
     return {
       original: formatPrice(parsedFiyat, paraBirimi),
       converted: formatPrice(converted, gorunenParaBirimi),
@@ -459,6 +526,12 @@ export default function RaporlarPage() {
   const [detayModalAcik, setDetayModalAcik] = useState(false)
   const [detayUrun, setDetayUrun] = useState(null)
   const [detayFirmaDetaylari, setDetayFirmaDetaylari] = useState([])
+  
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -515,7 +588,6 @@ export default function RaporlarPage() {
       urunGruplari[urunAdi].push(item)
     })
 
-    // FİRMA İSİMLERİNİ HESAPLAYAN MANTIK BURADA
     const istatistikler = Object.keys(urunGruplari).map(urunAdi => {
       const items = urunGruplari[urunAdi]
       
@@ -537,9 +609,9 @@ export default function RaporlarPage() {
       return {
         urunAdi: urunAdi,
         enUcuz: enUcuzConverted,
-        enUcuzFirma: enUcuzItem.firma_adi, // PDF ve UI için
+        enUcuzFirma: enUcuzItem.firma_adi, 
         enPahali: enPahaliConverted,
-        enPahaliFirma: enPahaliItem.firma_adi, // PDF ve UI için
+        enPahaliFirma: enPahaliItem.firma_adi, 
         fark: enPahaliConverted - enUcuzConverted,
         adet: items.length
       }
@@ -581,7 +653,8 @@ export default function RaporlarPage() {
     }
   }
 
-  const getPreparedData = () => {
+  // YENİ EKLENDİ: PDF render sonsuz döngüsünü çözmek için useMemo kullanıldı
+  const preparedData = useMemo(() => {
     return filteredFiyatlar.filter(item => seciliIds.includes(item.id)).map(item => {
       const etiket = getUrunEtiketi(item)
       const converted = getConvertedPrice(item.fiyat, item.para_birimi)
@@ -591,9 +664,9 @@ export default function RaporlarPage() {
         _convertedPrice: converted.convertedValue,
       }
     })
-  }
+  }, [seciliIds, filteredFiyatlar, gorunenParaBirimi, kurlar])
 
-  const getSelectedIstatistikler = () => {
+  const preparedIstatistikler = useMemo(() => {
     const selectedData = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
     const urunGruplari = {}
     selectedData.forEach(item => {
@@ -623,14 +696,15 @@ export default function RaporlarPage() {
       return {
         urunAdi: urunAdi,
         enUcuz: enUcuzConverted,
-        enUcuzFirma: enUcuzItem.firma_adi, // PDF için eklendi
+        enUcuzFirma: enUcuzItem.firma_adi,
         enPahali: enPahaliConverted,
-        enPahaliFirma: enPahaliItem.firma_adi, // PDF için eklendi
+        enPahaliFirma: enPahaliItem.firma_adi,
         fark: enPahaliConverted - enUcuzConverted,
         adet: items.length
       }
     })
-  }
+  }, [seciliIds, filteredFiyatlar, gorunenParaBirimi, kurlar])
+
 
   const handleDetayAc = (urun) => {
     const firmaDetaylari = filteredFiyatlar.filter(item => item.urun_adi === urun.urunAdi)
@@ -643,7 +717,6 @@ export default function RaporlarPage() {
     <div className="min-h-screen bg-slate-950 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <div className="flex items-center gap-3">
@@ -665,7 +738,6 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* FİLTRELER */}
         <div className="bg-slate-900/40 rounded-2xl p-5 border border-slate-700/50 backdrop-blur-sm shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
@@ -699,7 +771,6 @@ export default function RaporlarPage() {
           </div>
         </div>
 
-        {/* GENEL ÜRÜN İSTATİSTİKLERİ (EKRAN İÇİN 5'Lİ KART YAPISI VE FİRMALAR EKLENDİ) */}
         {urunIstatistikleri.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
@@ -745,12 +816,11 @@ export default function RaporlarPage() {
           </div>
         )}
 
-        {/* PDF BUTONU VE TABLO */}
         <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
           <div className="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/80">
             <h3 className="text-sm font-medium text-slate-300">Fiyat Teklifleri Tablosu</h3>
-            {seciliIds.length > 0 && (
-              <PDFDownloadLink document={<RaporPDF data={getPreparedData()} firmaBilgileri={firmaBilgileri} logoUrl={logoUrl} paraBirimi={gorunenParaBirimi} seciliIstatistikler={getSelectedIstatistikler()} />} fileName={`Analiz_Raporu_${new Date().toISOString().split('T')[0]}.pdf`}>
+            {isClient && seciliIds.length > 0 && (
+              <PDFDownloadLink document={<RaporPDF data={preparedData} firmaBilgileri={firmaBilgileri} logoUrl={logoUrl} paraBirimi={gorunenParaBirimi} seciliIstatistikler={preparedIstatistikler} />} fileName={`Analiz_Raporu_${new Date().toISOString().split('T')[0]}.pdf`}>
                 {({ loading: pdfLoading }) => (<button disabled={pdfLoading} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium shadow-lg shadow-emerald-500/20">{pdfLoading ? (<><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Oluşturuluyor...</>) : (<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Seçili Kayıtları İndir ({seciliIds.length})</>)}</button>)}
               </PDFDownloadLink>
             )}
