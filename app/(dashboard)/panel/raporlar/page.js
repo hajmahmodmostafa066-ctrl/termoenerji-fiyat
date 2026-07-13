@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../../../../lib/supabase'
 import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../../lib/currency'
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
-import { X, TrendingUp, Building2, ChevronRight, BarChart3 } from 'lucide-react'
+import { X, TrendingUp, Building2, ChevronRight, BarChart3, Download, RefreshCw, ArrowUpDown, AlertCircle } from 'lucide-react'
 
 // ============================================================
 // PDF STILLERI (FONT HATASI ÇÖZÜLDÜ - STANDART FONT)
@@ -351,6 +351,19 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
 // DETAY MODALI BİLEŞENİ
 // ============================================================
 const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }) => {
+  // ESC tuşu ile kapatma + modal açıkken arka plan kaydırmasını kilitleme
+  useEffect(() => {
+    if (!urun) return
+    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handleKey)
+    const oncekiOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      document.body.style.overflow = oncekiOverflow
+    }
+  }, [urun, onClose])
+
   if (!urun) return null
 
   const getConvertedPrice = (fiyat, paraBirimi) => {
@@ -385,8 +398,8 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-700/50 shadow-2xl">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={urun.urunAdi} onClick={(e) => e.stopPropagation()} className="bg-slate-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-700/50 shadow-2xl">
         <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700/50 p-4 flex items-center justify-between z-10">
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -526,36 +539,65 @@ export default function RaporlarPage() {
   const [detayModalAcik, setDetayModalAcik] = useState(false)
   const [detayUrun, setDetayUrun] = useState(null)
   const [detayFirmaDetaylari, setDetayFirmaDetaylari] = useState([])
-  
+
+  // YENİ: hata durumu, sıralama ve sayfalama
+  const [error, setError] = useState(null)
+  const [siralama, setSiralama] = useState({ alan: null, yon: 'asc' })
+  const [sayfa, setSayfa] = useState(1)
+  const SAYFA_BOYUTU = 20
+
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true)
-      try {
-        const { data: fiyatData } = await supabase.from('fiyat_teklifleri').select('*').order('created_at', { ascending: false })
-        setFiyatlar(fiyatData || [])
-        setFilteredFiyatlar(fiyatData || [])
-        const { data: firmalarData } = await supabase.from('firmalar').select('ad')
-        setFirmalar(firmalarData || [])
-        const { data: kategoriData } = await supabase.from('kategoriler').select('ad')
-        setKategoriler(kategoriData || [])
-        const { data: firmaData } = await supabase.from('firma_bilgileri').select('*').maybeSingle()
-        if (firmaData) {
-          setFirmaBilgileri(firmaData)
-          setLogoUrl(firmaData.logo_url || '')
-        }
-      } catch (error) {
-        console.error('Veri yükleme hatası:', error)
-      } finally {
-        setLoading(false)
+  // Supabase'ten tüm verileri çeker. Hem ilk yüklemede hem de "Tekrar Dene"
+  // butonunda ve realtime güncellemelerde tekrar kullanılabilmesi için
+  // useCallback ile bileşenin en üst seviyesine taşındı.
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const { data: fiyatData, error: fiyatError } = await supabase.from('fiyat_teklifleri').select('*').order('created_at', { ascending: false })
+      if (fiyatError) throw fiyatError
+      setFiyatlar(fiyatData || [])
+      setFilteredFiyatlar(fiyatData || [])
+      const { data: firmalarData } = await supabase.from('firmalar').select('ad')
+      setFirmalar(firmalarData || [])
+      const { data: kategoriData } = await supabase.from('kategoriler').select('ad')
+      setKategoriler(kategoriData || [])
+      const { data: firmaData } = await supabase.from('firma_bilgileri').select('*').maybeSingle()
+      if (firmaData) {
+        setFirmaBilgileri(firmaData)
+        setLogoUrl(firmaData.logo_url || '')
       }
+    } catch (err) {
+      console.error('Veri yükleme hatası:', err)
+      setError('Veriler yüklenirken bir sorun oluştu. Bağlantınızı kontrol edip tekrar deneyin.')
+    } finally {
+      setLoading(false)
     }
+  }, [])
+
+  useEffect(() => {
     loadData()
+  }, [loadData])
+
+  // YENİ: fiyat_teklifleri tablosunda değişiklik olduğunda (başka bir
+  // kullanıcı/ekran veri eklediğinde) sayfayı otomatik güncelle.
+  useEffect(() => {
+    const kanal = supabase
+      .channel('fiyat_teklifleri_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fiyat_teklifleri' }, async () => {
+        const { data } = await supabase.from('fiyat_teklifleri').select('*').order('created_at', { ascending: false })
+        if (data) setFiyatlar(data)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(kanal)
+    }
   }, [])
 
   useEffect(() => {
@@ -618,6 +660,11 @@ export default function RaporlarPage() {
     })
     setUrunIstatistikleri(istatistikler)
   }, [arama, filtreKategori, filtreFirma, fiyatlar, gorunenParaBirimi, kurlar])
+
+  // YENİ: filtre veya sıralama değiştiğinde 1. sayfaya dön
+  useEffect(() => {
+    setSayfa(1)
+  }, [arama, filtreKategori, filtreFirma, siralama])
 
   const toggleSecim = (id) => {
     setSeciliIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
@@ -713,6 +760,69 @@ export default function RaporlarPage() {
     setDetayModalAcik(true)
   }
 
+  // YENİ: sütun başlığına tıklayınca sıralama yönünü değiştir
+  const siralamaDegistir = (alan) => {
+    setSiralama(prev => {
+      if (prev.alan === alan) {
+        return { alan, yon: prev.yon === 'asc' ? 'desc' : 'asc' }
+      }
+      return { alan, yon: 'asc' }
+    })
+  }
+
+  // YENİ: seçili alana göre filtrelenmiş veriyi sırala (fiyat için güncel kura göre çevrilmiş değer kullanılır)
+  const sortedFiltered = useMemo(() => {
+    if (!siralama.alan) return filteredFiyatlar
+    const veri = [...filteredFiyatlar]
+    veri.sort((a, b) => {
+      let aDeger, bDeger
+      if (siralama.alan === 'fiyat') {
+        aDeger = getConvertedPrice(a.fiyat, a.para_birimi).convertedValue
+        bDeger = getConvertedPrice(b.fiyat, b.para_birimi).convertedValue
+      } else {
+        aDeger = (a[siralama.alan] || '').toString().toLowerCase()
+        bDeger = (b[siralama.alan] || '').toString().toLowerCase()
+      }
+      if (aDeger < bDeger) return siralama.yon === 'asc' ? -1 : 1
+      if (aDeger > bDeger) return siralama.yon === 'asc' ? 1 : -1
+      return 0
+    })
+    return veri
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredFiyatlar, siralama, gorunenParaBirimi, kurlar])
+
+  // YENİ: sayfalama
+  const toplamSayfa = Math.max(1, Math.ceil(sortedFiltered.length / SAYFA_BOYUTU))
+  const sayfalanmisVeri = sortedFiltered.slice((sayfa - 1) * SAYFA_BOYUTU, sayfa * SAYFA_BOYUTU)
+
+  // YENİ: filtrelenmiş tüm kayıtları CSV olarak indir (Excel'de Türkçe karakter
+  // sorunu yaşanmaması için UTF-8 BOM ve noktalı virgül ayracı kullanılır)
+  const csvIndir = () => {
+    const basliklar = ['Ürün Adı', 'Marka', 'Firma', 'Kategori', 'Fiyat', 'Para Birimi', 'Durum', 'Tarih']
+    const satirlar = filteredFiyatlar.map(item => [
+      item.urun_adi,
+      item.marka || '',
+      item.firma_adi,
+      item.kategori || '',
+      item.fiyat,
+      item.para_birimi || 'TRY',
+      item.durum === 'approved' ? 'Aktif' : item.durum === 'pending' ? 'Beklemede' : 'Pasif',
+      item.created_at ? new Date(item.created_at).toLocaleString('tr-TR') : '',
+    ])
+    const csvIcerik = [basliklar, ...satirlar]
+      .map(satir => satir.map(hucre => `"${String(hucre ?? '').replace(/"/g, '""')}"`).join(';'))
+      .join('\n')
+    const blob = new Blob(['\uFEFF' + csvIcerik], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `Fiyat_Teklifleri_${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -737,6 +847,18 @@ export default function RaporlarPage() {
             ))}
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-red-400 text-sm">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button onClick={loadData} className="text-xs font-medium bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0">
+              <RefreshCw className="h-3 w-3" /> Tekrar Dene
+            </button>
+          </div>
+        )}
 
         <div className="bg-slate-900/40 rounded-2xl p-5 border border-slate-700/50 backdrop-blur-sm shadow-xl">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -819,11 +941,19 @@ export default function RaporlarPage() {
         <div className="bg-slate-900/40 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
           <div className="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/80">
             <h3 className="text-sm font-medium text-slate-300">Fiyat Teklifleri Tablosu</h3>
+            <div className="flex items-center gap-2">
+            {isClient && filteredFiyatlar.length > 0 && (
+              <button onClick={csvIndir} className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-sm font-medium border border-slate-700/50">
+                <Download className="w-4 h-4" />
+                CSV İndir
+              </button>
+            )}
             {isClient && seciliIds.length > 0 && (
               <PDFDownloadLink document={<RaporPDF data={preparedData} firmaBilgileri={firmaBilgileri} logoUrl={logoUrl} paraBirimi={gorunenParaBirimi} seciliIstatistikler={preparedIstatistikler} />} fileName={`Analiz_Raporu_${new Date().toISOString().split('T')[0]}.pdf`}>
                 {({ loading: pdfLoading }) => (<button disabled={pdfLoading} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm font-medium shadow-lg shadow-emerald-500/20">{pdfLoading ? (<><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Oluşturuluyor...</>) : (<><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>Seçili Kayıtları İndir ({seciliIds.length})</>)}</button>)}
               </PDFDownloadLink>
             )}
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -840,16 +970,22 @@ export default function RaporlarPage() {
                 <thead className="text-[11px] text-slate-400 uppercase tracking-wider bg-slate-900/50 border-b border-slate-700/50">
                   <tr>
                     <th className="py-3 px-4 w-10"><div className="flex items-center justify-center"><input type="checkbox" onChange={() => { if (seciliIds.length === filteredFiyatlar.length) { setSeciliIds([]) } else { setSeciliIds(filteredFiyatlar.map(item => item.id)) } }} checked={seciliIds.length === filteredFiyatlar.length && filteredFiyatlar.length > 0} className="w-4 h-4 bg-slate-900 border-slate-700 rounded text-emerald-500 focus:ring-emerald-500/50 focus:ring-offset-slate-900 cursor-pointer" /></div></th>
-                    <th className="py-3 px-4 font-semibold">Ürün Adı</th>
+                    <th className="py-3 px-4 font-semibold cursor-pointer select-none hover:text-slate-200 transition-colors" onClick={() => siralamaDegistir('urun_adi')}>
+                      <div className="flex items-center gap-1">Ürün Adı <ArrowUpDown className={`h-3 w-3 ${siralama.alan === 'urun_adi' ? 'text-emerald-400' : 'text-slate-600'}`} /></div>
+                    </th>
                     <th className="py-3 px-4 font-semibold hidden md:table-cell">Marka</th>
-                    <th className="py-3 px-4 font-semibold">Firma</th>
+                    <th className="py-3 px-4 font-semibold cursor-pointer select-none hover:text-slate-200 transition-colors" onClick={() => siralamaDegistir('firma_adi')}>
+                      <div className="flex items-center gap-1">Firma <ArrowUpDown className={`h-3 w-3 ${siralama.alan === 'firma_adi' ? 'text-emerald-400' : 'text-slate-600'}`} /></div>
+                    </th>
                     <th className="py-3 px-4 font-semibold hidden lg:table-cell">Kategori</th>
-                    <th className="py-3 px-4 font-semibold text-right">Fiyat</th>
+                    <th className="py-3 px-4 font-semibold text-right cursor-pointer select-none hover:text-slate-200 transition-colors" onClick={() => siralamaDegistir('fiyat')}>
+                      <div className="flex items-center justify-end gap-1">Fiyat <ArrowUpDown className={`h-3 w-3 ${siralama.alan === 'fiyat' ? 'text-emerald-400' : 'text-slate-600'}`} /></div>
+                    </th>
                     <th className="py-3 px-4 font-semibold text-center">Durum</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-700/50">
-                  {filteredFiyatlar.map((item) => {
+                  {sayfalanmisVeri.map((item) => {
                     const isSelected = seciliIds.includes(item.id)
                     const etiket = getUrunEtiketi(item)
                     const fiyatlar = getConvertedPrice(item.fiyat, item.para_birimi)
@@ -869,6 +1005,24 @@ export default function RaporlarPage() {
               </table>
             )}
           </div>
+
+          {!loading && filteredFiyatlar.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-700/50 bg-slate-900/50">
+              <span className="text-xs text-slate-400">
+                Toplam <span className="text-white font-medium">{sortedFiltered.length}</span> kayıttan{' '}
+                <span className="text-white font-medium">{(sayfa - 1) * SAYFA_BOYUTU + 1}-{Math.min(sayfa * SAYFA_BOYUTU, sortedFiltered.length)}</span> arası gösteriliyor
+              </span>
+              <div className="flex items-center gap-2">
+                <button disabled={sayfa === 1} onClick={() => setSayfa(s => Math.max(1, s - 1))} className="px-3 py-1.5 text-xs rounded-lg bg-slate-800 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors">
+                  Önceki
+                </button>
+                <span className="text-xs text-slate-400">Sayfa {sayfa} / {toplamSayfa}</span>
+                <button disabled={sayfa === toplamSayfa} onClick={() => setSayfa(s => Math.min(toplamSayfa, s + 1))} className="px-3 py-1.5 text-xs rounded-lg bg-slate-800 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors">
+                  Sonraki
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
