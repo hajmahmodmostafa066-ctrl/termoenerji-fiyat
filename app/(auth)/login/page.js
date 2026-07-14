@@ -1,15 +1,29 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectPath = searchParams.get('redirect') || '/panel'
+  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Zaten giriş yapmışsa yönlendir
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        router.push(redirectPath)
+      }
+    }
+    checkSession()
+  }, [router, redirectPath])
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -24,8 +38,8 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      // Başarılı giriş
-      router.push('/panel')
+      // Başarılı giriş -> gitmek istediği sayfaya yönlendir
+      router.push(redirectPath)
     } catch (error) {
       setError('❌ ' + error.message)
     } finally {
@@ -44,6 +58,11 @@ export default function LoginPage() {
             TermoEnerji
           </h1>
           <p className="text-slate-400 text-sm mt-2">Fiyat Yönetim Sistemi</p>
+          {redirectPath !== '/panel' && (
+            <p className="text-emerald-400 text-xs mt-2 bg-emerald-500/10 px-3 py-1 rounded-full inline-block border border-emerald-500/30">
+              🔐 Giriş yaptıktan sonra ilgili sayfaya yönlendirileceksiniz
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
