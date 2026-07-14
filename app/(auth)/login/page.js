@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
-export default function LoginPage() {
+// useSearchParams kullanan kısmı ayrı bir bileşene alalım
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectPath = searchParams.get('redirect') || '/panel'
@@ -14,7 +15,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Zaten giriş yapmışsa yönlendir
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -37,8 +37,6 @@ export default function LoginPage() {
       })
 
       if (error) throw error
-
-      // Başarılı giriş -> gitmek istediği sayfaya yönlendir
       router.push(redirectPath)
     } catch (error) {
       setError('❌ ' + error.message)
@@ -110,5 +108,21 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+// Ana sayfa - Suspense ile sarılmış
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="text-slate-400 mt-4">Yükleniyor...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
