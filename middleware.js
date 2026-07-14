@@ -1,9 +1,36 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
 export async function middleware(req) {
   const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  
+  // Supabase istemcisini oluştur
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        get(name) {
+          return req.cookies.get(name)?.value
+        },
+        set(name, value, options) {
+          res.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name, options) {
+          res.cookies.set({
+            name,
+            value: '',
+            ...options,
+            maxAge: 0,
+          })
+        },
+      },
+    }
+  )
 
   // Oturumu kontrol et
   const { data: { session } } = await supabase.auth.getSession()
@@ -11,7 +38,6 @@ export async function middleware(req) {
   // Eğer oturum yoksa ve login sayfasında değilse login'e yönlendir
   if (!session && !req.nextUrl.pathname.startsWith('/login')) {
     const redirectUrl = new URL('/login', req.url)
-    // Gitmek istediği sayfayı parametre olarak ekle
     redirectUrl.searchParams.set('redirect', req.nextUrl.pathname)
     return NextResponse.redirect(redirectUrl)
   }
@@ -19,22 +45,6 @@ export async function middleware(req) {
   // Eğer oturum varsa ve login sayfasındaysa ana sayfaya yönlendir
   if (session && req.nextUrl.pathname === '/login') {
     return NextResponse.redirect(new URL('/panel', req.url))
-  }
-
-  // Kullanıcı rolünü kontrol et (admin/yönetici/kullanıcı)
-  if (session && req.nextUrl.pathname.startsWith('/panel/kullanıcilar')) {
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('email', session.user.email)
-      .single()
-
-    const role = userData?.role || 'kullanici'
-    
-    // Sadece admin ve yönetici görebilir
-    if (role !== 'admin' && role !== 'yonetici') {
-      return NextResponse.redirect(new URL('/panel', req.url))
-    }
   }
 
   return res
