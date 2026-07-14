@@ -8,22 +8,11 @@ import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '
 import { X, TrendingUp, Building2, ChevronRight, BarChart3, Download, RefreshCw, ArrowUpDown, AlertCircle } from 'lucide-react'
 
 // ============================================================
-// PDF STILLERI (FONT HATASI ÇÖZÜLDÜ - STANDART FONT)
+// PDF STILLERI (AYNI)
 // ============================================================
 const pdfStyles = StyleSheet.create({
-  page: {
-    padding: 20,
-    backgroundColor: '#ffffff',
-    // Font tanımı kaldırıldı, varsayılan Helvetica kullanılacak
-  },
-  topAccent: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 6,
-    backgroundColor: '#10b981',
-  },
+  page: { padding: 20, backgroundColor: '#ffffff' },
+  topAccent: { position: 'absolute', top: 0, left: 0, right: 0, height: 6, backgroundColor: '#10b981' },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -37,21 +26,10 @@ const pdfStyles = StyleSheet.create({
   },
   headerLeft: { width: '60%', paddingRight: 10 },
   logo: { width: 120, height: 40, objectFit: 'contain', marginBottom: 10 },
-  companyTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#0f172a',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-  },
+  companyTitle: { fontSize: 14, fontWeight: 'bold', color: '#0f172a', marginBottom: 4, textTransform: 'uppercase' },
   companyAddress: { fontSize: 9, color: '#475569', marginBottom: 2 },
   headerRight: { width: '40%', alignItems: 'flex-end' },
-  reportMainTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#10b981',
-    marginBottom: 8,
-  },
+  reportMainTitle: { fontSize: 18, fontWeight: 'bold', color: '#10b981', marginBottom: 8 },
   reportDateContainer: {
     backgroundColor: '#f8fafc',
     paddingVertical: 6,
@@ -64,10 +42,7 @@ const pdfStyles = StyleSheet.create({
   },
   reportDateLabel: { fontSize: 7, color: '#64748b', marginBottom: 2, fontWeight: 'bold' },
   reportDate: { fontSize: 9, fontWeight: 'bold', color: '#0f172a' },
-  summaryBox: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
+  summaryBox: { flexDirection: 'row', marginBottom: 20 },
   summaryItem: {
     flex: 1,
     backgroundColor: '#f8fafc',
@@ -84,9 +59,7 @@ const pdfStyles = StyleSheet.create({
     padding: 10,
     marginRight: 10,
   },
-  summaryItemLast: {
-    marginRight: 0,
-  },
+  summaryItemLast: { marginRight: 0 },
   summaryLabel: { fontSize: 7, color: '#64748b', textTransform: 'uppercase', marginBottom: 4, fontWeight: 'bold' },
   summaryValue: { fontSize: 12, fontWeight: 'bold', color: '#0f172a' },
   sectionTitle: {
@@ -102,13 +75,9 @@ const pdfStyles = StyleSheet.create({
     borderLeftColor: '#0f172a',
     borderLeftStyle: 'solid',
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 10,
-  },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
   statCard: {
-    width: '18.8%', 
+    width: '18.8%',
     marginRight: '1.5%',
     backgroundColor: '#ffffff',
     borderWidth: 1,
@@ -118,9 +87,7 @@ const pdfStyles = StyleSheet.create({
     padding: 6,
     marginBottom: 10,
   },
-  statCardLastInRow: {
-    marginRight: 0, 
-  },
+  statCardLastInRow: { marginRight: 0 },
   statProductName: {
     fontSize: 7.5,
     fontWeight: 'bold',
@@ -131,9 +98,7 @@ const pdfStyles = StyleSheet.create({
     borderBottomColor: '#e2e8f0',
     borderBottomStyle: 'solid',
   },
-  statSection: {
-    marginBottom: 5,
-  },
+  statSection: { marginBottom: 5 },
   statLabel: { fontSize: 5.5, color: '#64748b', marginBottom: 2, textTransform: 'uppercase' },
   statCompanyText: { fontSize: 5.5, color: '#334155', marginTop: 2 },
   statValueMinContainer: { backgroundColor: '#d1fae5', paddingVertical: 2, paddingHorizontal: 4, borderRadius: 2, alignSelf: 'flex-start' },
@@ -209,7 +174,7 @@ const pdfStyles = StyleSheet.create({
 })
 
 // ============================================================
-// PDF BİLEŞENİ
+// PDF BİLEŞENİ (AYNI)
 // ============================================================
 const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikler }) => {
   const formatPriceForPDF = (price, currency = 'TRY') => {
@@ -234,7 +199,6 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
     <Document>
       <Page size="A4" style={pdfStyles.page}>
         <View style={pdfStyles.topAccent} fixed />
-        
         <View style={pdfStyles.headerContainer} fixed>
           <View style={pdfStyles.headerLeft}>
             {hasValidLogo ? <Image src={logoUrl} style={pdfStyles.logo} /> : null}
@@ -275,7 +239,6 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
                 return (
                   <View key={index} style={[pdfStyles.statCard, isLastInRow ? pdfStyles.statCardLastInRow : {}]}>
                     <Text style={pdfStyles.statProductName}>{urun.urunAdi}</Text>
-                    
                     <View style={pdfStyles.statSection}>
                       <Text style={pdfStyles.statLabel}>EN UYGUN</Text>
                       <View style={pdfStyles.statValueMinContainer}>
@@ -283,7 +246,6 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
                       </View>
                       <Text style={pdfStyles.statCompanyText}>{urun.enUcuzFirma}</Text>
                     </View>
-                    
                     <View style={pdfStyles.statSection}>
                       <Text style={pdfStyles.statLabel}>EN YUKSEK</Text>
                       <View style={pdfStyles.statValueMaxContainer}>
@@ -291,7 +253,6 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
                       </View>
                       <Text style={pdfStyles.statCompanyText}>{urun.enPahaliFirma}</Text>
                     </View>
-                    
                     <View style={pdfStyles.statDiffSection}>
                       <Text style={pdfStyles.statValueDiffLabel}>FARK</Text>
                       <Text style={pdfStyles.statValueDiff}>{formatPriceForPDF(urun.fark, paraBirimi)}</Text>
@@ -313,14 +274,12 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
               <Text style={[pdfStyles.col4, pdfStyles.tableHeaderCell]}>FIRMA</Text>
               <Text style={[pdfStyles.col5, pdfStyles.tableHeaderCell, { textAlign: 'right' }]}>FIYAT</Text>
             </View>
-            
             {data.map((item, index) => (
               <View key={index} style={index % 2 === 0 ? pdfStyles.tableRow : pdfStyles.tableRowStriped} wrap={false}>
                 <Text style={[pdfStyles.col1, pdfStyles.tableCell]}>{index + 1}</Text>
                 <Text style={[pdfStyles.col2, pdfStyles.tableCellBold]}>{item.urun_adi}</Text>
                 <Text style={[pdfStyles.col3, pdfStyles.tableCell]}>{item.marka ? item.marka : '-'}</Text>
                 <Text style={[pdfStyles.col4, pdfStyles.tableCell]}>{item.firma_adi}</Text>
-                
                 <View style={pdfStyles.col5}>
                   {item._etiket === 'ucuz' ? (
                     <View style={pdfStyles.tagMinContainer}>
@@ -349,10 +308,9 @@ const RaporPDF = ({ data, firmaBilgileri, logoUrl, paraBirimi, seciliIstatistikl
 }
 
 // ============================================================
-// DETAY MODALI BİLEŞENİ
+// DETAY MODALI BİLEŞENİ (AYNI)
 // ============================================================
 const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }) => {
-  // ESC tuşu ile kapatma + modal açıkken arka plan kaydırmasını kilitleme
   useEffect(() => {
     if (!urun) return
     const handleKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -370,10 +328,8 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
   const getConvertedPrice = (fiyat, paraBirimi) => {
     const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
     if (isNaN(parsedFiyat) || !parsedFiyat) return { original: '-', converted: '-', convertedValue: 0 }
-    
     const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
     const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
-    
     return {
       original: formatPrice(parsedFiyat, paraBirimi),
       converted: formatPrice(converted, gorunenParaBirimi),
@@ -520,14 +476,13 @@ const DetayModal = ({ urun, firmaDetaylari, onClose, gorunenParaBirimi, kurlar }
 }
 
 // ============================================================
-// ANA SAYFA
+// ANA SAYFA - SADECE SIRALAMA DEĞİŞTİ
 // ============================================================
 export default function RaporlarPage() {
   const router = useRouter()
   
-  // ✅ SADECE BUNLAR EKLENDİ (state ve useEffect)
+  // ===== TÜM STATE'LER =====
   const [sessionLoading, setSessionLoading] = useState(true)
-  
   const [fiyatlar, setFiyatlar] = useState([])
   const [filteredFiyatlar, setFilteredFiyatlar] = useState([])
   const [loading, setLoading] = useState(true)
@@ -545,16 +500,114 @@ export default function RaporlarPage() {
   const [detayModalAcik, setDetayModalAcik] = useState(false)
   const [detayUrun, setDetayUrun] = useState(null)
   const [detayFirmaDetaylari, setDetayFirmaDetaylari] = useState([])
-
-  // YENİ: hata durumu, sıralama ve sayfalama
   const [error, setError] = useState(null)
   const [siralama, setSiralama] = useState({ alan: null, yon: 'asc' })
   const [sayfa, setSayfa] = useState(1)
   const SAYFA_BOYUTU = 20
+  const [isClient, setIsClient] = useState(false)
 
-  const [isClient, setIsClient] = useState(false);
+  // ===== useMemo'LAR EN ÜSTTE (OTURUM KONTROLÜNDEN ÖNCE) =====
+  const getConvertedPrice = (fiyat, paraBirimi) => {
+    const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
+    if (isNaN(parsedFiyat) || !parsedFiyat) {
+      return { original: '-', converted: '-', convertedValue: 0 }
+    }
+    const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
+    const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
+    return {
+      original: formatPrice(parsedFiyat, paraBirimi),
+      converted: formatPrice(converted, gorunenParaBirimi),
+      convertedValue: converted
+    }
+  }
 
-  // ✅ O T U R U M   K O N T R O L Ü  (SADECE BURASI EKLENDİ)
+  const getUrunEtiketi = (item) => {
+    const urunItems = filteredFiyatlar.filter(i => i.urun_adi === item.urun_adi)
+    if (urunItems.length < 2) return null
+    const tlFiyatlar = urunItems.map(i => {
+      const fiyat = parseFloat(i.fiyat)
+      const paraBirimi = i.para_birimi || 'TRY'
+      return convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
+    })
+    const minFiyat = Math.min(...tlFiyatlar)
+    const maxFiyat = Math.max(...tlFiyatlar)
+    const mevcutTL = convertPrice(parseFloat(item.fiyat), item.para_birimi || 'TRY', 'TRY', kurlar)
+    if (mevcutTL === minFiyat) return 'ucuz'
+    if (mevcutTL === maxFiyat) return 'pahali'
+    return null
+  }
+
+  const preparedData = useMemo(() => {
+    return filteredFiyatlar.filter(item => seciliIds.includes(item.id)).map(item => {
+      const etiket = getUrunEtiketi(item)
+      const converted = getConvertedPrice(item.fiyat, item.para_birimi)
+      return {
+        ...item,
+        _etiket: etiket,
+        _convertedPrice: converted.convertedValue,
+      }
+    })
+  }, [seciliIds, filteredFiyatlar, gorunenParaBirimi, kurlar])
+
+  const preparedIstatistikler = useMemo(() => {
+    const selectedData = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
+    const urunGruplari = {}
+    selectedData.forEach(item => {
+      const urunAdi = item.urun_adi || 'Bilinmiyor'
+      if (!urunGruplari[urunAdi]) urunGruplari[urunAdi] = []
+      urunGruplari[urunAdi].push(item)
+    })
+
+    return Object.keys(urunGruplari).map(urunAdi => {
+      const items = urunGruplari[urunAdi]
+      
+      const siraliItems = items.map(item => {
+        const fiyat = parseFloat(item.fiyat)
+        const paraBirimi = item.para_birimi || 'TRY'
+        return {
+          ...item,
+          tlFiyat: convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
+        }
+      }).sort((a, b) => a.tlFiyat - b.tlFiyat)
+
+      const enUcuzItem = siraliItems[0]
+      const enPahaliItem = siraliItems[siraliItems.length - 1]
+
+      const enUcuzConverted = convertPrice(enUcuzItem.tlFiyat, 'TRY', gorunenParaBirimi, kurlar)
+      const enPahaliConverted = convertPrice(enPahaliItem.tlFiyat, 'TRY', gorunenParaBirimi, kurlar)
+      
+      return {
+        urunAdi: urunAdi,
+        enUcuz: enUcuzConverted,
+        enUcuzFirma: enUcuzItem.firma_adi,
+        enPahali: enPahaliConverted,
+        enPahaliFirma: enPahaliItem.firma_adi,
+        fark: enPahaliConverted - enUcuzConverted,
+        adet: items.length
+      }
+    })
+  }, [seciliIds, filteredFiyatlar, gorunenParaBirimi, kurlar])
+
+  const sortedFiltered = useMemo(() => {
+    if (!siralama.alan) return filteredFiyatlar
+    const veri = [...filteredFiyatlar]
+    veri.sort((a, b) => {
+      let aDeger, bDeger
+      if (siralama.alan === 'fiyat') {
+        aDeger = getConvertedPrice(a.fiyat, a.para_birimi).convertedValue
+        bDeger = getConvertedPrice(b.fiyat, b.para_birimi).convertedValue
+      } else {
+        aDeger = (a[siralama.alan] || '').toString().toLowerCase()
+        bDeger = (b[siralama.alan] || '').toString().toLowerCase()
+      }
+      if (aDeger < bDeger) return siralama.yon === 'asc' ? -1 : 1
+      if (aDeger > bDeger) return siralama.yon === 'asc' ? 1 : -1
+      return 0
+    })
+    return veri
+  }, [filteredFiyatlar, siralama, gorunenParaBirimi, kurlar])
+
+  // ===== OTURUM KONTROLÜ (useEffect'ler) =====
   useEffect(() => {
     const kontrol = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -568,12 +621,9 @@ export default function RaporlarPage() {
   }, [])
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    setIsClient(true)
+  }, [])
 
-  // Supabase'ten tüm verileri çeker. Hem ilk yüklemede hem de "Tekrar Dene"
-  // butonunda ve realtime güncellemelerde tekrar kullanılabilmesi için
-  // useCallback ile bileşenin en üst seviyesine taşındı.
   const loadData = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -600,17 +650,12 @@ export default function RaporlarPage() {
   }, [])
 
   useEffect(() => {
-    // ✅ OTURUM KONTROLÜ: sessionLoading false olana kadar bekle
     if (sessionLoading) return
     loadData()
   }, [loadData, sessionLoading])
 
-  // YENİ: fiyat_teklifleri tablosunda değişiklik olduğunda (başka bir
-  // kullanıcı/ekran veri eklediğinde) sayfayı otomatik güncelle.
   useEffect(() => {
-    // ✅ OTURUM KONTROLÜ
     if (sessionLoading) return
-    
     const kanal = supabase
       .channel('fiyat_teklifleri_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'fiyat_teklifleri' }, async () => {
@@ -618,16 +663,13 @@ export default function RaporlarPage() {
         if (data) setFiyatlar(data)
       })
       .subscribe()
-
     return () => {
       supabase.removeChannel(kanal)
     }
   }, [sessionLoading])
 
   useEffect(() => {
-    // ✅ OTURUM KONTROLÜ
     if (sessionLoading) return
-    
     const loadKurlar = async () => {
       const k = await getKurlar()
       setKurlar(k)
@@ -688,12 +730,11 @@ export default function RaporlarPage() {
     setUrunIstatistikleri(istatistikler)
   }, [arama, filtreKategori, filtreFirma, fiyatlar, gorunenParaBirimi, kurlar])
 
-  // YENİ: filtre veya sıralama değiştiğinde 1. sayfaya dön
   useEffect(() => {
     setSayfa(1)
   }, [arama, filtreKategori, filtreFirma, siralama])
 
-  // ✅ OTURUM KONTROLÜ: Yükleniyor ekranı
+  // ===== YÜKLENİYOR KONTROLÜ (EN SONDA) =====
   if (sessionLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -705,91 +746,10 @@ export default function RaporlarPage() {
     )
   }
 
+  // ===== FONKSİYONLAR =====
   const toggleSecim = (id) => {
     setSeciliIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }
-
-  const getUrunEtiketi = (item) => {
-    const urunItems = filteredFiyatlar.filter(i => i.urun_adi === item.urun_adi)
-    if (urunItems.length < 2) return null
-    const tlFiyatlar = urunItems.map(i => {
-      const fiyat = parseFloat(i.fiyat)
-      const paraBirimi = i.para_birimi || 'TRY'
-      return convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
-    })
-    const minFiyat = Math.min(...tlFiyatlar)
-    const maxFiyat = Math.max(...tlFiyatlar)
-    const mevcutTL = convertPrice(parseFloat(item.fiyat), item.para_birimi || 'TRY', 'TRY', kurlar)
-    if (mevcutTL === minFiyat) return 'ucuz'
-    if (mevcutTL === maxFiyat) return 'pahali'
-    return null
-  }
-
-  const getConvertedPrice = (fiyat, paraBirimi) => {
-    const parsedFiyat = parseFloat(String(fiyat).replace(',', '.'))
-    if (isNaN(parsedFiyat) || !parsedFiyat) {
-      return { original: '-', converted: '-', convertedValue: 0 }
-    }
-    const tlValue = convertPrice(parsedFiyat, paraBirimi, 'TRY', kurlar)
-    const converted = convertPrice(tlValue, 'TRY', gorunenParaBirimi, kurlar)
-    return {
-      original: formatPrice(parsedFiyat, paraBirimi),
-      converted: formatPrice(converted, gorunenParaBirimi),
-      convertedValue: converted
-    }
-  }
-
-  // YENİ EKLENDİ: PDF render sonsuz döngüsünü çözmek için useMemo kullanıldı
-  const preparedData = useMemo(() => {
-    return filteredFiyatlar.filter(item => seciliIds.includes(item.id)).map(item => {
-      const etiket = getUrunEtiketi(item)
-      const converted = getConvertedPrice(item.fiyat, item.para_birimi)
-      return {
-        ...item,
-        _etiket: etiket,
-        _convertedPrice: converted.convertedValue,
-      }
-    })
-  }, [seciliIds, filteredFiyatlar, gorunenParaBirimi, kurlar])
-
-  const preparedIstatistikler = useMemo(() => {
-    const selectedData = filteredFiyatlar.filter(item => seciliIds.includes(item.id))
-    const urunGruplari = {}
-    selectedData.forEach(item => {
-      const urunAdi = item.urun_adi || 'Bilinmiyor'
-      if (!urunGruplari[urunAdi]) urunGruplari[urunAdi] = []
-      urunGruplari[urunAdi].push(item)
-    })
-
-    return Object.keys(urunGruplari).map(urunAdi => {
-      const items = urunGruplari[urunAdi]
-      
-      const siraliItems = items.map(item => {
-        const fiyat = parseFloat(item.fiyat)
-        const paraBirimi = item.para_birimi || 'TRY'
-        return {
-          ...item,
-          tlFiyat: convertPrice(fiyat, paraBirimi, 'TRY', kurlar)
-        }
-      }).sort((a, b) => a.tlFiyat - b.tlFiyat)
-
-      const enUcuzItem = siraliItems[0]
-      const enPahaliItem = siraliItems[siraliItems.length - 1]
-
-      const enUcuzConverted = convertPrice(enUcuzItem.tlFiyat, 'TRY', gorunenParaBirimi, kurlar)
-      const enPahaliConverted = convertPrice(enPahaliItem.tlFiyat, 'TRY', gorunenParaBirimi, kurlar)
-      
-      return {
-        urunAdi: urunAdi,
-        enUcuz: enUcuzConverted,
-        enUcuzFirma: enUcuzItem.firma_adi,
-        enPahali: enPahaliConverted,
-        enPahaliFirma: enPahaliItem.firma_adi,
-        fark: enPahaliConverted - enUcuzConverted,
-        adet: items.length
-      }
-    })
-  }, [seciliIds, filteredFiyatlar, gorunenParaBirimi, kurlar])
 
   const handleDetayAc = (urun) => {
     const firmaDetaylari = filteredFiyatlar.filter(item => item.urun_adi === urun.urunAdi)
@@ -798,7 +758,6 @@ export default function RaporlarPage() {
     setDetayModalAcik(true)
   }
 
-  // YENİ: sütun başlığına tıklayınca sıralama yönünü değiştir
   const siralamaDegistir = (alan) => {
     setSiralama(prev => {
       if (prev.alan === alan) {
@@ -808,33 +767,9 @@ export default function RaporlarPage() {
     })
   }
 
-  // YENİ: seçili alana göre filtrelenmiş veriyi sırala (fiyat için güncel kura göre çevrilmiş değer kullanılır)
-  const sortedFiltered = useMemo(() => {
-    if (!siralama.alan) return filteredFiyatlar
-    const veri = [...filteredFiyatlar]
-    veri.sort((a, b) => {
-      let aDeger, bDeger
-      if (siralama.alan === 'fiyat') {
-        aDeger = getConvertedPrice(a.fiyat, a.para_birimi).convertedValue
-        bDeger = getConvertedPrice(b.fiyat, b.para_birimi).convertedValue
-      } else {
-        aDeger = (a[siralama.alan] || '').toString().toLowerCase()
-        bDeger = (b[siralama.alan] || '').toString().toLowerCase()
-      }
-      if (aDeger < bDeger) return siralama.yon === 'asc' ? -1 : 1
-      if (aDeger > bDeger) return siralama.yon === 'asc' ? 1 : -1
-      return 0
-    })
-    return veri
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredFiyatlar, siralama, gorunenParaBirimi, kurlar])
-
-  // YENİ: sayfalama
   const toplamSayfa = Math.max(1, Math.ceil(sortedFiltered.length / SAYFA_BOYUTU))
   const sayfalanmisVeri = sortedFiltered.slice((sayfa - 1) * SAYFA_BOYUTU, sayfa * SAYFA_BOYUTU)
 
-  // YENİ: filtrelenmiş tüm kayıtları CSV olarak indir (Excel'de Türkçe karakter
-  // sorunu yaşanmaması için UTF-8 BOM ve noktalı virgül ayracı kullanılır)
   const csvIndir = () => {
     const basliklar = ['Ürün Adı', 'Marka', 'Firma', 'Kategori', 'Fiyat', 'Para Birimi', 'Durum', 'Tarih']
     const satirlar = filteredFiyatlar.map(item => [
@@ -861,6 +796,7 @@ export default function RaporlarPage() {
     URL.revokeObjectURL(url)
   }
 
+  // ===== JSX (AYNI) =====
   return (
     <div className="min-h-screen bg-slate-950 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
