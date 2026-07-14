@@ -23,8 +23,24 @@ export default function PanelPage() {
   const [tarih, setTarih] = useState('')
   const [saat, setSaat] = useState('')
   const [userInfo, setUserInfo] = useState(null)
+  const [sessionLoading, setSessionLoading] = useState(true)
+
+  // OTURUM KONTROLÜ
+  useEffect(() => {
+    const kontrol = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login?redirect=/panel')
+      } else {
+        setSessionLoading(false)
+      }
+    }
+    kontrol()
+  }, [])
 
   useEffect(() => {
+    if (sessionLoading) return
+
     const fetchStats = async () => {
       try {
         const { count: fiyatCount } = await supabase
@@ -99,7 +115,18 @@ export default function PanelPage() {
     getUserInfo()
     const interval = setInterval(updateDateTime, 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [sessionLoading])
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="text-slate-400 mt-4">Yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
 
   const formatPrice = (price, currency = 'TRY') => {
     return new Intl.NumberFormat('tr-TR', {
