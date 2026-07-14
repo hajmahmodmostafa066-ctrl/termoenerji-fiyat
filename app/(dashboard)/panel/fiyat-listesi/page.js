@@ -15,6 +15,7 @@ export default function FiyatListesiPage() {
   const [fiyatlar, setFiyatlar] = useState([])
   const [filteredFiyatlar, setFilteredFiyatlar] = useState([])
   const [loading, setLoading] = useState(true)
+  const [sessionLoading, setSessionLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [gorunenParaBirimi, setGorunenParaBirimi] = useState('TRY')
   const [secilenFiyat, setSecilenFiyat] = useState(null)
@@ -33,8 +34,23 @@ export default function FiyatListesiPage() {
   })
   const [kurlar, setKurlar] = useState({ usdTry: 34.50, eurTry: 37.20 })
 
+  // OTURUM KONTROLÜ
+  useEffect(() => {
+    const kontrol = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login?redirect=/panel/fiyat-listesi')
+      } else {
+        setSessionLoading(false)
+      }
+    }
+    kontrol()
+  }, [])
+
   // Admin kontrolü
   useEffect(() => {
+    if (sessionLoading) return
+
     const checkAdmin = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -43,10 +59,12 @@ export default function FiyatListesiPage() {
       }
     }
     checkAdmin()
-  }, [])
+  }, [sessionLoading])
 
   // Kurları yükle
   useEffect(() => {
+    if (sessionLoading) return
+
     const loadKurlar = async () => {
       const k = await getKurlar()
       setKurlar(k)
@@ -58,11 +76,12 @@ export default function FiyatListesiPage() {
       fetchFiyatlar()
     })
     return () => unsubscribe()
-  }, [])
+  }, [sessionLoading])
 
   useEffect(() => {
+    if (sessionLoading) return
     fetchFiyatlar()
-  }, [])
+  }, [sessionLoading])
 
   useEffect(() => {
     if (searchTerm) {
@@ -78,6 +97,17 @@ export default function FiyatListesiPage() {
       setFilteredFiyatlar(fiyatlar)
     }
   }, [searchTerm, fiyatlar])
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="text-slate-400 mt-4">Yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
 
   const fetchFiyatlar = async () => {
     setLoading(true)
@@ -275,7 +305,6 @@ export default function FiyatListesiPage() {
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 />
               </div>
-              {/* ✅ MARKA DÜZENLEME */}
               <div>
                 <label className="block text-sm text-slate-300 mb-1">Marka</label>
                 <input
