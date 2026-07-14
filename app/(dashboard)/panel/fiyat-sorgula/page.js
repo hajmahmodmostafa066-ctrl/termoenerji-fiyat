@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 
 export default function FiyatSorgulaPage() {
+  const router = useRouter()
   const [fiyatlar, setFiyatlar] = useState([])
   const [loading, setLoading] = useState(false)
+  const [sessionLoading, setSessionLoading] = useState(true)
   const [firmalar, setFirmalar] = useState([])
   const [kategoriler, setKategoriler] = useState([])
   const [filtreler, setFiltreler] = useState({
@@ -15,7 +18,22 @@ export default function FiyatSorgulaPage() {
     kategori: ''
   })
 
+  // OTURUM KONTROLÜ
   useEffect(() => {
+    const kontrol = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login?redirect=/panel/fiyat-sorgula')
+      } else {
+        setSessionLoading(false)
+      }
+    }
+    kontrol()
+  }, [])
+
+  useEffect(() => {
+    if (sessionLoading) return
+
     const fetchFilters = async () => {
       try {
         const { data: firmalarData } = await supabase
@@ -33,7 +51,18 @@ export default function FiyatSorgulaPage() {
       }
     }
     fetchFilters()
-  }, [])
+  }, [sessionLoading])
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="text-slate-400 mt-4">Yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleSearch = async () => {
     setLoading(true)
@@ -107,7 +136,7 @@ export default function FiyatSorgulaPage() {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl font-bold text-white mb-6">🔍 Fiyat Sorgula</h1>
 
-        {/* Filtreler - Marka Eklendi */}
+        {/* Filtreler */}
         <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700/50 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
@@ -121,7 +150,6 @@ export default function FiyatSorgulaPage() {
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               />
             </div>
-            {/* ✅ MARKA FİLTRESİ EKLENDİ */}
             <div>
               <label className="block text-sm text-slate-300 mb-1">Marka</label>
               <input
@@ -171,7 +199,7 @@ export default function FiyatSorgulaPage() {
           </button>
         </div>
 
-        {/* Sonuçlar - Marka Sütunu Eklendi */}
+        {/* Sonuçlar */}
         {fiyatlar.length === 0 && !loading && (
           <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
             <p className="text-slate-400">Henüz sonuç yok. Filtreleri kullanarak arama yapın.</p>
