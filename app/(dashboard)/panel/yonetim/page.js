@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
 import { getKurlar, setKurlar } from '../../../../lib/currency'
 
 export default function YonetimPage() {
+  const router = useRouter()
+  const [sessionLoading, setSessionLoading] = useState(true)
   const [firmaAdi, setFirmaAdi] = useState('TermoEnerji')
   const [telefon, setTelefon] = useState('')
   const [adres, setAdres] = useState('')
@@ -14,7 +17,22 @@ export default function YonetimPage() {
   const [eurTry, setEurTry] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // OTURUM KONTROLÜ
   useEffect(() => {
+    const kontrol = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login?redirect=/panel/yonetim')
+      } else {
+        setSessionLoading(false)
+      }
+    }
+    kontrol()
+  }, [])
+
+  useEffect(() => {
+    if (sessionLoading) return
+
     const fetchData = async () => {
       try {
         const { data: firmaData } = await supabase
@@ -38,7 +56,18 @@ export default function YonetimPage() {
       }
     }
     fetchData()
-  }, [])
+  }, [sessionLoading])
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="text-slate-400 mt-4">Yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleKaydet = async () => {
     setLoading(true)
