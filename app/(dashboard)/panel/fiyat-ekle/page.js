@@ -8,6 +8,7 @@ import { addAuditLog } from '../../../../lib/audit'
 export default function FiyatEklePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [sessionLoading, setSessionLoading] = useState(true)
   const [firmalar, setFirmalar] = useState([])
   const [kategoriler, setKategoriler] = useState([])
   const [formData, setFormData] = useState({
@@ -25,7 +26,22 @@ export default function FiyatEklePage() {
   const [yeniFirma, setYeniFirma] = useState('')
   const [showYeniFirma, setShowYeniFirma] = useState(false)
 
+  // OTURUM KONTROLÜ
   useEffect(() => {
+    const kontrol = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login?redirect=/panel/fiyat-ekle')
+      } else {
+        setSessionLoading(false)
+      }
+    }
+    kontrol()
+  }, [])
+
+  useEffect(() => {
+    if (sessionLoading) return
+
     const fetchData = async () => {
       try {
         const { data: firmalarData } = await supabase
@@ -45,7 +61,18 @@ export default function FiyatEklePage() {
       }
     }
     fetchData()
-  }, [])
+  }, [sessionLoading])
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="text-slate-400 mt-4">Yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -162,7 +189,7 @@ export default function FiyatEklePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-white">💰 Fiyat Ekle</h1>
         <button
@@ -190,7 +217,7 @@ export default function FiyatEklePage() {
           />
         </div>
 
-        {/* ✅ MARKA ALANI EKLENDİ */}
+        {/* Marka */}
         <div>
           <label className="block text-sm text-slate-300 mb-1">Marka</label>
           <input
