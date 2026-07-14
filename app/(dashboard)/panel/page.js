@@ -79,12 +79,13 @@ export default function PanelPage() {
         if (session?.user) {
           const { data: userData, error } = await supabase
             .from('users')
-            .select('role')
+            .select('*')
             .eq('email', session.user.email)
             .single()
           
           setUserInfo({
             email: session.user.email,
+            full_name: userData?.full_name || '',
             role: userData?.role || 'kullanici'
           })
         }
@@ -165,11 +166,20 @@ export default function PanelPage() {
     )
   }
 
+  // Kullanıcının görünecek adını belirle
+  const getDisplayName = () => {
+    if (!userInfo) return 'Misafir'
+    if (userInfo.full_name && userInfo.full_name.trim() !== '') {
+      return userInfo.full_name
+    }
+    return userInfo.email?.split('@')[0] || 'Misafir'
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* HEADER - KULLANICI BİLGİSİ EKLENDİ */}
+        {/* HEADER - KULLANICI BİLGİSİ */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg shadow-emerald-500/40">
@@ -190,17 +200,23 @@ export default function PanelPage() {
             <div className="flex items-center gap-3 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700/50">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold">
-                  {userInfo.email.charAt(0).toUpperCase()}
+                  {getDisplayName().charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden sm:block">
-                  <p className="text-white text-sm font-medium">{userInfo.email}</p>
+                  <p className="text-white text-sm font-medium">
+                    {getDisplayName()}
+                  </p>
                   <div className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400">{userInfo.email}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
                       userInfo.role === 'admin' 
                         ? 'bg-emerald-500/20 text-emerald-400' 
+                        : userInfo.role === 'yonetici'
+                        ? 'bg-blue-500/20 text-blue-400'
                         : 'bg-slate-500/20 text-slate-400'
                     }`}>
-                      {userInfo.role === 'admin' ? '👑 Admin' : userInfo.role === 'yonetici' ? '⚙️ Yönetici' : '👤 Kullanıcı'}
+                      {userInfo.role === 'admin' ? '👑 Admin' : 
+                       userInfo.role === 'yonetici' ? '⚙️ Yönetici' : '👤 Kullanıcı'}
                     </span>
                   </div>
                 </div>
@@ -216,10 +232,10 @@ export default function PanelPage() {
           )}
         </div>
 
-        {/* KARŞILAMA */}
+        {/* KARŞILAMA - İSİM GÖSTERİMİ */}
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-3 flex-wrap">
-            👋 İyi Günler, {userInfo?.email?.split('@')[0] || 'Misafir'}!
+            👋 İyi Günler, <span className="text-emerald-400">{getDisplayName()}!</span>
             <span className="text-sm font-normal text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
               {stats.aktifFiyat} teklif aktif
             </span>
