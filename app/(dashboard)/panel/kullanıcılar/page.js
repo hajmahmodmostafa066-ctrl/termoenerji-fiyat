@@ -18,27 +18,14 @@ export default function KullaniciPage() {
   const fetchKullanicilar = async () => {
     setLoading(true)
     try {
-      // Supabase Auth'dan kullanıcıları çek
-      const { data, error } = await supabase.auth.admin.listUsers()
-      if (error) throw error
-
-      // Kullanıcı rollerini kendi tablomuzdan çek
-      const { data: rolData, error: rolError } = await supabase
-        .from('kullanici_rolleri')
+      // Önce users tablosundan tüm kullanıcıları çek
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
         .select('*')
 
-      if (rolError) throw rolError
+      if (usersError) throw usersError
 
-      // Rolleri birleştir
-      const kullanicilarWithRol = data.users.map(user => {
-        const rol = rolData.find(r => r.email === user.email)
-        return {
-          ...user,
-          rol: rol?.rol || 'kullanici'
-        }
-      })
-
-      setKullanicilar(kullanicilarWithRol)
+      setKullanicilar(usersData || [])
     } catch (error) {
       console.error('Kullanıcı yükleme hatası:', error)
       alert('❌ Hata: ' + error.message)
@@ -50,8 +37,9 @@ export default function KullaniciPage() {
   const handleRolDegistir = async (email, yeniRol) => {
     try {
       const { error } = await supabase
-        .from('kullanici_rolleri')
-        .upsert({ email, rol: yeniRol }, { onConflict: 'email' })
+        .from('users')
+        .update({ role: yeniRol })
+        .eq('email', email)
 
       if (error) throw error
 
@@ -63,11 +51,15 @@ export default function KullaniciPage() {
     }
   }
 
-  const handleKullaniciSil = async (userId) => {
+  const handleKullaniciSil = async (email) => {
     if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId)
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('email', email)
+
       if (error) throw error
 
       await fetchKullanicilar()
@@ -87,25 +79,27 @@ export default function KullaniciPage() {
     setEklemeLoading(true)
     try {
       // Supabase Auth'a yeni kullanıcı ekle
-      const { data, error } = await supabase.auth.admin.createUser({
+      const { data, error } = await supabase.auth.signUp({
         email: yeniEmail,
         password: yeniSifre,
-        email_confirm: true
+        options: {
+          data: {
+            role: yeniRol
+          }
+        }
       })
 
       if (error) throw error
 
-      // Rol tablosuna ekle
-      if (data.user) {
-        await supabase
-          .from('kullanici_rolleri')
-          .insert({ email: yeniEmail, rol: yeniRol })
-      }
+      // Kullanıcı otomatik olarak users tablosuna trigger ile eklenecek
+      // Ama hemen görünmesi için bir saniye bekleyelim
+      setTimeout(() => {
+        fetchKullanicilar()
+      }, 1000)
 
       setYeniEmail('')
       setYeniSifre('')
       setYeniRol('kullanici')
-      await fetchKullanicilar()
       alert('✅ Kullanıcı eklendi!')
     } catch (error) {
       console.error('Ekleme hatası:', error)
@@ -116,7 +110,7 @@ export default function KullaniciPage() {
   }
 
   return (
-    <div>
+    <div className="p-6">
       <h1 className="text-2xl font-bold text-white mb-6">👥 Kullanıcılar</h1>
 
       {/* Yeni Kullanıcı Ekle */}
@@ -172,7 +166,6 @@ export default function KullaniciPage() {
               <tr className="border-b border-slate-700 bg-slate-800">
                 <th className="text-left py-3 px-4 text-slate-400 font-medium">E-posta</th>
                 <th className="text-left py-3 px-4 text-slate-400 font-medium">Rol</th>
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">Durum</th>
                 <th className="text-right py-3 px-4 text-slate-400 font-medium">İşlemler</th>
               </tr>
             </thead>
@@ -182,7 +175,7 @@ export default function KullaniciPage() {
                   <td className="py-3 px-4 text-white">{user.email}</td>
                   <td className="py-3 px-4">
                     <select
-                      value={user.rol || 'kullanici'}
+                      value={user.role || 'kullanici'}
                       onChange={(e) => handleRolDegistir(user.email, e.target.value)}
                       className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                     >
@@ -191,16 +184,9 @@ export default function KullaniciPage() {
                       <option value="kullanici">Kullanıcı</option>
                     </select>
                   </td>
-                  <td className="py-3 px-4">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      user.email_confirmed_at ? 'bg-emerald-500/20 text-emerald-400' : 'bg-yellow-500/20 text-yellow-400'
-                    }`}>
-                      {user.email_confirmed_at ? '✅ Onaylandı' : '⏳ Onaylanmadı'}
-                    </span>
-                  </td>
                   <td className="py-3 px-4 text-right">
                     <button
-                      onClick={() => handleKullaniciSil(user.id)}
+                      onClick={() => handleKullaniciSil(user.email)}
                       className="text-red-400 hover:text-red-300 transition"
                     >
                       🗑️ Sil
