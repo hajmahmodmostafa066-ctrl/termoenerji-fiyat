@@ -10,6 +10,7 @@ export default function KategorilerPage() {
   const router = useRouter()
   const [kategoriler, setKategoriler] = useState([])
   const [loading, setLoading] = useState(true)
+  const [sessionLoading, setSessionLoading] = useState(true)
   const [yeniKategori, setYeniKategori] = useState('')
   const [eklemeLoading, setEklemeLoading] = useState(false)
   const [duzenlenenId, setDuzenlenenId] = useState(null)
@@ -21,7 +22,22 @@ export default function KategorilerPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredKategoriler, setFilteredKategoriler] = useState([])
 
+  // OTURUM KONTROLÜ
   useEffect(() => {
+    const kontrol = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login?redirect=/panel/kategoriler')
+      } else {
+        setSessionLoading(false)
+      }
+    }
+    kontrol()
+  }, [])
+
+  useEffect(() => {
+    if (sessionLoading) return
+
     const checkAdminAndFetch = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -31,7 +47,7 @@ export default function KategorilerPage() {
       await fetchKategoriler()
     }
     checkAdminAndFetch()
-  }, [])
+  }, [sessionLoading])
 
   useEffect(() => {
     if (searchTerm) {
@@ -44,6 +60,17 @@ export default function KategorilerPage() {
       setFilteredKategoriler(kategoriler)
     }
   }, [searchTerm, kategoriler])
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
+          <p className="text-slate-400 mt-4">Yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
 
   const fetchKategoriler = async () => {
     setLoading(true)
