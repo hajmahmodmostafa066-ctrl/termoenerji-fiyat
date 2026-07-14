@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Plus, List, Search, Layers, Building2, 
   BarChart3, Settings, Users, TrendingUp, TrendingDown, 
   DollarSign, FileText, Calendar, Clock, Menu, ChevronRight,
-  Bell, Zap, Sparkles, Crown, CheckCircle, Package
+  Bell, Zap, Sparkles, Crown, CheckCircle, Package, LogOut
 } from 'lucide-react'
 
 export default function PanelPage() {
@@ -22,6 +22,7 @@ export default function PanelPage() {
   const [loading, setLoading] = useState(true)
   const [tarih, setTarih] = useState('')
   const [saat, setSaat] = useState('')
+  const [userInfo, setUserInfo] = useState(null)
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -72,8 +73,29 @@ export default function PanelPage() {
       setSaat(now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
     }
 
+    const getUserInfo = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('role')
+            .eq('email', session.user.email)
+            .single()
+          
+          setUserInfo({
+            email: session.user.email,
+            role: userData?.role || 'kullanici'
+          })
+        }
+      } catch (error) {
+        console.error('Kullanıcı bilgisi alınamadı:', error)
+      }
+    }
+
     fetchStats()
     updateDateTime()
+    getUserInfo()
     const interval = setInterval(updateDateTime, 1000)
     return () => clearInterval(interval)
   }, [])
@@ -83,6 +105,13 @@ export default function PanelPage() {
       style: 'currency',
       currency: currency
     }).format(price)
+  }
+
+  const handleCikis = async () => {
+    if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+      await supabase.auth.signOut()
+      router.push('/login')
+    }
   }
 
   const menuItems = [
@@ -140,7 +169,7 @@ export default function PanelPage() {
     <div className="min-h-screen bg-slate-950 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* HEADER */}
+        {/* HEADER - KULLANICI BİLGİSİ EKLENDİ */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-lg shadow-emerald-500/40">
@@ -155,23 +184,42 @@ export default function PanelPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700/50">
-              <Bell className="h-4 w-4" />
-              <span className="bg-emerald-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">3</span>
+          
+          {/* KULLANICI BİLGİSİ - SAĞ TARAF */}
+          {userInfo && (
+            <div className="flex items-center gap-3 bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700/50">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold">
+                  {userInfo.email.charAt(0).toUpperCase()}
+                </div>
+                <div className="hidden sm:block">
+                  <p className="text-white text-sm font-medium">{userInfo.email}</p>
+                  <div className="flex items-center gap-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      userInfo.role === 'admin' 
+                        ? 'bg-emerald-500/20 text-emerald-400' 
+                        : 'bg-slate-500/20 text-slate-400'
+                    }`}>
+                      {userInfo.role === 'admin' ? '👑 Admin' : userInfo.role === 'yonetici' ? '⚙️ Yönetici' : '👤 Kullanıcı'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleCikis}
+                className="text-slate-400 hover:text-red-400 transition p-1.5 hover:bg-red-500/10 rounded-full"
+                title="Çıkış Yap"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700/50">
-              <Zap className="h-4 w-4 text-emerald-400 animate-pulse" />
-              <span>Sistem Aktif</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-            </div>
-          </div>
+          )}
         </div>
 
         {/* KARŞILAMA */}
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-3 flex-wrap">
-            👋 İyi Günler!
+            👋 İyi Günler, {userInfo?.email?.split('@')[0] || 'Misafir'}!
             <span className="text-sm font-normal text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
               {stats.aktifFiyat} teklif aktif
             </span>
