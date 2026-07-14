@@ -546,7 +546,7 @@ export default function RaporlarPage() {
   const SAYFA_BOYUTU = 20
   const [isClient, setIsClient] = useState(false)
 
-  // ✅ SADECE OTURUM KONTROLÜ EKLENDİ
+  // OTURUM KONTROLÜ
   useEffect(() => {
     const kontrol = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -618,7 +618,6 @@ export default function RaporlarPage() {
     return () => unsubscribe()
   }, [sessionLoading])
 
-  // ===== useMemo'lar AYNI =====
   useEffect(() => {
     let filtered = [...fiyatlar]
     if (arama.trim()) {
@@ -674,7 +673,6 @@ export default function RaporlarPage() {
     setSayfa(1)
   }, [arama, filtreKategori, filtreFirma, siralama])
 
-  // ✅ SADECE OTURUM KONTROLÜ EKLENDİ - Loading
   if (sessionLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
