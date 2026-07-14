@@ -11,6 +11,11 @@ export default function KullaniciPage() {
   const [yeniRol, setYeniRol] = useState('kullanici')
   const [eklemeLoading, setEklemeLoading] = useState(false)
   const [benimBilgilerim, setBenimBilgilerim] = useState(null)
+  
+  // Profil düzenleme state'leri
+  const [profilDuzenle, setProfilDuzenle] = useState(false)
+  const [duzenlenecekKullanici, setDuzenlenecekKullanici] = useState(null)
+  const [duzenlemeLoading, setDuzenlemeLoading] = useState(false)
 
   useEffect(() => {
     fetchKullanicilar()
@@ -22,7 +27,20 @@ export default function KullaniciPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
-        setBenimBilgilerim(session.user)
+        // Users tablosundan ek bilgileri al
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', session.user.email)
+          .single()
+        
+        setBenimBilgilerim({
+          ...session.user,
+          full_name: userData?.full_name || '',
+          phone: userData?.phone || '',
+          title: userData?.title || '',
+          role: userData?.role || 'kullanici'
+        })
         localStorage.setItem('userEmail', session.user.email)
       }
     } catch (error) {
@@ -50,9 +68,47 @@ export default function KullaniciPage() {
     }
   }
 
+  // Profil bilgilerini güncelle
+  const handleProfilGuncelle = async (e) => {
+    e.preventDefault()
+    setDuzenlemeLoading(true)
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          full_name: duzenlenecekKullanici.full_name,
+          phone: duzenlenecekKullanici.phone,
+          title: duzenlenecekKullanici.title
+        })
+        .eq('email', duzenlenecekKullanici.email)
+
+      if (error) throw error
+
+      // Benim bilgilerimi güncelle
+      if (duzenlenecekKullanici.email === localStorage.getItem('userEmail')) {
+        setBenimBilgilerim(prev => ({
+          ...prev,
+          full_name: duzenlenecekKullanici.full_name,
+          phone: duzenlenecekKullanici.phone,
+          title: duzenlenecekKullanici.title
+        }))
+      }
+
+      await fetchKullanicilar()
+      setProfilDuzenle(false)
+      setDuzenlenecekKullanici(null)
+      alert('✅ Profil bilgileri güncellendi!')
+    } catch (error) {
+      console.error('Güncelleme hatası:', error)
+      alert('❌ Hata: ' + error.message)
+    } finally {
+      setDuzenlemeLoading(false)
+    }
+  }
+
   // Rol değiştir
   const handleRolDegistir = async (email, yeniRol) => {
-    // Kendi rolünü değiştirmesin
     if (email === localStorage.getItem('userEmail')) {
       alert('❌ Kendi rolünüzü değiştiremezsiniz!')
       return
@@ -76,7 +132,6 @@ export default function KullaniciPage() {
 
   // Kullanıcı sil
   const handleKullaniciSil = async (email) => {
-    // Admin kullanıcının kendisini silemez
     const benimEmail = localStorage.getItem('userEmail')
     
     if (email === benimEmail) {
@@ -84,7 +139,6 @@ export default function KullaniciPage() {
       return
     }
 
-    // Silinecek kullanıcı admin mi?
     const silinecekKullanici = kullanicilar.find(u => u.email === email)
     if (silinecekKullanici?.role === 'admin') {
       alert('❌ Admin kullanıcıyı silemezsiniz!')
@@ -116,13 +170,11 @@ export default function KullaniciPage() {
       return
     }
 
-    // Email format kontrolü
     if (!yeniEmail.includes('@') || !yeniEmail.includes('.')) {
       alert('❌ Geçerli bir e-posta adresi girin!')
       return
     }
 
-    // Şifre uzunluk kontrolü
     if (yeniSifre.length < 6) {
       alert('❌ Şifre en az 6 karakter olmalı!')
       return
@@ -130,7 +182,6 @@ export default function KullaniciPage() {
 
     setEklemeLoading(true)
     try {
-      // 1. Kullanıcıyı Auth'a ekle
       const { data, error } = await supabase.auth.signUp({
         email: yeniEmail,
         password: yeniSifre,
@@ -143,8 +194,6 @@ export default function KullaniciPage() {
 
       if (error) throw error
 
-      // 2. Trigger otomatik olarak users tablosuna ekleyecek
-      // 3. Rolünü güncelle (trigger 'user' olarak ekler, biz seçilen rolü verelim)
       if (yeniRol !== 'kullanici') {
         await supabase
           .from('users')
@@ -156,7 +205,6 @@ export default function KullaniciPage() {
       setYeniSifre('')
       setYeniRol('kullanici')
       
-      // Listeyi yenile
       setTimeout(() => {
         fetchKullanicilar()
       }, 1500)
@@ -164,8 +212,6 @@ export default function KullaniciPage() {
       alert('✅ Kullanıcı eklendi!')
     } catch (error) {
       console.error('Ekleme hatası:', error)
-      
-      // Özel hata mesajları
       if (error.message.includes('User already registered')) {
         alert('❌ Bu e-posta zaten kayıtlı!')
       } else {
@@ -185,6 +231,18 @@ export default function KullaniciPage() {
     }
   }
 
+  // Profil düzenleme modal'ını aç
+  const profiliDuzenle = (user) => {
+    setDuzenlenecekKullanici({
+      email: user.email,
+      full_name: user.full_name || '',
+      phone: user.phone || '',
+      title: user.title || '',
+      role: user.role || 'kullanici'
+    })
+    setProfilDuzenle(true)
+  }
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Kullanıcı Bilgileri - ÜST BANNER */}
@@ -195,16 +253,28 @@ export default function KullaniciPage() {
               👤
             </div>
             <div>
-              <p className="text-white font-medium">{benimBilgilerim.email}</p>
-              <p className="text-emerald-400 text-sm flex items-center gap-1">
-                <span>✅</span> Giriş yaptınız
+              <p className="text-white font-medium">
+                {benimBilgilerim.full_name || benimBilgilerim.email}
               </p>
+              <p className="text-slate-400 text-sm flex items-center gap-1">
+                <span>📧</span> {benimBilgilerim.email}
+                <span className="ml-2 text-emerald-400 text-xs bg-emerald-500/20 px-2 py-0.5 rounded-full">
+                  {benimBilgilerim.role === 'admin' ? '👑 Admin' : 
+                   benimBilgilerim.role === 'yonetici' ? '⚙️ Yönetici' : '👤 Kullanıcı'}
+                </span>
+              </p>
+              {benimBilgilerim.title && (
+                <p className="text-xs text-slate-500">{benimBilgilerim.title}</p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="bg-emerald-500/20 px-3 py-1 rounded-full text-emerald-400 text-xs font-medium">
-              Admin
-            </span>
+            <button
+              onClick={() => profiliDuzenle(benimBilgilerim)}
+              className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-4 py-2 rounded-lg transition text-sm"
+            >
+              ✏️ Profili Düzenle
+            </button>
             <button
               onClick={handleCikis}
               className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-4 py-2 rounded-lg transition text-sm"
@@ -217,42 +287,44 @@ export default function KullaniciPage() {
 
       <h1 className="text-2xl font-bold text-white mb-6">👥 Kullanıcılar</h1>
 
-      {/* Yeni Kullanıcı Ekle */}
-      <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700 mb-6">
-        <h2 className="text-lg font-semibold text-white mb-4">➕ Yeni Kullanıcı Ekle</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input
-            type="email"
-            value={yeniEmail}
-            onChange={(e) => setYeniEmail(e.target.value)}
-            placeholder="E-posta"
-            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-          />
-          <input
-            type="password"
-            value={yeniSifre}
-            onChange={(e) => setYeniSifre(e.target.value)}
-            placeholder="Şifre (en az 6 karakter)"
-            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-          />
-          <select
-            value={yeniRol}
-            onChange={(e) => setYeniRol(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+      {/* Yeni Kullanıcı Ekle - Sadece Admin Görebilir */}
+      {benimBilgilerim?.role === 'admin' && (
+        <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700 mb-6">
+          <h2 className="text-lg font-semibold text-white mb-4">➕ Yeni Kullanıcı Ekle</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input
+              type="email"
+              value={yeniEmail}
+              onChange={(e) => setYeniEmail(e.target.value)}
+              placeholder="E-posta"
+              className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            />
+            <input
+              type="password"
+              value={yeniSifre}
+              onChange={(e) => setYeniSifre(e.target.value)}
+              placeholder="Şifre (en az 6 karakter)"
+              className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            />
+            <select
+              value={yeniRol}
+              onChange={(e) => setYeniRol(e.target.value)}
+              className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+            >
+              <option value="kullanici">Kullanıcı</option>
+              <option value="yonetici">Yönetici</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button
+            onClick={handleYeniKullanici}
+            disabled={eklemeLoading}
+            className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
           >
-            <option value="kullanici">Kullanıcı</option>
-            <option value="yonetici">Yönetici</option>
-            <option value="admin">Admin</option>
-          </select>
+            {eklemeLoading ? 'Ekleniyor...' : '➕ Ekle'}
+          </button>
         </div>
-        <button
-          onClick={handleYeniKullanici}
-          disabled={eklemeLoading}
-          className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-lg transition disabled:opacity-50"
-        >
-          {eklemeLoading ? 'Ekleniyor...' : '➕ Ekle'}
-        </button>
-      </div>
+      )}
 
       {/* Kullanıcı Listesi */}
       {loading ? (
@@ -269,8 +341,9 @@ export default function KullaniciPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-700 bg-slate-800">
-                <th className="text-left py-3 px-4 text-slate-400 font-medium">E-posta</th>
+                <th className="text-left py-3 px-4 text-slate-400 font-medium">Kullanıcı</th>
                 <th className="text-left py-3 px-4 text-slate-400 font-medium">Rol</th>
+                <th className="text-left py-3 px-4 text-slate-400 font-medium">İletişim</th>
                 <th className="text-center py-3 px-4 text-slate-400 font-medium">Durum</th>
                 <th className="text-right py-3 px-4 text-slate-400 font-medium">İşlemler</th>
               </tr>
@@ -284,28 +357,44 @@ export default function KullaniciPage() {
                 return (
                   <tr key={user.id} className={`border-b border-slate-700/50 hover:bg-slate-800/30 transition ${isBenim ? 'bg-emerald-500/5' : ''}`}>
                     <td className="py-3 px-4">
-                      <span className="text-white">
-                        {user.email}
-                        {isBenim && (
-                          <span className="ml-2 text-xs text-emerald-400">(Ben)</span>
+                      <div>
+                        <p className="text-white font-medium">
+                          {user.full_name || user.email}
+                          {isBenim && (
+                            <span className="ml-2 text-xs text-emerald-400">(Ben)</span>
+                          )}
+                        </p>
+                        <p className="text-slate-500 text-xs">{user.email}</p>
+                        {user.title && (
+                          <p className="text-slate-500 text-xs">{user.title}</p>
                         )}
-                      </span>
+                      </div>
                     </td>
                     <td className="py-3 px-4">
-                      <select
-                        value={user.role || 'kullanici'}
-                        onChange={(e) => handleRolDegistir(user.email, e.target.value)}
-                        disabled={isBenim || isAdmin}
-                        className={`bg-slate-900 border border-slate-700 rounded-lg px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
-                          isBenim || isAdmin ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        <option value="kullanici">Kullanıcı</option>
-                        <option value="yonetici">Yönetici</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                      {isBenim && <span className="text-xs text-slate-500 ml-2">(kendin)</span>}
+                      {isBenim ? (
+                        <span className="text-slate-400 text-xs">(kendin)</span>
+                      ) : (
+                        <select
+                          value={user.role || 'kullanici'}
+                          onChange={(e) => handleRolDegistir(user.email, e.target.value)}
+                          disabled={isAdmin}
+                          className={`bg-slate-900 border border-slate-700 rounded-lg px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                            isAdmin ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          <option value="kullanici">Kullanıcı</option>
+                          <option value="yonetici">Yönetici</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      )}
                       {isAdmin && !isBenim && <span className="text-xs text-emerald-400 ml-2">🔒</span>}
+                    </td>
+                    <td className="py-3 px-4">
+                      {user.phone ? (
+                        <span className="text-slate-300 text-xs">{user.phone}</span>
+                      ) : (
+                        <span className="text-slate-500 text-xs">-</span>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className={`text-xs px-2 py-1 rounded-full ${
@@ -315,16 +404,27 @@ export default function KullaniciPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => handleKullaniciSil(user.email)}
-                        disabled={isBenim || isAdmin}
-                        className={`text-red-400 hover:text-red-300 transition ${
-                          isBenim || isAdmin ? 'opacity-30 cursor-not-allowed' : ''
-                        }`}
-                        title={isBenim ? 'Kendinizi silemezsiniz' : isAdmin ? 'Admin silinemez' : ''}
-                      >
-                        🗑️ Sil
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => profiliDuzenle(user)}
+                          className="text-blue-400 hover:text-blue-300 transition text-sm"
+                          title="Profili Düzenle"
+                        >
+                          ✏️
+                        </button>
+                        {!isBenim && !isAdmin && (
+                          <button
+                            onClick={() => handleKullaniciSil(user.email)}
+                            className="text-red-400 hover:text-red-300 transition text-sm"
+                            title="Sil"
+                          >
+                            🗑️
+                          </button>
+                        )}
+                        {isAdmin && !isBenim && (
+                          <span className="text-xs text-slate-500">🔒</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -338,6 +438,85 @@ export default function KullaniciPage() {
       {!loading && (
         <div className="mt-4 text-sm text-slate-400">
           Toplam: {kullanicilar.length} kullanıcı
+        </div>
+      )}
+
+      {/* PROFİL DÜZENLEME MODAL */}
+      {profilDuzenle && duzenlenecekKullanici && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-slate-700">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white">✏️ Profili Düzenle</h2>
+              <button
+                onClick={() => setProfilDuzenle(false)}
+                className="text-slate-400 hover:text-white transition"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-slate-400 text-sm mb-4">{duzenlenecekKullanici.email}</p>
+            
+            <form onSubmit={handleProfilGuncelle} className="space-y-4">
+              <div>
+                <label className="text-sm text-slate-300 block mb-1">Ad Soyad</label>
+                <input
+                  type="text"
+                  value={duzenlenecekKullanici.full_name || ''}
+                  onChange={(e) => setDuzenlenecekKullanici({
+                    ...duzenlenecekKullanici,
+                    full_name: e.target.value
+                  })}
+                  placeholder="Ad Soyad"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm text-slate-300 block mb-1">Telefon</label>
+                <input
+                  type="text"
+                  value={duzenlenecekKullanici.phone || ''}
+                  onChange={(e) => setDuzenlenecekKullanici({
+                    ...duzenlenecekKullanici,
+                    phone: e.target.value
+                  })}
+                  placeholder="Telefon"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm text-slate-300 block mb-1">Unvan</label>
+                <input
+                  type="text"
+                  value={duzenlenecekKullanici.title || ''}
+                  onChange={(e) => setDuzenlenecekKullanici({
+                    ...duzenlenecekKullanici,
+                    title: e.target.value
+                  })}
+                  placeholder="Unvan (Örn: Satış Müdürü)"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setProfilDuzenle(false)}
+                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  disabled={duzenlemeLoading}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg transition disabled:opacity-50"
+                >
+                  {duzenlemeLoading ? 'Kaydediliyor...' : '💾 Kaydet'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
