@@ -13,7 +13,7 @@ export default function KullaniciPage() {
   const [yeniRol, setYeniRol] = useState('kullanici')
   const [eklemeLoading, setEklemeLoading] = useState(false)
   const [benimBilgilerim, setBenimBilgilerim] = useState(null)
-  const [yetkiKontrol, setYetkiKontrol] = useState(false)
+  const [yetkili, setYetkili] = useState(false)
   
   // Profil düzenleme state'leri
   const [profilDuzenle, setProfilDuzenle] = useState(false)
@@ -21,17 +21,17 @@ export default function KullaniciPage() {
   const [duzenlemeLoading, setDuzenlemeLoading] = useState(false)
 
   useEffect(() => {
-    kontrolVeGetir()
+    yetkiKontrol()
   }, [])
 
-  // Yetki kontrolü ve veri getirme
-  const kontrolVeGetir = async () => {
+  // YETKİ KONTROLÜ - ÖNCE BUNU YAP
+  const yetkiKontrol = async () => {
     setLoading(true)
     try {
       // 1. Oturum kontrolü
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        router.push('/login')
+        router.push('/login?redirect=/panel/kullanıcilar')
         return
       }
 
@@ -44,30 +44,33 @@ export default function KullaniciPage() {
 
       if (userError) throw userError
 
+      const role = userData?.role || 'kullanici'
+      
+      // 3. Yetki kontrolü - SADECE ADMIN ve YÖNETİCİ görebilir
+      if (role !== 'admin' && role !== 'yonetici') {
+        setYetkili(false)
+        setLoading(false)
+        return
+      }
+
+      // 4. Yetkili kullanıcı bilgilerini kaydet
+      setYetkili(true)
       setBenimBilgilerim({
         ...session.user,
         full_name: userData?.full_name || '',
         phone: userData?.phone || '',
         title: userData?.title || '',
-        role: userData?.role || 'kullanici'
+        role: role
       })
 
-      // 3. Yetki kontrolü - SADECE ADMIN ve YÖNETİCİ görebilir
-      if (userData?.role === 'admin' || userData?.role === 'yonetici') {
-        setYetkiKontrol(true)
-        // Kullanıcı listesini çek
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('*')
-          .order('created_at', { ascending: false })
+      // 5. Kullanıcı listesini çek
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-        if (usersError) throw usersError
-        setKullanicilar(usersData || [])
-      } else {
-        // KULLANICI ise sayfayı göremez
-        setYetkiKontrol(false)
-        setKullanicilar([])
-      }
+      if (usersError) throw usersError
+      setKullanicilar(usersData || [])
 
     } catch (error) {
       console.error('Hata:', error)
@@ -126,7 +129,7 @@ export default function KullaniciPage() {
       setYeniRol('kullanici')
       
       setTimeout(() => {
-        kontrolVeGetir()
+        yetkiKontrol()
       }, 1500)
       
       alert('✅ Kullanıcı eklendi!')
@@ -154,6 +157,13 @@ export default function KullaniciPage() {
       return
     }
 
+    // Admin başka adminin rolünü değiştiremez
+    const hedefKullanici = kullanicilar.find(u => u.email === email)
+    if (hedefKullanici?.role === 'admin') {
+      alert('❌ Admin kullanıcının rolünü değiştiremezsiniz!')
+      return
+    }
+
     try {
       const { error } = await supabase
         .from('users')
@@ -162,7 +172,7 @@ export default function KullaniciPage() {
 
       if (error) throw error
 
-      await kontrolVeGetir()
+      await yetkiKontrol()
       alert('✅ Rol güncellendi!')
     } catch (error) {
       console.error('Rol güncelleme hatası:', error)
@@ -198,7 +208,7 @@ export default function KullaniciPage() {
 
       if (error) throw error
 
-      await kontrolVeGetir()
+      await yetkiKontrol()
       alert('✅ Kullanıcı silindi!')
     } catch (error) {
       console.error('Silme hatası:', error)
@@ -233,7 +243,7 @@ export default function KullaniciPage() {
         }))
       }
 
-      await kontrolVeGetir()
+      await yetkiKontrol()
       setProfilDuzenle(false)
       setDuzenlenecekKullanici(null)
       alert('✅ Profil bilgileri güncellendi!')
@@ -278,7 +288,7 @@ export default function KullaniciPage() {
   }
 
   // YETKİSİZ KULLANICI - Sayfayı göremez
-  if (!yetkiKontrol) {
+  if (!yetkili) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
         <div className="max-w-md w-full bg-slate-800/50 rounded-2xl p-8 border border-red-500/30 text-center">
