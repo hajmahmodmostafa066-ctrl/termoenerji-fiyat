@@ -4,42 +4,13 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../../lib/supabase'
 import { convertPrice, formatPrice, getKurlar, kurDegistiginde } from '../../../../lib/currency'
-import dynamic from 'next/dynamic'
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { X, TrendingUp, Building2, ChevronRight, BarChart3, Download, RefreshCw, ArrowUpDown, AlertCircle } from 'lucide-react'
 
-// PDF bileşenlerini dinamik olarak yükle (SSR devre dışı)
-const PDFDownloadLink = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
-  { ssr: false, loading: () => <button disabled className="bg-slate-700 text-slate-400 px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-medium">PDF Yükleniyor...</button> }
-)
-
-const Document = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.Document),
-  { ssr: false }
-)
-const Page = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.Page),
-  { ssr: false }
-)
-const Text = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.Text),
-  { ssr: false }
-)
-const View = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.View),
-  { ssr: false }
-)
-const StyleSheet = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.StyleSheet),
-  { ssr: false }
-)
-const Image = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.Image),
-  { ssr: false }
-)
-
-// PDF STILLERI - SADECE İSTEMCİ TARAFINDA ÇALIŞACAK
-const pdfStyles = {
+// ============================================================
+// PDF STILLERI (FONT HATASI ÇÖZÜLDÜ - STANDART FONT)
+// ============================================================
+const pdfStyles = StyleSheet.create({
   page: {
     padding: 20,
     backgroundColor: '#ffffff',
@@ -112,7 +83,9 @@ const pdfStyles = {
     padding: 10,
     marginRight: 10,
   },
-  summaryItemLast: { marginRight: 0 },
+  summaryItemLast: {
+    marginRight: 0,
+  },
   summaryLabel: { fontSize: 7, color: '#64748b', textTransform: 'uppercase', marginBottom: 4, fontWeight: 'bold' },
   summaryValue: { fontSize: 12, fontWeight: 'bold', color: '#0f172a' },
   sectionTitle: {
@@ -128,9 +101,13 @@ const pdfStyles = {
     borderLeftColor: '#0f172a',
     borderLeftStyle: 'solid',
   },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
   statCard: {
-    width: '18.8%',
+    width: '18.8%', 
     marginRight: '1.5%',
     backgroundColor: '#ffffff',
     borderWidth: 1,
@@ -140,7 +117,9 @@ const pdfStyles = {
     padding: 6,
     marginBottom: 10,
   },
-  statCardLastInRow: { marginRight: 0 },
+  statCardLastInRow: {
+    marginRight: 0, 
+  },
   statProductName: {
     fontSize: 7.5,
     fontWeight: 'bold',
@@ -151,7 +130,9 @@ const pdfStyles = {
     borderBottomColor: '#e2e8f0',
     borderBottomStyle: 'solid',
   },
-  statSection: { marginBottom: 5 },
+  statSection: {
+    marginBottom: 5,
+  },
   statLabel: { fontSize: 5.5, color: '#64748b', marginBottom: 2, textTransform: 'uppercase' },
   statCompanyText: { fontSize: 5.5, color: '#334155', marginTop: 2 },
   statValueMinContainer: { backgroundColor: '#d1fae5', paddingVertical: 2, paddingHorizontal: 4, borderRadius: 2, alignSelf: 'flex-start' },
@@ -224,7 +205,7 @@ const pdfStyles = {
   },
   footerText: { fontSize: 7, color: '#94a3b8' },
   footerPageNumber: { fontSize: 7, fontWeight: 'bold', color: '#64748b' },
-}
+})
 
 // ============================================================
 // PDF BİLEŞENİ
@@ -565,7 +546,7 @@ export default function RaporlarPage() {
   const SAYFA_BOYUTU = 20
   const [isClient, setIsClient] = useState(false)
 
-  // OTURUM KONTROLÜ
+  // ✅ SADECE OTURUM KONTROLÜ EKLENDİ
   useEffect(() => {
     const kontrol = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -637,6 +618,7 @@ export default function RaporlarPage() {
     return () => unsubscribe()
   }, [sessionLoading])
 
+  // ===== useMemo'lar AYNI =====
   useEffect(() => {
     let filtered = [...fiyatlar]
     if (arama.trim()) {
@@ -692,6 +674,7 @@ export default function RaporlarPage() {
     setSayfa(1)
   }, [arama, filtreKategori, filtreFirma, siralama])
 
+  // ✅ SADECE OTURUM KONTROLÜ EKLENDİ - Loading
   if (sessionLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
